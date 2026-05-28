@@ -4,15 +4,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
     
+    // Ждём загрузку настроек
     await loadAll();
+    
     buildWorkspaces();
     buildSidebarV2();
     applyAllSettings();
     buildShortcuts();
     bindAllEvents();
     loadRates();
-    
     addTable('USD');
+    
     document.addEventListener('keydown', handleGlobalHotkeys);
     document.addEventListener('paste', handleGlobalPaste);
+    
+    console.log('ONTEK v4.5.0 готов');
 });
