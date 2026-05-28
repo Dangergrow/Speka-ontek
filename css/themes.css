@@ -1,0 +1,69 @@
+/* ===== БАЗОВЫЕ ПЕРЕМЕННЫЕ ===== */
+:root {
+    --bg:#eef1f5;--app-bg:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--card:#fff;
+    --card-hdr:#f8fafc;--card-act:#eff6ff;--tbg:#f8fafc;--tsbg:#fff;--thbg:#64748b;--thtx:#fff;
+    --rb:#eff6ff;--ra:#dbeafe;--rh:#fef9c3;--rs:#fef9c3;--tot:#e2e8f0;--rnbg:#f1f5f9;--rntx:#94a3b8;
+    --sbg:#f8fafc;--toast-ok-bg:#d1fae5;--toast-ok-tx:#065f46;--toast-err-bg:#fee2e2;--toast-err-tx:#991b1b;
+    --ctxbg:#fff;--brand:#1e40af;--brandtx:#fff;--sidebar-bg:#f1f5f9;
+    --accent:#3b82f6;--accent2:#6366f1;--accent-light:#eff6ff;
+    --btn-add-bg:#d1fae5;--btn-add-tx:#065f46;--btn-del-bg:#fee2e2;--btn-del-tx:#991b1b;
+    --input-focus-shadow:rgba(59,130,246,0.08);
+}
+
+/* Тёмная тема */
+.dark {
+    --bg:#0f172a;--app-bg:#1e293b;--text:#e2e8f0;--text2:#94a3b8;--border:#334155;--card:#1e293b;
+    --card-hdr:#273548;--card-act:#1e3a5f;--tbg:#1a2332;--tsbg:#273548;--thbg:#334155;--thtx:#e2e8f0;
+    --rb:#1e293b;--ra:#273548;--rh:#334155;--rs:#3b3b1a;--tot:#334155;--rnbg:#1a2332;--rntx:#64748b;
+    --sbg:#1a2332;--toast-ok-bg:#064e3b;--toast-ok-tx:#a7f3d0;--toast-err-bg:#7f1d1d;--toast-err-tx:#fecaca;
+    --ctxbg:#273548;--brand:#3b82f6;--sidebar-bg:#1a2332;
+    --accent-light:#1e3a5f;--input-focus-shadow:rgba(59,130,246,0.2);
+}
+
+/* ===== ЦВЕТОВЫЕ ТЕМЫ ===== */
+
+/* Синяя (по умолчанию) */
+.theme-blue {
+    --accent:#3b82f6;--accent2:#6366f1;--brand:#1e40af;
+    --btn-blue-bg:#3b82f6;--btn-green-bg:#10b981;--btn-red-bg:#ef4444;
+    --btn-orange-bg:#f59e0b;--btn-purple-bg:#8b5cf6;--btn-teal-bg:#14b8a6;
+    --btn-slate-bg:#475569;--btn-pink-bg:#ec4899;--btn-indigo-bg:#6366f1;
+}
+
+/* Зелёная */
+.theme-green {
+    --accent:#10b981;--accent2:#059669;--brand:#065f46;
+    --btn-blue-bg:#10b981;--btn-green-bg:#059669;--btn-red-bg:#ef4444;
+    --btn-orange-bg:#f59e0b;--btn-purple-bg:#7c3aed;--btn-teal-bg:#0d9488;
+    --btn-slate-bg:#374151;--btn-pink-bg:#db2777;--btn-indigo-bg:#4f46e5;
+    --thbg:#065f46;--brandtx:#fff;
+}
+
+/* Фиолетовая */
+.theme-purple {
+    --accent:#8b5cf6;--accent2:#7c3aed;--brand:#5b21b6;
+    --btn-blue-bg:#8b5cf6;--btn-green-bg:#10b981;--btn-red-bg:#ef4444;
+    --btn-orange-bg:#f59e0b;--btn-purple-bg:#7c3aed;--btn-teal-bg:#14b8a6;
+    --btn-slate-bg:#4338ca;--btn-pink-bg:#ec4899;--btn-indigo-bg:#6366f1;
+    --thbg:#5b21b6;--brandtx:#fff;
+}
+
+/* Оранжевая */
+.theme-orange {
+    --accent:#f59e0b;--accent2:#ea580c;--brand:#c2410c;
+    --btn-blue-bg:#f59e0b;--btn-green-bg:#10b981;--btn-red-bg:#ef4444;
+    --btn-orange-bg:#ea580c;--btn-purple-bg:#8b5cf6;--btn-teal-bg:#14b8a6;
+    --btn-slate-bg:#78350f;--btn-pink-bg:#be123c;--btn-indigo-bg:#6366f1;
+    --thbg:#c2410c;--brandtx:#fff;
+}
+
+/* Применение цветов кнопок */
+.b-blue{background:var(--btn-blue-bg,#3b82f6);color:#fff}
+.b-green{background:var(--btn-green-bg,#10b981);color:#fff}
+.b-red{background:var(--btn-red-bg,#ef4444);color:#fff}
+.b-orange{background:var(--btn-orange-bg,#f59e0b);color:#fff}
+.b-purple{background:var(--btn-purple-bg,#8b5cf6);color:#fff}
+.b-teal{background:var(--btn-teal-bg,#14b8a6);color:#fff}
+.b-slate{background:var(--btn-slate-bg,#475569);color:#fff}
+.b-pink{background:var(--btn-pink-bg,#ec4899);color:#fff}
+.b-indigo{background:var(--btn-indigo-bg,#6366f1);color:#fff}
