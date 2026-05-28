@@ -11,4 +11,8 @@ document.addEventListener('DOMContentLoaded', function() {
     bindAllEvents();
     loadRates();
     addTable('USD');
+    
+    // ВОТ ЭТО — привязка горячих клавиш
+    document.addEventListener('keydown', handleGlobalHotkeys);
+    document.addEventListener('paste', handleGlobalPaste);
 });
