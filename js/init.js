@@ -4,9 +4,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
     
-    // Ждём загрузку настроек
-    await loadAll();
+    // Ждём инициализацию pywebview API
+    await new Promise(resolve => setTimeout(resolve, 300));
     
+    await loadAll();
     buildWorkspaces();
     buildSidebarV2();
     applyAllSettings();
@@ -17,4 +18,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     document.addEventListener('keydown', handleGlobalHotkeys);
     document.addEventListener('paste', handleGlobalPaste);
+    
+    console.log('ONTEK v4.5.0 готов');
 });
