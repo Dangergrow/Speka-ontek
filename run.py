@@ -10,7 +10,7 @@ from tkinter import Tk, filedialog
 # ==================== НАСТРОЙКИ ====================
 APP_NAME = "ONTEK — Таблица заказов"
 APP_VERSION = "3.7.0"
-UPDATE_URL = "https://raw.githubusercontent.com/yourname/ontek-orders/main/version.json"  # Замените на свой URL
+UPDATE_URL = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/version.json"  # Замените на свой URL
 CHECK_UPDATES = True  # Автоматически проверять обновления
 
 # ==================== ТРЕЙ ====================
