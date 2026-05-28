@@ -27,9 +27,35 @@ function cA(r,c){let s='';while(c>0){c--;s=String.fromCharCode(65+(c%26))+s;c=Ma
 function ccl(n){const l=n.toLowerCase();if(l.includes('артикул'))return'col-article';if(l.includes('наименование'))return'col-name';if(l.includes('ко-во')||l.includes('количество'))return'col-qty';if(l.startsWith('цена'))return'col-price';if(l.startsWith('стоимость'))return'col-total';return'col-default';}
 function hkDisplay(key){if(!key)return'—';if(key==='DELETE')return'Del';return key;}
 
-// ==================== СОХРАНЕНИЕ ====================
-function saveAll(){try{const s={theme:theme,color:colorTheme,hotkeys:hotkeys,activeWorkspace:activeWorkspace};localStorage.setItem('ontek_settings',JSON.stringify(s));}catch(e){}}
-function loadAll(){try{const s=JSON.parse(localStorage.getItem('ontek_settings'));if(s){theme=s.theme||'light';colorTheme=s.color||'blue';if(s.hotkeys)hotkeys=s.hotkeys;if(s.activeWorkspace)activeWorkspace=s.activeWorkspace;}}catch(e){}}
+// ==================== СОХРАНЕНИЕ В ФАЙЛ ====================
+async function saveAll(){
+    const s={theme:theme,color:colorTheme,hotkeys:hotkeys,activeWorkspace:activeWorkspace};
+    const json=JSON.stringify(s);
+    try{localStorage.setItem('ontek_settings',json);}catch(e){}
+    if(window.pywebview&&window.pywebview.api){
+        try{await window.pywebview.api.save_settings(json);}catch(e){}
+    }
+}
+async function loadAll(){
+    if(window.pywebview&&window.pywebview.api){
+        try{
+            const json=await window.pywebview.api.load_settings();
+            if(json&&json!='{}'){
+                const s=JSON.parse(json);
+                if(s.theme||s.color||s.hotkeys){
+                    theme=s.theme||'light';colorTheme=s.color||'blue';
+                    if(s.hotkeys)hotkeys=s.hotkeys;
+                    if(s.activeWorkspace)activeWorkspace=s.activeWorkspace;
+                    return;
+                }
+            }
+        }catch(e){}
+    }
+    try{
+        const s=JSON.parse(localStorage.getItem('ontek_settings'));
+        if(s){theme=s.theme||'light';colorTheme=s.color||'blue';if(s.hotkeys)hotkeys=s.hotkeys;if(s.activeWorkspace)activeWorkspace=s.activeWorkspace;}
+    }catch(e){}
+}
 function updateAllHKDisplays(){document.querySelectorAll('.s-hotkey[data-hk]').forEach(el=>{const k=el.dataset.hk;if(hotkeys[k])el.textContent='Shift+'+hkDisplay(hotkeys[k]);});buildShortcuts();}
 
 function applyAllSettings(){
@@ -132,36 +158,21 @@ function bindAllEvents(){
     document.getElementById('btnTheme').onclick=toggleTheme;
     document.getElementById('btnUpdate').onclick=checkUpdate;
     document.getElementById('fileInput').onchange=e=>{if(e.target.files[0]){load(e.target.files[0]);e.target.value='';}};
-    
     document.getElementById('btnSettings').onclick=function(){
         document.getElementById('settingsModal').classList.add('show');
         renderHotkeyList();
         renderThemeOptions('themeOptionsSettings');
     };
-    document.getElementById('btnCloseSettings').onclick=function(){
-        document.getElementById('settingsModal').classList.remove('show');
-    };
-    document.getElementById('settingsModal').addEventListener('click',function(e){
-        if(e.target===this)this.classList.remove('show');
-    });
-    
+    document.getElementById('btnCloseSettings').onclick=function(){document.getElementById('settingsModal').classList.remove('show');};
+    document.getElementById('settingsModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
     document.getElementById('hkToggle').onclick=function(){toggleSection('hkToggle','hkSection');};
     document.getElementById('themeToggle').onclick=function(){toggleSection('themeToggle','themeSection');renderThemeOptions('themeOptionsSettings');};
     document.getElementById('backupToggle').onclick=function(){toggleSection('backupToggle','backupSection');};
     document.getElementById('aboutToggle').onclick=function(){toggleSection('aboutToggle','aboutSection');};
     document.getElementById('btnResetHotkeys').onclick=function(){hotkeys={...defaultHotkeys};saveAll();updateAllHKDisplays();renderHotkeyList();toast('Сброшено');};
-    
-    document.getElementById('btnColorTheme').onclick=function(){
-        document.getElementById('colorThemeModal').classList.add('show');
-        renderThemeOptions('colorThemeOptions');
-    };
-    document.getElementById('btnCloseColorTheme').onclick=function(){
-        document.getElementById('colorThemeModal').classList.remove('show');
-    };
-    document.getElementById('colorThemeModal').addEventListener('click',function(e){
-        if(e.target===this)this.classList.remove('show');
-    });
-    
+    document.getElementById('btnColorTheme').onclick=function(){document.getElementById('colorThemeModal').classList.add('show');renderThemeOptions('colorThemeOptions');};
+    document.getElementById('btnCloseColorTheme').onclick=function(){document.getElementById('colorThemeModal').classList.remove('show');};
+    document.getElementById('colorThemeModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
     const bv=(id,fn)=>{const el=document.getElementById(id);if(el)el.onclick=fn;};
     bv('btnAddRow',()=>{const t=active();t?addRowEnd(t):toast('Выберите таблицу!',0);});bv('btnDelRow',()=>{const t=active();t?delRowEnd(t):toast('Выберите таблицу!',0);});
     bv('btnAddCol',()=>{const t=active();t?addColEnd(t):toast('Выберите таблицу!',0);});bv('btnDelCol',()=>{const t=active();t?delColEnd(t):toast('Выберите таблицу!',0);});
