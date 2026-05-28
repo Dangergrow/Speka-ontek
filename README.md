@@ -44,3 +44,24 @@
 ```bash
 pip install pywebview pyinstaller pystray Pillow
 python run.py
+
+Сборка EXE:
+
+bash
+pyinstaller --onefile --windowed --add-data "index.html;." --add-data "exceljs.min.js;." --add-data "xlsx.full.min.js;." --name "ONTEK_Orders" --hidden-import=webview --hidden-import=tkinter run.py
+text
+
+---
+
+## 🎉 Готово! Теперь у вас есть:
+
+1. ✅ Рабочая программа EXE
+2. ✅ Страница на GitHub с описанием
+3. ✅ Release с EXE-файлом для скачивания
+4. ✅ Автообновление (при новой версии в `version.json`)
+
+Когда захотите выпустить обновление:
+1. Увеличьте версию в `version.json` (например `3.8.0`)
+2. Соберите новый EXE
+3. Создайте новый Release на GitHub
+4. Пользователи увидят уведомление об обновлении
