@@ -44,27 +44,43 @@
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
         <h2>⚙ Настройки</h2>
+        
         <h3 id="hkToggle"><span class="arrow">▶</span> Горячие клавиши</h3>
-        <div class="hk-section" id="hkSection"><div id="hotkeyList"></div><div class="modal-btns"><button class="btn b-red" id="btnResetHotkeys">Сбросить</button></div></div>
-        <h3 id="themeToggle"><span class="arrow">▶</span> Цветовая тема</h3>
-        <div class="hk-section" id="themeSection"><div class="theme-options" id="themeOptions"></div></div>
-        <h3 id="aboutToggle"><span class="arrow">▶</span> О программе</h3>
-        <div class="hk-section" id="aboutSection">
-            <div style="text-align:center;padding:20px"><div class="about-logo">📊</div><div style="font-size:24px;font-weight:700;margin:10px 0">ONTEK</div><div>Таблица заказов v4.5.0</div><div style="font-size:12px;color:var(--text2);margin-top:12px">© 2026 Speka Ontek</div></div>
+        <div class="hk-section" id="hkSection">
+            <div id="hotkeyList"></div>
+            <div class="modal-btns"><button class="btn b-red" id="btnResetHotkeys">Сбросить</button></div>
         </div>
+        
+        <h3 id="themeToggle"><span class="arrow">▶</span> Цветовая тема</h3>
+        <div class="hk-section" id="themeSection">
+            <div class="theme-options" id="themeOptionsSettings"></div>
+        </div>
+        
         <h3 id="backupToggle"><span class="arrow">▶</span> Автосохранение</h3>
         <div class="hk-section" id="backupSection">
             <div style="padding:10px 0">
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text)">
                     <input type="checkbox" id="autoSaveCheck" checked> Автосохранять каждые 5 минут
                 </label>
                 <div style="font-size:11px;color:var(--text2);margin-top:6px">Данные сохраняются в localStorage браузера</div>
             </div>
         </div>
+        
+        <h3 id="aboutToggle"><span class="arrow">▶</span> О программе</h3>
+        <div class="hk-section" id="aboutSection">
+            <div style="text-align:center;padding:20px">
+                <div class="about-logo">📊</div>
+                <div style="font-size:24px;font-weight:700;margin:10px 0">ONTEK</div>
+                <div>Таблица заказов v4.5.0</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:12px">© 2026 Speka Ontek</div>
+            </div>
+        </div>
+        
         <div class="modal-btns"><button class="btn b-slate" id="btnCloseSettings">Закрыть</button></div>
     </div>
 </div>
 
+<!-- Цветовые темы (быстрая модалка) -->
 <div class="modal-overlay" id="colorThemeModal">
     <div class="modal theme-modal">
         <h2>🎨 Цветовая тема</h2>
