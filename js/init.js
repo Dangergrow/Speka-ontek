@@ -12,20 +12,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     bindAllEvents();
     loadRates();
     
-    // Автосохранение настроек каждые 5 минут
-    let autoSaveEnabled = true;
-    const autoSaveCheck = document.getElementById('autoSaveCheck');
-    if(autoSaveCheck){
-        autoSaveCheck.checked = true;
-        autoSaveCheck.addEventListener('change', function(){
-            autoSaveEnabled = this.checked;
-        });
-    }
-    setInterval(function(){
-        if(autoSaveEnabled){
-            saveAll();
-        }
-    }, 300000);
+    // Сохранение настроек при закрытии программы
+    window.addEventListener('beforeunload', function() {
+        saveAll();
+    });
     
     addTable('USD');
     document.addEventListener('keydown', handleGlobalHotkeys);
