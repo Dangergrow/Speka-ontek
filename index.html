@@ -6,149 +6,14 @@
     <title>ONTEK — Таблица заказов</title>
     <script src="exceljs.min.js"></script>
     <script src="xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --bg:#eef1f5;--app-bg:#fff;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--card:#fff;
-            --card-hdr:#f8fafc;--card-act:#eff6ff;--tbg:#f8fafc;--tsbg:#fff;--thbg:#64748b;--thtx:#fff;
-            --rb:#eff6ff;--ra:#dbeafe;--rh:#fef9c3;--rs:#fef9c3;--tot:#e2e8f0;--rnbg:#f1f5f9;--rntx:#94a3b8;
-            --sbg:#f8fafc;--tsbg2:#d1fae5;--tstx2:#065f46;--tebg:#fee2e2;--tetx:#991b1b;--ctxbg:#fff;
-            --brand:#1e40af;--brandtx:#fff;--sidebar-bg:#f1f5f9;--sidebar-btn-text:#fff;
-            --accent:#3b82f6;--accent2:#8b5cf6;
-        }
-        .dark {
-            --bg:#0f172a;--app-bg:#1e293b;--text:#e2e8f0;--text2:#94a3b8;--border:#334155;--card:#1e293b;
-            --card-hdr:#273548;--card-act:#1e3a5f;--tbg:#1a2332;--tsbg:#273548;--thbg:#334155;--thtx:#e2e8f0;
-            --rb:#1e293b;--ra:#273548;--rh:#334155;--rs:#3b3b1a;--tot:#334155;--rnbg:#1a2332;--rntx:#64748b;
-            --sbg:#1a2332;--tsbg2:#064e3b;--tstx2:#a7f3d0;--tebg:#7f1d1d;--tetx:#fecaca;--ctxbg:#273548;
-            --brand:#3b82f6;--sidebar-bg:#1a2332;
-        }
-        /* Цветовые темы */
-        .theme-blue {--accent:#3b82f6;--accent2:#6366f1;--brand:#1e40af;}
-        .theme-green {--accent:#10b981;--accent2:#059669;--brand:#065f46;}
-        .theme-purple {--accent:#8b5cf6;--accent2:#7c3aed;--brand:#5b21b6;}
-        .theme-orange {--accent:#f59e0b;--accent2:#ea580c;--brand:#c2410c;}
-        
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);min-height:100vh;padding:16px;color:var(--text);user-select:none;transition:background 0.3s,color 0.3s}
-        
-        .app{max-width:1800px;margin:0 auto;background:var(--app-bg);border-radius:20px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,0.08);display:flex;gap:0;transition:all 0.3s;height:calc(100vh - 32px)}
-        
-        .header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;min-height:44px}
-        .header-l{display:flex;align-items:center;gap:10px}
-        .logo{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
-        .title{font-size:22px;font-weight:700;color:var(--text)}.ver{font-size:9px;color:var(--text2);margin-left:4px}
-        .header-r{display:flex;align-items:center;gap:8px}
-        .brand{background:var(--brand);color:#fff;font-size:26px;font-weight:800;padding:8px 22px;border-radius:12px;letter-spacing:3px}
-        .icon-btn{width:36px;height:36px;border-radius:10px;border:2px solid var(--border);background:var(--tsbg);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
-        .icon-btn:hover{border-color:var(--accent)}
-        .icon-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-        .ui-switch{display:flex;flex-direction:column;align-items:center;gap:1px}
-        .ui-switch-label{font-size:7px;font-weight:700;text-transform:uppercase;color:var(--text2)}
-        .ui-switch-btns{display:flex;gap:2px}
-        .ui-btn{width:28px;height:24px;border-radius:6px;border:2px solid var(--border);background:var(--tsbg);color:var(--text);font-size:10px;font-weight:700;cursor:pointer}
-        .ui-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-        
-        .main-content{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
-        
-        .tb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px;background:var(--tbg);border-radius:14px;border:1px solid var(--border);margin-bottom:16px}
-        @media(max-width:1100px){.tb-grid{grid-template-columns:repeat(2,1fr)}}
-        .tb-cell{background:var(--tsbg);border-radius:10px;border:1px solid var(--border);padding:8px 10px;display:flex;flex-direction:column;gap:4px}
-        .tb-lbl{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:0.5px;text-align:center}
-        .tb-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
-        
-        .layout-v2{display:none;flex:1;gap:14px;height:100%}
-        .layout-v2.active{display:flex}
-        .sidebar-v2{width:240px;min-width:240px;display:flex;flex-direction:column;gap:6px;padding:14px;background:var(--sidebar-bg);border-radius:14px;border:1px solid var(--border);overflow-y:auto;position:sticky;top:0;max-height:calc(100vh - 200px)}
-        .sidebar-section{margin-bottom:4px}
-        .sidebar-section-title{font-size:8px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:0.8px;padding:4px 8px}
-        .sidebar-btn{width:100%;border:none;border-radius:8px;padding:10px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.08);margin-bottom:3px}
-        .sidebar-btn:hover{transform:translateX(3px);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
-        .sidebar-btn .s-icon{font-size:16px;width:24px;text-align:center}
-        .sidebar-btn .s-hotkey{font-size:8px;font-weight:700;background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:4px;margin-left:auto}
-        .sb-blue{background:#3b82f6}.sb-green{background:#10b981}.sb-red{background:#ef4444}.sb-orange{background:#f59e0b}.sb-purple{background:#8b5cf6}.sb-teal{background:#14b8a6}.sb-slate{background:#475569}.sb-pink{background:#ec4899}.sb-indigo{background:#6366f1}
-        
-        .btn{border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 4px rgba(0,0,0,0.06)}
-        .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.12)}.btn:active{transform:scale(0.96)}
-        .hk{font-size:8px;font-weight:700;background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:4px}
-        .b-blue{background:#3b82f6;color:#fff}.b-green{background:#10b981;color:#fff}.b-red{background:#ef4444;color:#fff}.b-orange{background:#f59e0b;color:#fff}.b-purple{background:#8b5cf6;color:#fff}.b-teal{background:#14b8a6;color:#fff}.b-slate{background:#475569;color:#fff}.b-pink{background:#ec4899;color:#fff}.b-indigo{background:#6366f1;color:#fff}
-        .b-outline{background:transparent;color:var(--text);border:2px solid var(--border);box-shadow:none}
-
-        .tables-area{display:flex;flex-direction:column;gap:20px;flex:1;overflow-y:auto;min-height:200px}
-        .empty{text-align:center;padding:40px 20px;color:var(--text2);border:2px dashed var(--border);border-radius:14px;font-size:14px}
-        .card{border:2px solid var(--border);border-radius:14px;background:var(--card);transition:all 0.2s;cursor:pointer}
-        .card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
-        .card-hdr{background:var(--card-hdr);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-wrap:wrap;font-size:13px;font-weight:700}
-        .card.active .card-hdr{background:var(--card-act)}
-        .badge{font-size:8px;font-weight:700;padding:2px 8px;border-radius:10px}.badge-usd{background:#fef3c7;color:#92400e}.badge-rub{background:#d1fae5;color:#065f46}
-        .badge-act{background:var(--accent);color:#fff;display:none}.card.active .badge-act{display:inline-block}
-        .card-acts{display:flex;gap:5px;align-items:center}
-        .scroll{overflow-x:auto;padding:6px 10px 10px 8px}
-        table{border-collapse:collapse;width:max-content;min-width:100%}
-        thead th.rn{background:var(--thbg);color:#cbd5e1;font-weight:400;font-size:8pt;padding:5px 3px;border:1px solid #475569;text-align:center;position:sticky;top:0;z-index:5;min-width:30px;width:30px}
-        thead th{background:var(--thbg);color:var(--thtx);font-weight:700;font-size:9pt;padding:10px 5px;border:1px solid #475569;text-align:center;position:sticky;top:0;z-index:5;white-space:nowrap}
-        thead th.col-name{min-width:500px}thead th.col-article{min-width:100px}
-        tbody td.rn{background:var(--rnbg);color:var(--rntx);font-size:8pt;font-weight:500;text-align:center;padding:3px;border:1px solid var(--border);min-width:30px;width:30px;vertical-align:middle}
-        tbody td{padding:3px 4px;border:1px solid #bfdbfe;text-align:center;font-size:9pt;background:var(--rb);word-wrap:break-word;white-space:normal;vertical-align:top}
-        tbody td.col-name{min-width:500px}tbody td.col-article{min-width:100px}
-        tbody tr:nth-child(even) td{background:var(--ra)}tbody tr:hover td{background:var(--rh)}
-        tbody tr.sel td{background:var(--rs)!important;outline:2px solid #f59e0b;outline-offset:-2px}
-        tbody tr.tot td{background:var(--tot)!important;font-weight:700;border-top:2px solid #64748b}
-        tbody td input{width:100%;border:1px solid transparent;padding:5px 3px;text-align:center;font-size:9pt;background:transparent;border-radius:4px;font-family:inherit;min-height:24px;color:var(--text)}
-        tbody td input:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 2px rgba(59,130,246,0.08)}
-        tbody td input.qty,tbody td input.price{text-align:right}tbody td input.total{font-weight:600;text-align:right;cursor:default}
-        td.act-cell{min-width:44px;width:44px;padding:2px 3px!important;background:var(--card)!important;border:1px solid var(--border)!important;vertical-align:middle!important}
-        .rbtn{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:none;cursor:pointer}
-        .rbtn-add{background:#d1fae5;color:#065f46}.rbtn-del{background:#fee2e2;color:#991b1b}
-        
-        .toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:10px;font-weight:600;font-size:12px;z-index:9999;animation:su 0.3s ease;box-shadow:0 4px 16px rgba(0,0,0,0.15)}
-        @keyframes su{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        .toast-ok{background:var(--tsbg2);color:var(--tstx2)}.toast-err{background:var(--tebg);color:var(--tetx)}
-        .shortcuts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px;padding:10px;background:var(--sbg);border-radius:10px;font-size:9px;color:var(--text2)}
-        .shortcuts kbd{background:var(--app-bg);padding:2px 6px;border-radius:3px;border:1px solid var(--border);font-weight:700;font-size:8px;color:var(--text)}
-        .ctx{display:none;position:fixed;background:var(--ctxbg);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.3);z-index:10000;min-width:200px;padding:5px 0}
-        .ctx-item{padding:9px 14px;cursor:pointer;font-size:11px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:5px}
-        .ctx-item:hover{background:var(--card-act)}.ctx-div{height:1px;background:var(--border);margin:3px 0}
-        .hidden{display:none}
-        
-        /* Модальные окна */
-        .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10001;justify-content:center;align-items:center}
-        .modal-overlay.show{display:flex}
-        .modal{background:var(--app-bg);border-radius:16px;padding:24px;min-width:500px;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);color:var(--text)}
-        .modal h2{font-size:20px;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:8px}
-        .modal h3{font-size:13px;margin-bottom:8px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;padding:6px 0}
-        .modal h3:hover{color:var(--accent)}
-        .modal h3 .arrow{transition:transform 0.2s;font-size:10px}
-        .modal h3.open .arrow{transform:rotate(90deg)}
-        .hk-section{display:none;margin-bottom:12px}
-        .hk-section.open{display:block}
-        .hotkey-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
-        .hotkey-row .hk-label{flex:1;font-size:13px;font-weight:500}
-        .hotkey-row .hk-current{padding:6px 12px;background:var(--tbg);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;min-width:90px;text-align:center;transition:all 0.2s}
-        .hotkey-row .hk-current:hover{background:var(--card-act)}
-        .hotkey-row .hk-current.recording{background:#fef3c7;border-color:#f59e0b;animation:pulse 0.8s infinite}
-        .hotkey-row .hk-current.conflict{background:#fee2e2;border-color:#ef4444}
-        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0)}}
-        .modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-        
-        /* Модальное окно цветовых тем */
-        .theme-modal{min-width:400px}
-        .theme-options{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
-        .theme-card{padding:16px;border-radius:12px;border:2px solid var(--border);cursor:pointer;text-align:center;transition:all 0.2s;background:var(--tsbg)}
-        .theme-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-        .theme-card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
-        .theme-card .theme-preview{width:100%;height:60px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;font-weight:700}
-        .theme-card .theme-name{font-weight:600;font-size:14px;color:var(--text)}
-        .tp-blue{background:linear-gradient(135deg,#3b82f6,#6366f1)}
-        .tp-green{background:linear-gradient(135deg,#10b981,#059669)}
-        .tp-purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
-        .tp-orange{background:linear-gradient(135deg,#f59e0b,#ea580c)}
-    </style>
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="theme-blue">
+<body>
 <div class="app" id="appContainer">
 <div class="main-content">
 <div class="header">
-    <div class="header-l"><div class="logo">📊</div><div class="title">Таблица заказов<span class="ver">v4.1.0</span></div></div>
+    <div class="header-l"><div class="logo">📊</div><div class="title">Таблица заказов<span class="ver">v4.2.0</span></div></div>
     <div class="header-r">
         <div class="ui-switch"><div class="ui-switch-label">Интерфейс</div><div class="ui-switch-btns"><button class="ui-btn active" id="uiV1">1</button><button class="ui-btn" id="uiV2">2</button></div></div>
         <button class="icon-btn" id="btnTheme" title="Тёмная/Светлая">🌙</button>
@@ -208,20 +73,27 @@
 </div>
 </div>
 
-<!-- Модальное окно настроек горячих клавиш -->
+<!-- Модальное окно настроек -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <h2>⚙ Настройки горячих клавиш</h2>
-        <h3 id="hkToggle" class="open"><span class="arrow">▶</span> Горячие клавиши</h3>
-        <div class="hk-section open" id="hkSection">
-            <div id="hotkeyList"></div>
-            <div class="modal-btns">
-                <button class="btn b-red" id="btnResetHotkeys">Сбросить к заводским</button>
+        <h2>⚙ Настройки</h2>
+        
+        <h3 id="hkToggle"><span class="arrow">▶</span> Горячие клавиши</h3>
+        <div class="hk-section" id="hkSection"><div id="hotkeyList"></div><div class="modal-btns"><button class="btn b-red" id="btnResetHotkeys">Сбросить к заводским</button></div></div>
+        
+        <h3 id="aboutToggle"><span class="arrow">▶</span> О программе</h3>
+        <div class="hk-section" id="aboutSection">
+            <div style="text-align:center;padding:20px">
+                <div class="about-logo">📊</div>
+                <div style="font-size:24px;font-weight:700;margin:10px 0">ONTEK</div>
+                <div style="font-size:16px;color:var(--text2)">Таблица заказов</div>
+                <div style="font-size:14px;margin-top:8px">Версия 4.2.0</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:12px">© 2026 Speka Ontek</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:4px">Все права защищены</div>
             </div>
         </div>
-        <div class="modal-btns" style="margin-top:16px">
-            <button class="btn b-slate" id="btnCloseSettings">Закрыть</button>
-        </div>
+        
+        <div class="modal-btns" style="margin-top:16px"><button class="btn b-slate" id="btnCloseSettings">Закрыть</button></div>
     </div>
 </div>
 
@@ -229,27 +101,8 @@
 <div class="modal-overlay" id="colorThemeModal">
     <div class="modal theme-modal">
         <h2>🎨 Цветовая тема</h2>
-        <div class="theme-options">
-            <div class="theme-card active" data-theme="blue">
-                <div class="theme-preview tp-blue">B</div>
-                <div class="theme-name">Синяя</div>
-            </div>
-            <div class="theme-card" data-theme="green">
-                <div class="theme-preview tp-green">G</div>
-                <div class="theme-name">Зелёная</div>
-            </div>
-            <div class="theme-card" data-theme="purple">
-                <div class="theme-preview tp-purple">P</div>
-                <div class="theme-name">Фиолетовая</div>
-            </div>
-            <div class="theme-card" data-theme="orange">
-                <div class="theme-preview tp-orange">O</div>
-                <div class="theme-name">Оранжевая</div>
-            </div>
-        </div>
-        <div class="modal-btns" style="margin-top:16px">
-            <button class="btn b-slate" id="btnCloseColorTheme">Закрыть</button>
-        </div>
+        <div class="theme-options" id="themeOptions"></div>
+        <div class="modal-btns" style="margin-top:16px"><button class="btn b-slate" id="btnCloseColorTheme">Закрыть</button></div>
     </div>
 </div>
 
@@ -269,244 +122,9 @@
     <div class="ctx-item" data-action="delTable">🗑 Удалить таблицу</div>
 </div>
 
-<script>
-if(typeof ExcelJS==='undefined'||typeof XLSX==='undefined'){document.body.innerHTML='<h1>Ошибка загрузки</h1>';throw new Error('Libs');}
-
-const T=[],DC=['Артикул','Наименование','Ко-во, шт','Цена','Стоимость'];
-let idC=0,actId=null,ctxD={t:null,r:null,c:null},hist=[],uiMode='v1';
-const RU={'Ф':'A','А':'A','В':'D','Д':'D','С':'C','Ц':'C','Ч':'X','Х':'X','К':'R','Р':'R','М':'V','Ж':'V','Щ':'O','О':'O','Г':'U','У':'U','Ы':'S','Я':'Z'};
-const Q=s=>document.querySelector(s),ctxM=Q('#ctxMenu');
-let ttTimer,theme='light',colorTheme='blue',recordingKey=null,recordingHk=null;
-
-const defaultHotkeys={addRow:'A',delRow:'D',addCol:'C',delCol:'X',recalc:'R',paste:'V',load:'O',newRUB:'1',newUSD:'2',dup:'U',clear:'DELETE',find:'F',replace:'H',undo:'Z',save:'S'};
-let hotkeys={...defaultHotkeys};
-const keyLabels={addRow:'Добавить строку',delRow:'Удалить строку',addCol:'Добавить колонку',delCol:'Удалить колонку',recalc:'Пересчитать',paste:'Вставить',load:'Загрузить',newRUB:'Новая RUB',newUSD:'Новая USD',dup:'Дублировать',clear:'Очистить',find:'Найти',replace:'Заменить',undo:'Отменить',save:'Сохранить'};
-
-const VER='4.1.0',UP_URL='https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/version.json';
-
-function saveSettings(){try{const s={ui:uiMode,theme,color:colorTheme,hotkeys};localStorage.setItem('ontek_settings',JSON.stringify(s));}catch(e){}}
-function loadSettings(){try{const s=JSON.parse(localStorage.getItem('ontek_settings'));if(s){uiMode=s.ui||'v1';theme=s.theme||'light';colorTheme=s.color||'blue';if(s.hotkeys)hotkeys=s.hotkeys;}}catch(e){}}
-loadSettings();
-
-function getArea(){return uiMode==='v2'?Q('#tablesAreaV2'):Q('#tablesAreaV1');}
-function area(){return getArea();}
-
-function toast(m,ok=true){const o=Q('.toast');if(o)o.remove();clearTimeout(ttTimer);const d=document.createElement('div');d.className='toast '+(ok?'toast-ok':'toast-err');d.textContent=m;document.body.appendChild(d);ttTimer=setTimeout(()=>d.remove(),3000);}
-function active(){if(actId===null&&T.length)actId=T[0].id;return T.find(t=>t.id===actId)||null;}
-function setAct(id){actId=id;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('active',+c.dataset.tid===actId));}
-function upEmpty(){const a=area();const e=a.querySelector('.empty');if(!T.length&&!e)a.innerHTML='<div class="empty">Создайте таблицу — <b>Shift+1</b> RUB или <b>Shift+2</b> USD</div>';else if(T.length&&e)e.remove();}
-function ci(cols,kw){return cols.findIndex(c=>c.toLowerCase().includes(kw.toLowerCase()));}
-function cln(s){if(!s)return'';let x=String(s).trim().replace(/\s/g,'').replace(/,/g,'.').replace(/[^\d.\-]/g,'');const p=x.split('.');if(p.length>2)x=p[0]+'.'+p.slice(1).join('');if(x.includes('-')&&x.indexOf('-')>0)x=x.replace(/-/g,'');return x;}
-function pn(v){const c=cln(v);return(c===''||c==='-'||c==='.')?NaN:parseFloat(c);}
-function getQi(cols){return ci(cols,'Ко-во')>=0?ci(cols,'Ко-во'):ci(cols,'Количество');}
-function calc(r,cols){const qi=getQi(cols),pi=ci(cols,'Цена'),ti=ci(cols,'Стоимость');if(qi>=0&&pi>=0&&ti>=0)r[ti]=((pn(r[qi])||0)*(pn(r[pi])||0)).toFixed(2);}
-function sumT(td){const ti=ci(td.cols,'Стоимость');return ti<0?0:td.rows.reduce((s,r)=>s+(pn(r[ti])||0),0);}
-function hdrs(cols,cur){return cols.map(c=>c.toLowerCase().startsWith('цена')?`Цена, ${cur} с НДС`:c.toLowerCase().startsWith('стоимость')?`Стоимость, ${cur} с НДС`:c);}
-function cA(r,c){let s='';while(c>0){c--;s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26);}return s+r;}
-function ccl(n){const l=n.toLowerCase();if(l.includes('артикул'))return'col-article';if(l.includes('наименование'))return'col-name';if(l.includes('ко-во')||l.includes('количество'))return'col-qty';if(l.startsWith('цена'))return'col-price';if(l.startsWith('стоимость'))return'col-total';return'col-default';}
-
-function hkDisplay(key){if(!key)return'—';if(key==='DELETE')return'Del';if(key==='CTRL+Z')return'Ctrl+Z';return key;}
-
-// Обновить все отображения горячих клавиш
-function updateAllHKDisplays(){
-    document.querySelectorAll('.hk[data-hk]').forEach(el=>{
-        const k=el.dataset.hk;
-        if(hotkeys[k])el.textContent=hotkeys[k]==='DELETE'?'Del':hotkeys[k];
-    });
-    document.querySelectorAll('.s-hotkey[data-hk]').forEach(el=>{
-        const k=el.dataset.hk;
-        if(hotkeys[k])el.textContent=hotkeys[k]==='DELETE'?'Del':hotkeys[k];
-    });
-    renderHotkeyList();
-}
-
-function applyAllSettings(){
-    document.body.classList.toggle('dark',theme==='dark');
-    Q('#btnTheme').textContent=theme==='dark'?'☀️':'🌙';
-    document.body.className=document.body.className.replace(/theme-\w+/g,'');
-    document.body.classList.add('theme-'+colorTheme);
-    Q('#uiV1').classList.toggle('active',uiMode==='v1');
-    Q('#uiV2').classList.toggle('active',uiMode==='v2');
-    Q('#toolbarV1').style.display=uiMode==='v1'?'block':'none';
-    Q('#tablesAreaV1').style.display=uiMode==='v1'?'block':'none';
-    Q('#layoutV2').classList.toggle('active',uiMode==='v2');
-    document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===colorTheme));
-    updateAllHKDisplays();
-    saveSettings();
-}
-applyAllSettings();
-
-function switchUI(mode){uiMode=mode;applyAllSettings();if(mode==='v2')reRenderAll();}
-function toggleTheme(){theme=theme==='light'?'dark':'light';applyAllSettings();}
-function setColorTheme(t){colorTheme=t;applyAllSettings();}
-
-function reRenderAll(){const a=area();a.innerHTML='';T.forEach(td=>{td.el=null;td.card=null;});T.forEach(td=>{const card=buildCardDOM(td);a.appendChild(card);td.card=card;});T.forEach(td=>{if(td.el)render(td);});upEmpty();}
-
-function buildCardDOM(td){const card=document.createElement('div');card.className='card';card.dataset.tid=td.id;card.addEventListener('click',e=>{if(!e.target.closest('button')&&!e.target.closest('input'))setAct(td.id);});card.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();const thEl=e.target.closest('thead th:not(.rn)');const trEl=e.target.closest('tbody tr');let ri=null,ci=null;if(thEl){const ths=[...card.querySelectorAll('thead th:not(.rn)')];ci=ths.indexOf(thEl);if(ci>=td.cols.length)ci=null;}if(trEl&&!trEl.classList.contains('tot')){ri=+trEl.dataset.ri;const tdEl=e.target.closest('td:not(.rn):not(.act-cell)');if(tdEl){const tds=[...trEl.querySelectorAll('td:not(.rn):not(.act-cell)')];ci=tds.indexOf(tdEl);if(ci>=td.cols.length)ci=null;}}ctxD={t:td.id,r:ri,c:ci};setAct(td.id);ctxM.style.display='block';ctxM.style.left=Math.min(e.clientX,window.innerWidth-220)+'px';ctxM.style.top=Math.min(e.clientY,window.innerHeight-400)+'px';});const hdr=document.createElement('div');hdr.className='card-hdr';hdr.innerHTML=`<span>📋 ${td.currency} с НДС <span class="badge badge-${td.currency==='USD'?'usd':'rub'}">${td.currency}</span><span class="badge badge-act">Активна</span></span><div class="card-acts"><button class="btn b-outline" style="padding:4px 10px;font-size:11px;">${td.currency==='USD'?'💵 USD':'💰 RUB'}</button><button class="btn b-outline" style="padding:4px 6px;font-size:11px;">📑</button><button class="btn b-red" style="padding:4px 10px;font-size:11px;">🗑</button></div>`;const ca=hdr.querySelector('.card-acts');ca.children[0].addEventListener('click',e=>{e.stopPropagation();td.currency=td.currency==='USD'?'RUB':'USD';ca.children[0].textContent=td.currency==='USD'?'💵 USD':'💰 RUB';const badge=hdr.querySelector('.badge:not(.badge-act)');badge.textContent=td.currency;badge.className='badge badge-'+(td.currency==='USD'?'usd':'rub');hdr.querySelector('span').childNodes[0].textContent='📋 '+td.currency+' с НДС ';if(td.el)render(td);toast(`Валюта: ${td.currency}`);});ca.children[1].addEventListener('click',e=>{e.stopPropagation();dupTable(td);});ca.children[2].addEventListener('click',e=>{e.stopPropagation();if(T.length<=1)return toast('Нужна хотя бы одна таблица!',0);card.remove();T.splice(T.indexOf(td),1);if(actId===td.id)actId=T.length?T[0].id:null;upEmpty();toast('Удалена');});const scr=document.createElement('div');scr.className='scroll';const tbl=document.createElement('table');tbl.innerHTML='<thead><tr></tr></thead><tbody></tbody>';scr.appendChild(tbl);card.appendChild(hdr);card.appendChild(scr);td.el=tbl;return card;}
-
-function addTable(cur='RUB'){upEmpty();idC++;const td={id:idC,cols:[...DC],rows:[['','','','','']],currency:cur,el:null,card:null};T.push(td);const a=area();const card=buildCardDOM(td);a.appendChild(card);td.card=card;setAct(td.id);render(td);toast(`Таблица ${cur} создана`);}
-function dupTable(src){if(!src)src=active();if(!src)return;idC++;const td={id:idC,cols:[...src.cols],rows:src.rows.map(r=>[...r]),currency:src.currency,el:null,card:null};T.push(td);const a=area();const card=buildCardDOM(td);a.appendChild(card);td.card=card;render(td);toast('Дублирована');}
-
-function render(td){if(!td.el)return;const th=td.el.querySelector('thead tr'),tb=td.el.querySelector('tbody');th.innerHTML='<th class="rn">№</th>'+hdrs(td.cols,td.currency).map((h,i)=>`<th class="${ccl(td.cols[i])}">${h}</th>`).join('')+'<th style="width:44px"></th>';tb.innerHTML='';td.rows.forEach((r,ri)=>{const tr=document.createElement('tr');tr.dataset.ri=ri;const nt=document.createElement('td');nt.className='rn';nt.textContent=ri+1;tr.appendChild(nt);r.forEach((v,ci)=>{const tdEl=document.createElement('td');tdEl.className=ccl(td.cols[ci]);const inp=document.createElement('input');const cn=(td.cols[ci]||'').toLowerCase();if(cn.startsWith('стоимость')){inp.className='total';inp.readOnly=true;}inp.value=v??'';if(!cn.startsWith('стоимость'))inp.className=(cn.includes('ко-во')||cn.includes('количество'))?'qty':cn.startsWith('цена')?'price':'';if(cn.includes('наименование')){inp.style.whiteSpace='pre-wrap';inp.style.wordWrap='break-word';}inp.addEventListener('focus',()=>{tb.querySelectorAll('tr').forEach(r=>r.classList.remove('sel'));tr.classList.add('sel');});if((cn.includes('ко-во')||cn.includes('количество'))||cn.startsWith('цена')){inp.addEventListener('input',()=>{td.rows[ri][ci]=inp.value;updCalc(td);});inp.addEventListener('blur',()=>{const n=pn(td.rows[ri][ci]);if(!isNaN(n)){td.rows[ri][ci]=n.toFixed(2);inp.value=td.rows[ri][ci];updCalc(td);}});}else if(!cn.startsWith('стоимость')){inp.addEventListener('input',()=>{td.rows[ri][ci]=inp.value;});}inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.shiftKey){e.preventDefault();const s=inp.selectionStart,en=inp.selectionEnd,v=inp.value;inp.value=v.substring(0,s)+'\n'+v.substring(en);inp.selectionStart=inp.selectionEnd=s+1;td.rows[ri][ci]=inp.value;}else if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();mvFocus(td,ri,ci,1);}else if(e.key==='Tab'&&e.shiftKey){e.preventDefault();mvFocus(td,ri,ci,-1);}else if(e.key==='Enter'&&!e.shiftKey&&!e.ctrlKey){e.preventDefault();mvFocus(td,ri,ci,0,1);}});inp.addEventListener('paste',e=>{e.preventDefault();const text=(e.clipboardData||window.clipboardData).getData('text');if(!text)return;const p=parseCB(text);if(!p.length)return;if(p.length===1&&p[0].length===1){let val=p[0][0];if((cn.includes('ко-во')||cn.includes('количество'))||cn.startsWith('цена')){const n=pn(val);if(!isNaN(n))val=n.toFixed(2);}inp.value=val;td.rows[ri][ci]=val;if((cn.includes('ко-во')||cn.includes('количество'))||cn.startsWith('цена'))updCalc(td);return;}pastePos(td,ri,ci,p);});tdEl.appendChild(inp);tr.appendChild(tdEl);});const at=document.createElement('td');at.className='act-cell';at.innerHTML='<div style="display:flex;gap:3px;justify-content:center;"><button class="rbtn rbtn-add">+</button><button class="rbtn rbtn-del">✕</button></div>';at.querySelector('.rbtn-add').addEventListener('click',e=>{e.stopPropagation();insRowBelow(td,ri);});at.querySelector('.rbtn-del').addEventListener('click',e=>{e.stopPropagation();delRow(td,ri);});tr.appendChild(at);tb.appendChild(tr);});const totTr=document.createElement('tr');totTr.className='tot';const tnt=document.createElement('td');tnt.className='rn';totTr.appendChild(tnt);const ti=ci(td.cols,'Стоимость');td.cols.forEach((_,ci)=>{const tdEl=document.createElement('td');tdEl.className=ccl(td.cols[ci]);if(ci===(ti>=0?ti-1:td.cols.length-2)){tdEl.textContent='Итого';tdEl.style.cssText='text-align:right;font-weight:700;padding-right:8px;';}else if(ci===ti){const inp=document.createElement('input');inp.value=sumT(td).toFixed(2);inp.readOnly=true;inp.className='total';inp.style.fontWeight='700';tdEl.appendChild(inp);}totTr.appendChild(tdEl);});const tat=document.createElement('td');tat.className='act-cell';totTr.appendChild(tat);tb.appendChild(totTr);}
-
-function updCalc(td){if(!td||!td.el)return;const ti=ci(td.cols,'Стоимость');if(ti<0)return;const rows=td.el.querySelectorAll('tbody tr:not(.tot)');rows.forEach((tr,ri)=>{if(ri<td.rows.length){calc(td.rows[ri],td.cols);const tds=tr.querySelectorAll('td');if(tds[ti+1]){const inp=tds[ti+1].querySelector('input');if(inp&&document.activeElement!==inp)inp.value=td.rows[ri][ti]??'';}}});updTot(td);}
-function mvFocus(td,ri,ci,dc,dr=0){let nr=ri+dr,nc=ci+dc;if(nc>=td.cols.length){nc=0;nr++;}if(nc<0){nc=td.cols.length-1;nr--;}if(nr>=td.rows.length)nr=0;if(nr<0)nr=td.rows.length-1;const rows=td.el.querySelectorAll('tbody tr:not(.tot)');if(nr>=0&&nr<rows.length){const tds=rows[nr].querySelectorAll('td:not(.rn):not(.act-cell)');if(nc>=0&&nc<tds.length){const inp=tds[nc].querySelector('input');if(inp){inp.focus();inp.select();}}}}
-function pastePos(td,sr,sc,parsed){const nr=parsed.length,nc=Math.max(...parsed.map(r=>r.length));while(td.rows.length<=sr+nr-1)td.rows.push(Array(td.cols.length).fill(''));const qi=getQi(td.cols),pi=ci(td.cols,'Цена');for(let dr=0;dr<nr;dr++){const tr=sr+dr;if(tr>=td.rows.length)break;for(let dc=0;dc<nc;dc++){const tc=sc+dc;if(tc>=td.cols.length)break;let v=parsed[dr][dc]??'';if(tc===qi||tc===pi){const n=pn(v);if(!isNaN(n))v=n.toFixed(2);}td.rows[tr][tc]=v;}calc(td.rows[tr],td.cols);}render(td);toast(`Вставлено: ${nr} стр.`);}
-function updTot(td){if(!td.el)return;const tr=td.el.querySelector('tbody tr.tot');if(!tr)return;const ti=ci(td.cols,'Стоимость');if(ti<0)return;const tds=tr.querySelectorAll('td');if(tds[ti+1]){const inp=tds[ti+1].querySelector('input');if(inp)inp.value=sumT(td).toFixed(2);}}
-
-function insRowBelow(td,idx){insRow(td,idx+1);}function insRowAbove(td,idx){insRow(td,idx);}
-function insRow(td,idx){td.rows.splice(idx,0,Array(td.cols.length).fill(''));calc(td.rows[idx],td.cols);render(td);toast('Строка добавлена');}
-function delRow(td,idx){if(td.rows.length<=1)return toast('Нельзя удалить строку!',0);hist.push({a:'delRow',tid:td.id,d:{i:idx,r:[...td.rows[idx]]}});td.rows.splice(idx,1);render(td);toast('Строка удалена');}
-function addRowEnd(td){td.rows.push(Array(td.cols.length).fill(''));calc(td.rows[td.rows.length-1],td.cols);render(td);toast('Строка добавлена в конец');}
-function delRowEnd(td){if(td.rows.length<=1)return toast('Нельзя удалить строку!',0);td.rows.pop();render(td);toast('Последняя строка удалена');}
-function insCol(td,idx){const n=prompt('Название:','Новая колонка');if(!n||!n.trim())return;td.cols.splice(idx,0,n.trim());td.rows.forEach(r=>r.splice(idx,0,''));render(td);toast(`Колонка добавлена`);}
-function delCol(td,idx){if(td.cols.length<=2)return toast('Минимум 2 колонки!',0);td.cols.splice(idx,1);td.rows.forEach(r=>r.splice(idx,1));render(td);toast('Колонка удалена');}
-function renameCol(td,idx){const old=td.cols[idx];const n=prompt('Новое название:',old);if(!n||!n.trim()||n.trim()===old)return;td.cols[idx]=n.trim();render(td);toast(`«${old}» → «${n.trim()}»`);}
-function addColEnd(td){const n=prompt('Название:','Новая колонка');if(!n||!n.trim())return;td.cols.push(n.trim());td.rows.forEach(r=>r.push(''));render(td);toast(`Колонка добавлена`);}
-function delColEnd(td){if(td.cols.length<=2)return toast('Минимум 2 колонки!',0);td.cols.pop();td.rows.forEach(r=>r.pop());render(td);toast('Последняя колонка удалена');}
-
-function parseCB(text){if(!text||!text.trim())return[];return text.trim().split(/\r?\n/).map(l=>l.includes('\t')?l.split('\t'):l.includes('|')?l.split('|').map(c=>c.trim()).filter(c=>c):l.split(/\s{2,}/)).filter(r=>r.some(c=>c.trim()));}
-function paste(){const td=active();if(!td)return toast('Выберите таблицу!',0);const dp=text=>{const p=parseCB(text);if(!p.length)return toast('Нет данных',0);p.forEach(r=>{const nr=[];for(let i=0;i<td.cols.length;i++){let v=r[i]??'';const cn=td.cols[i].toLowerCase();if(cn.includes('ко-во')||cn.includes('количество')||cn.startsWith('цена')){const n=pn(v);if(!isNaN(n))v=n.toFixed(2);}nr.push(v);}td.rows.push(nr);calc(nr,td.cols);});render(td);toast(`Вставлено строк: ${p.length}`);};navigator.clipboard.readText().then(dp).catch(()=>{const m=prompt('Вставьте:','');if(m)dp(m);});}
-function findInTable(){const td=active();if(!td)return toast('Выберите таблицу!',0);const q=prompt('Что искать:','');if(!q||!q.trim())return;const res=[];td.rows.forEach((r,ri)=>{r.forEach((v,ci)=>{if(String(v??'').toLowerCase().includes(q.toLowerCase()))res.push({ri,ci});});});if(!res.length)return toast('Ничего не найдено',false);toast(`Найдено: ${res.length}`);let idx=0;hlRes(td,res[idx]);window._nr=()=>{idx=(idx+1)%res.length;hlRes(td,res[idx]);};}
-function hlRes(td,res){const rows=td.el.querySelectorAll('tbody tr:not(.tot)');if(res.ri<rows.length){const tds=rows[res.ri].querySelectorAll('td:not(.rn):not(.act-cell)');if(res.ci<tds.length){const inp=tds[res.ci].querySelector('input');if(inp){inp.focus();inp.select();rows[res.ri].classList.add('sel');}}}}
-function replaceInTable(){const td=active();if(!td)return toast('Выберите таблицу!',0);const q=prompt('Что заменить:','');if(!q||!q.trim())return;const rp=prompt('На что:','');if(rp===null)return;let c=0;td.rows.forEach(r=>{for(let i=0;i<r.length;i++){if(String(r[i]??'').toLowerCase().includes(q.toLowerCase())){r[i]=String(r[i]??'').replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),rp);c++;}}});render(td);toast(`Заменено: ${c}`);}
-async function checkUpdate(){toast('Проверка обновлений...');try{const r=await fetch(UP_URL,{cache:'no-cache'});const d=await r.json();if(d.version>VER){if(confirm(`🆕 Версия ${d.version}!\n\n${d.notes||''}\n\nОбновить?`)){if(window.pywebview&&window.pywebview.api){const result=JSON.parse(await window.pywebview.api.apply_update());if(result.success){toast('✅ Обновлено! Перезагрузка...');setTimeout(()=>location.reload(),1500);}else{toast('Ошибка',false);}}}}else{toast('✅ Последняя версия');}}catch(e){toast('Ошибка проверки',false);}}
-
-async function save(){if(!T.length)return toast('Нет таблиц!',0);try{const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('Заказы');let cr=1;const mc=Math.max(...T.map(t=>t.cols.length),5);ws.columns=[{width:6},...Array(mc).fill({width:24})];for(let ti=0;ti<T.length;ti++){const td=T[ti],tc=td.cols.length,qi=getQi(td.cols),pi=ci(td.cols,'Цена'),toti=ci(td.cols,'Стоимость');const hr=ws.getRow(cr);hr.getCell(1).value='№';hr.getCell(1).font={bold:true,size:12,color:{argb:'FFCBD5E1'}};hr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF64748B'}};hdrs(td.cols,td.currency).forEach((h,ci)=>{const c=hr.getCell(ci+2);c.value=h;c.font={bold:true,size:12,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF64748B'}};});hr.height=28;cr++;const fdr=cr;for(let r=0;r<td.rows.length;r++){const row=ws.getRow(cr);row.getCell(1).value=r+1;for(let c=0;c<tc;c++){const cell=row.getCell(c+2);if(c===toti)cell.value={formula:`${cA(cr,qi+2)}*${cA(cr,pi+2)}`};else if(c===qi||c===pi)cell.value=pn(td.rows[r][c])||td.rows[r][c];else cell.value=td.rows[r][c]??'';if(c===toti||c===qi||c===pi)cell.numFmt='#,##0.00';cell.font={size:11};}cr++;}const totr=ws.getRow(cr);for(let c=0;c<tc;c++){const cell=totr.getCell(c+2);if(c===(toti>=0?toti-1:tc-2))cell.value='Итого';else if(c===toti)cell.value={formula:`SUM(${cA(fdr,toti+2)}:${cA(cr-1,toti+2)})`};cell.font={bold:true,size:12};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2E8F0'}};}cr++;if(ti<T.length-1)cr+=2;}const buf=await wb.xlsx.writeBuffer();const fn=`Заказы_ONTEK_${new Date().toISOString().slice(0,10)}.xlsx`;if(window.pywebview&&window.pywebview.api){const b64=btoa(String.fromCharCode(...new Uint8Array(buf)));const r=JSON.parse(await window.pywebview.api.save_file(b64,fn));if(r.success)toast('✅ Сохранено!');}else{const blob=new Blob([buf]);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('✅ Сохранено!');}}catch(e){toast('Ошибка сохранения',false);}}
-
-function processWB(wb){const a=area();a.innerHTML='';T.length=0;idC=0;actId=null;wb.SheetNames.forEach(n=>{const raw=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});if(!raw.length)return;let cur=null,ec=0;for(let i=0;i<raw.length;i++){const row=raw[i],emp=!row||row.every(c=>String(c??'').trim()==='');if(emp){ec++;if(ec>=2&&cur&&cur.rows.length){fin(cur);cur=null;}continue;}ec=0;const f=String(row[0]||'').trim();if(f.toLowerCase()==='итого'){if(cur&&cur.rows.length){fin(cur);cur=null;}continue;}if(row.some(c=>['артикул','наименование','ко-во','количество','цена','стоимость'].some(k=>String(c||'').toLowerCase().includes(k)))){if(cur&&cur.rows.length)fin(cur);const hd=row.map(c=>String(c||'').trim().replace(/,?\s*(USD|RUB)\s*с НДС/i,''));let det=row.join(' ').includes('USD')?'USD':'RUB';cur={cols:hd.filter(h=>h),rows:[],currency:det};if(!cur.cols.length)cur.cols=[...DC];continue;}if(!cur)cur={cols:[...DC],rows:[],currency:'RUB'};const dr=row.map(c=>String(c??'').trim());while(dr.length<cur.cols.length)dr.push('');cur.rows.push(dr.slice(0,cur.cols.length));}if(cur&&cur.rows.length)fin(cur);function fin(c){if(!c.cols.length)c.cols=[...DC];if(!c.rows.length)c.rows=[Array(c.cols.length).fill('')];idC++;T.push({id:idC,cols:c.cols,rows:c.rows,currency:c.currency,el:null,card:null});}});T.forEach(td=>{const card=buildCardDOM(td);a.appendChild(card);td.card=card;render(td);});upEmpty();if(!T.length)addTable('USD');else{setAct(T[0].id);toast(`Загружено: ${T.length} табл.`);}}
-function load(file){const r=new FileReader();r.onload=e=>{try{processWB(XLSX.read(new Uint8Array(e.target.result),{type:'array'}));}catch(er){toast('Ошибка',0);if(!T.length)addTable('USD');}};r.readAsArrayBuffer(file);}
-async function loadViaDialog(){if(window.pywebview&&window.pywebview.api){const r=JSON.parse(await window.pywebview.api.load_file());if(r.success){const bs=atob(r.data);const bytes=new Uint8Array(bs.length);for(let i=0;i<bs.length;i++)bytes[i]=bs.charCodeAt(i);processWB(XLSX.read(bytes,{type:'array'}));}}else Q('#fileInput').click();}
-
-function hideCtx(){ctxM.style.display='none';}
-ctxM.addEventListener('click',e=>{const item=e.target.closest('.ctx-item');if(!item)return;const a=item.dataset.action;hideCtx();const td=T.find(t=>t.id===ctxD.t);if(!td&&!['paste','dupTable'].includes(a))return;if(td)setAct(td.id);switch(a){case'addRowAbove':if(td&&ctxD.r!==null)insRowAbove(td,ctxD.r);break;case'addRowBelow':if(td&&ctxD.r!==null)insRowBelow(td,ctxD.r);break;case'delRow':if(td&&ctxD.r!==null)delRow(td,ctxD.r);break;case'renameCol':if(td&&ctxD.c!==null)renameCol(td,ctxD.c);break;case'addColBefore':if(td&&ctxD.c!==null)insCol(td,ctxD.c);break;case'addColAfter':if(td&&ctxD.c!==null)insCol(td,ctxD.c+1);break;case'delCol':if(td&&ctxD.c!==null)delCol(td,ctxD.c);break;case'paste':paste();break;case'dupTable':if(td)dupTable(td);else dupTable();break;case'delTable':if(td&&T.length>1){td.card.remove();T.splice(T.indexOf(td),1);if(actId===td.id)actId=T.length?T[0].id:null;upEmpty();}break;}});
-document.addEventListener('click',e=>{if(!ctxM.contains(e.target))hideCtx();});
-
-function undo(){if(!hist.length)return toast('Нечего отменять',false);const l=hist.pop();const td=T.find(t=>t.id===l.tid);if(!td)return;td.rows.splice(l.d.i,0,l.d.r);render(td);toast('Отменено');}
-
-// Горячие клавиши
-function findHotkeyConflict(key,excludeHk){
-    for(const[k,v]of Object.entries(hotkeys)){if(k!==excludeHk&&v===key)return k;}
-    return null;
-}
-
-function renderHotkeyList(){
-    const container=Q('#hotkeyList');if(!container)return;
-    container.innerHTML=Object.keys(defaultHotkeys).map(k=>{
-        const key=hotkeys[k]||'';
-        const conflict=key&&findHotkeyConflict(key,k);
-        let cls='';
-        if(!key)cls='conflict';
-        return `<div class="hotkey-row"><span class="hk-label">${keyLabels[k]||k}</span><span class="hk-current ${cls}" data-hk="${k}">${hkDisplay(key)}</span></div>`;
-    }).join('');
-    container.querySelectorAll('.hk-current').forEach(el=>{el.addEventListener('click',()=>startRecording(el));});
-}
-
-function startRecording(el){
-    if(recordingKey){recordingKey.classList.remove('recording','conflict');}
-    recordingKey=el;recordingHk=el.dataset.hk;el.classList.add('recording');el.textContent='...';
-    const handler=e=>{
-        e.preventDefault();e.stopPropagation();
-        let key=e.key.toUpperCase();
-        if(key==='DELETE'||key==='DEL')key='DELETE';
-        if(key==='CONTROL'||key==='SHIFT'||key==='ALT')return;
-        if(key.length===1&&e.ctrlKey){key='CTRL+'+key;}
-
-        const conflict=findHotkeyConflict(key,recordingHk);
-        if(conflict&&conflict!==recordingHk){
-            if(!confirm(`Клавиша «${hkDisplay(key)}» уже назначена на «${keyLabels[conflict]}».\n\nПереназначить? (с «${keyLabels[conflict]}» клавиша снимется)`)){
-                el.textContent=hkDisplay(hotkeys[recordingHk]);
-                el.classList.remove('recording','conflict');
-                recordingKey=null;recordingHk=null;
-                document.removeEventListener('keydown',handler);
-                return;
-            }
-            hotkeys[conflict]='';
-        }
-
-        hotkeys[recordingHk]=key;
-        el.textContent=hkDisplay(key);
-        el.classList.remove('recording','conflict');
-        recordingKey=null;recordingHk=null;
-        saveSettings();updateAllHKDisplays();
-        document.removeEventListener('keydown',handler);
-        toast(`«${keyLabels[recordingHk]}» → ${hkDisplay(key)}`);
-    };
-    document.addEventListener('keydown',handler);
-}
-
-function resetHotkeys(){hotkeys={...defaultHotkeys};saveSettings();updateAllHKDisplays();toast('Сброшено к заводским');}
-
-// Toggle секции
-Q('#hkToggle').addEventListener('click',()=>{
-    Q('#hkToggle').classList.toggle('open');
-    Q('#hkSection').classList.toggle('open');
-});
-
-// Кнопки V1
-function bindV1(){
-    Q('#btnAddRow1').onclick=()=>{const t=active();t?addRowEnd(t):toast('Выберите таблицу!',0);};
-    Q('#btnDelRow1').onclick=()=>{const t=active();t?delRowEnd(t):toast('Выберите таблицу!',0);};
-    Q('#btnAddCol1').onclick=()=>{const t=active();t?addColEnd(t):toast('Выберите таблицу!',0);};
-    Q('#btnDelCol1').onclick=()=>{const t=active();t?delColEnd(t):toast('Выберите таблицу!',0);};
-    Q('#btnRecalc1').onclick=()=>{T.forEach(td=>{td.rows.forEach(r=>calc(r,td.cols));updTot(td);});toast('Пересчитано');};
-    Q('#btnPaste1').onclick=paste;Q('#btnNewRUB1').onclick=()=>addTable('RUB');Q('#btnNewUSD1').onclick=()=>addTable('USD');
-    Q('#btnSave1').onclick=save;Q('#btnLoad1').onclick=()=>loadViaDialog();
-    Q('#btnClear1').onclick=()=>{if(!T.length)return;if(confirm('Удалить все?')){area().innerHTML='';T.length=0;idC=0;actId=null;hist.length=0;upEmpty();toast('Очищено');}};
-    Q('#btnDup1').onclick=()=>dupTable();Q('#btnUndo1').onclick=undo;Q('#btnFind1').onclick=findInTable;Q('#btnReplace1').onclick=replaceInTable;
-}
-function bindV2(){
-    Q('#btnAddRow2').onclick=()=>{const t=active();t?addRowEnd(t):toast('Выберите таблицу!',0);};
-    Q('#btnDelRow2').onclick=()=>{const t=active();t?delRowEnd(t):toast('Выберите таблицу!',0);};
-    Q('#btnAddCol2').onclick=()=>{const t=active();t?addColEnd(t):toast('Выберите таблицу!',0);};
-    Q('#btnDelCol2').onclick=()=>{const t=active();t?delColEnd(t):toast('Выберите таблицу!',0);};
-    Q('#btnRecalc2').onclick=()=>{T.forEach(td=>{td.rows.forEach(r=>calc(r,td.cols));updTot(td);});toast('Пересчитано');};
-    Q('#btnPaste2').onclick=paste;Q('#btnNewRUB2').onclick=()=>addTable('RUB');Q('#btnNewUSD2').onclick=()=>addTable('USD');
-    Q('#btnSave2').onclick=save;Q('#btnLoad2').onclick=()=>loadViaDialog();
-    Q('#btnClear2').onclick=()=>{if(!T.length)return;if(confirm('Удалить все?')){area().innerHTML='';T.length=0;idC=0;actId=null;hist.length=0;upEmpty();toast('Очищено');}};
-    Q('#btnDup2').onclick=()=>dupTable();Q('#btnUndo2').onclick=undo;Q('#btnFind2').onclick=findInTable;Q('#btnReplace2').onclick=replaceInTable;
-}
-bindV1();bindV2();
-
-Q('#uiV1').onclick=()=>switchUI('v1');Q('#uiV2').onclick=()=>switchUI('v2');
-Q('#btnTheme').onclick=toggleTheme;
-Q('#btnUpdate').onclick=checkUpdate;
-Q('#fileInput').onchange=e=>{if(e.target.files[0]){load(e.target.files[0]);e.target.value='';}};
-
-// Настройки
-Q('#btnSettings').onclick=()=>{Q('#settingsModal').classList.add('show');renderHotkeyList();};
-Q('#btnCloseSettings').onclick=()=>Q('#settingsModal').classList.remove('show');
-Q('#btnResetHotkeys').onclick=resetHotkeys;
-Q('#settingsModal').onclick=e=>{if(e.target===Q('#settingsModal'))Q('#settingsModal').classList.remove('show');};
-
-// Цветовые темы
-Q('#btnColorTheme').onclick=()=>Q('#colorThemeModal').classList.add('show');
-Q('#btnCloseColorTheme').onclick=()=>Q('#colorThemeModal').classList.remove('show');
-Q('#colorThemeModal').onclick=e=>{if(e.target===Q('#colorThemeModal'))Q('#colorThemeModal').classList.remove('show');};
-document.querySelectorAll('.theme-card').forEach(c=>c.onclick=()=>setColorTheme(c.dataset.theme));
-
-document.addEventListener('keydown',e=>{
-    if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&(e.key==='z'||e.key==='я')){e.preventDefault();undo();return;}
-    if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&(e.key==='f'||e.key==='а')){e.preventDefault();findInTable();return;}
-    if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&(e.key==='h'||e.key==='р')){e.preventDefault();replaceInTable();return;}
-    if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&(e.key==='t'||e.key==='е')){e.preventDefault();toggleTheme();return;}
-    if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&(e.key==='u'||e.key==='г')){e.preventDefault();checkUpdate();return;}
-    if(e.key==='F3'){e.preventDefault();if(window._nr)window._nr();return;}
-    if(e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.target.closest('input')&&!recordingKey){
-        let key=e.key.toUpperCase();if(RU[key])key=RU[key];if(e.code==='Digit1')key='1';if(e.code==='Digit2')key='2';if(e.code==='Delete')key='DELETE';
-        if(key===hotkeys.addRow)Q('#btnAddRow1').click();if(key===hotkeys.delRow)Q('#btnDelRow1').click();
-        if(key===hotkeys.addCol)Q('#btnAddCol1').click();if(key===hotkeys.delCol)Q('#btnDelCol1').click();
-        if(key===hotkeys.recalc)Q('#btnRecalc1').click();if(key===hotkeys.paste)Q('#btnPaste1').click();
-        if(key===hotkeys.load)Q('#btnLoad1').click();if(key===hotkeys.newRUB)Q('#btnNewRUB1').click();
-        if(key===hotkeys.newUSD)Q('#btnNewUSD1').click();if(key===hotkeys.dup)Q('#btnDup1').click();
-        if(key===hotkeys.clear)Q('#btnClear1').click();
-    }
-    if(e.ctrlKey&&!e.shiftKey&&!e.altKey){const k=e.key.toLowerCase();if((k==='v'||k==='м')&&!e.target.closest('input')){e.preventDefault();gPaste(e);}if(k==='s'||k==='ы'){e.preventDefault();save();}if(k==='o'||k==='щ'){e.preventDefault();loadViaDialog();}if((k==='d'||k==='в')&&!e.target.closest('input')){e.preventDefault();dupTable();}}
-});
-function gPaste(e){const td=active();if(!td)return;if(e)e.preventDefault();navigator.clipboard.readText().then(text=>{const p=parseCB(text);if(!p.length)return toast('Нет данных',0);const sel=td.el.querySelector('tbody tr.sel:not(.tot)');if(sel){const ri=+sel.dataset.ri;let ci=0;const ae=document.activeElement;if(ae&&ae.closest('td')){const tds=[...sel.querySelectorAll('td:not(.rn):not(.act-cell)')];ci=tds.indexOf(ae.closest('td'));if(ci>=td.cols.length)ci=0;}pastePos(td,ri,ci,p);}else{p.forEach(r=>{const nr=[];for(let i=0;i<td.cols.length;i++){let v=r[i]??'';const cn=td.cols[i].toLowerCase();if(cn.includes('ко-во')||cn.includes('количество')||cn.startsWith('цена')){const n=pn(v);if(!isNaN(n))v=n.toFixed(2);}nr.push(v);}td.rows.push(nr);calc(nr,td.cols);});render(td);toast(`Вставлено строк: ${p.length}`);}}).catch(()=>{});}
-document.addEventListener('paste',e=>{if(e.target.closest('input'))return;e.preventDefault();gPaste(e);});
-
-addTable('USD');
-</script>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/hotkeys.js"></script>
+<script src="js/excel.js"></script>
 </body>
 </html>
