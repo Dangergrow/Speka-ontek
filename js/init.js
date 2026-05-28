@@ -10,26 +10,16 @@ document.addEventListener('DOMContentLoaded', function() {
     loadAll();
     applyAllSettings();
     
-    // Строим тулбар V1
+    // Строим интерфейс
     buildToolbarV1();
-    
-    // Строим сайдбар V2
     buildSidebarV2();
     
-    // Привязываем события
+    // Привязываем события (кнопки, модалки)
     bindAllEvents();
-    
-    // Рендерим горячие клавиши
-    renderHotkeyList();
-    renderThemeOptions();
-    
-    // Горячие клавиши
-    document.addEventListener('keydown', handleGlobalHotkeys);
-    document.addEventListener('paste', handleGlobalPaste);
     
     // Создаём первую таблицу
     addTable('USD');
     
-    // Обновляем отображение клавиш
+    // Обновляем отображение горячих клавиш
     updateAllHKDisplays();
 });
