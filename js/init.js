@@ -1,16 +1,19 @@
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     if(typeof ExcelJS==='undefined'||typeof XLSX==='undefined'){
-        document.body.innerHTML='<h1 style="text-align:center;margin-top:100px;">Ошибка загрузки</h1>';
+        document.body.innerHTML='<h1>Ошибка загрузки библиотек</h1>';
         return;
     }
     
-    // Ждём инициализацию pywebview API
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    await loadAll();
+    // Строим интерфейс
     buildWorkspaces();
     buildSidebarV2();
-    applyAllSettings();
+    
+    // Загружаем настройки и применяем
+    loadSettings().then(function(){
+        applyAllSettings();
+    });
+    
+    // Остальное
     buildShortcuts();
     bindAllEvents();
     loadRates();
@@ -18,6 +21,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     document.addEventListener('keydown', handleGlobalHotkeys);
     document.addEventListener('paste', handleGlobalPaste);
-    
-    console.log('ONTEK v4.5.0 готов');
 });
