@@ -27,7 +27,7 @@ function cA(r,c){let s='';while(c>0){c--;s=String.fromCharCode(65+(c%26))+s;c=Ma
 function ccl(n){const l=n.toLowerCase();if(l.includes('артикул'))return'col-article';if(l.includes('наименование'))return'col-name';if(l.includes('ко-во')||l.includes('количество'))return'col-qty';if(l.startsWith('цена'))return'col-price';if(l.startsWith('стоимость'))return'col-total';return'col-default';}
 function hkDisplay(key){if(!key)return'—';if(key==='DELETE')return'Del';return key;}
 
-// ==================== СОХРАНЕНИЕ В ФАЙЛ ====================
+// ==================== СОХРАНЕНИЕ ====================
 async function saveAll(){
     const s={theme:theme,color:colorTheme,hotkeys:hotkeys,activeWorkspace:activeWorkspace};
     const json=JSON.stringify(s);
@@ -40,14 +40,12 @@ async function loadAll(){
     if(window.pywebview&&window.pywebview.api){
         try{
             const json=await window.pywebview.api.load_settings();
-            if(json&&json!='{}'){
+            if(json&&json!=='{}'){
                 const s=JSON.parse(json);
-                if(s.theme||s.color||s.hotkeys){
-                    theme=s.theme||'light';colorTheme=s.color||'blue';
-                    if(s.hotkeys)hotkeys=s.hotkeys;
-                    if(s.activeWorkspace)activeWorkspace=s.activeWorkspace;
-                    return;
-                }
+                theme=s.theme||'light';colorTheme=s.color||'blue';
+                if(s.hotkeys)hotkeys=s.hotkeys;
+                if(s.activeWorkspace)activeWorkspace=s.activeWorkspace;
+                return;
             }
         }catch(e){}
     }
