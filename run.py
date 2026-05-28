@@ -4,9 +4,8 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from tkinter import Tk, filedialog
 
 APP_NAME = "ONTEK — Таблица заказов"
-APP_VERSION = "4.2.0"
-VERSION_URL = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/version.json"
-HTML_URL = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/index.html"
+APP_VERSION = "4.4.0"
+GITHUB_RAW = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main"
 
 def get_app_dir():
     if getattr(sys, 'frozen', False):
@@ -23,6 +22,7 @@ def get_base_dir():
 class Api:
     def __init__(self): self._window = None
     def set_window(self, w): self._window = w
+    
     def save_file(self, data_b64, name):
         try:
             data = base64.b64decode(data_b64)
@@ -49,14 +49,36 @@ class Api:
             return json.dumps({"success": False, "message": str(e)})
     
     def apply_update(self):
+        """Скачать ВСЕ файлы обновления"""
         try:
             app_dir = get_app_dir()
-            index_path = os.path.join(app_dir, 'index.html')
-            tmp = os.path.join(tempfile.gettempdir(), 'ontek_index_update.html')
-            urllib.request.urlretrieve(HTML_URL, tmp)
-            if os.path.exists(index_path): os.remove(index_path)
-            shutil.move(tmp, index_path)
-            return json.dumps({"success": True, "message": "Обновление применено!"})
+            
+            # Список файлов для обновления
+            files = [
+                'index.html',
+                'css/themes.css',
+                'css/style.css',
+                'js/app.js',
+                'js/init.js'
+            ]
+            
+            for f in files:
+                url = f"{GITHUB_RAW}/{f}"
+                local_path = os.path.join(app_dir, f)
+                
+                # Создаём папки если нужно
+                os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                
+                # Скачиваем
+                tmp = os.path.join(tempfile.gettempdir(), 'ontek_update_' + os.path.basename(f))
+                urllib.request.urlretrieve(url, tmp)
+                
+                # Заменяем
+                if os.path.exists(local_path):
+                    os.remove(local_path)
+                shutil.move(tmp, local_path)
+            
+            return json.dumps({"success": True, "message": "Все файлы обновлены!"})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
     
