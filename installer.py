@@ -51,24 +51,40 @@ def install_files(source_dir, target_dir, progress_callback=None):
     if progress_callback: progress_callback(100)
 
 def create_shortcut(target_dir):
+    """Создать ярлык через VBScript (работает всегда)"""
     try:
         desktop = os.path.join(os.path.expanduser("~"), "Desktop")
         shortcut_path = os.path.join(desktop, f"{APP_NAME}.lnk")
         exe_path = os.path.join(target_dir, 'ONTEK_Orders.exe')
-        icon_path = os.path.join(target_dir, 'icon.ico')
-        if not os.path.exists(exe_path): return False
-        if os.path.exists(shortcut_path): os.remove(shortcut_path)
-        ps = f'''
-$WshShell = New-Object -ComObject WScript.Shell
-$Shortcut = $WshShell.CreateShortcut("{shortcut_path}")
-$Shortcut.TargetPath = "{exe_path}"
-$Shortcut.WorkingDirectory = "{target_dir}"
-$Shortcut.IconLocation = "{icon_path}"
-$Shortcut.Save()
+        
+        if not os.path.exists(exe_path):
+            return False
+        
+        if os.path.exists(shortcut_path):
+            os.remove(shortcut_path)
+        
+        # VBScript для создания ярлыка
+        vbs = f'''
+Set WshShell = CreateObject("WScript.Shell")
+Set Shortcut = WshShell.CreateShortcut("{shortcut_path}")
+Shortcut.TargetPath = "{exe_path}"
+Shortcut.WorkingDirectory = "{target_dir}"
+Shortcut.Description = "{APP_NAME}"
+Shortcut.Save()
 '''
-        subprocess.run(['powershell', '-Command', ps], capture_output=True, shell=True)
+        vbs_path = os.path.join(tempfile.gettempdir(), 'create_shortcut.vbs')
+        with open(vbs_path, 'w', encoding='utf-8') as f:
+            f.write(vbs)
+        
+        subprocess.run(['cscript', '//NoLogo', vbs_path], capture_output=True, shell=True)
+        
+        try: os.remove(vbs_path)
+        except: pass
+        
         return os.path.exists(shortcut_path)
-    except: return False
+    except Exception as e:
+        print(f"Ошибка ярлыка: {e}")
+        return False
 
 def write_config(target_dir):
     with open(os.path.join(target_dir, 'config.json'), 'w', encoding='utf-8') as f:
@@ -87,7 +103,6 @@ class Installer:
         y=(self.root.winfo_screenheight()//2)-(h//2)
         self.root.geometry(f'{w}x{h}+{x}+{y}')
         self.install_path = StringVar(value=DEFAULT_PATH)
-        self.run_after = BooleanVar(value=True)
         self.create_desktop = BooleanVar(value=True)
         self.exe_path = None
         self.setup_ui()
@@ -104,7 +119,6 @@ class Installer:
         Entry(pf, textvariable=self.install_path, font=('Segoe UI', 10), width=42, bd=1, relief='solid').pack(side='left', ipady=5)
         Button(pf, text="Обзор", command=self.browse, font=('Segoe UI', 10), bg='#e2e8f0', bd=0, padx=12, cursor='hand2').pack(side='left', padx=6)
         Checkbutton(body, text="Создать ярлык на рабочем столе", variable=self.create_desktop, font=('Segoe UI', 11), bg='#f8fafc', activebackground='#f8fafc', cursor='hand2').pack(anchor='w', pady=4)
-        Checkbutton(body, text="Запустить программу после установки", variable=self.run_after, font=('Segoe UI', 11), bg='#f8fafc', activebackground='#f8fafc', cursor='hand2').pack(anchor='w', pady=4)
         Frame(body, bg='#e2e8f0', height=1).pack(fill='x', pady=15)
         self.progress = Progressbar(body, mode='determinate', length=490)
         self.status_label = Label(body, text="", font=('Segoe UI', 9), bg='#f8fafc', fg='#64748b')
@@ -130,7 +144,7 @@ class Installer:
             self.exe_path = os.path.join(target, 'ONTEK_Orders.exe')
             so = False
             if self.create_desktop.get():
-                self.root.after(0, lambda: self.status_label.config(text="Ярлык..."))
+                self.root.after(0, lambda: self.status_label.config(text="Создание ярлыка..."))
                 so = create_shortcut(target)
             write_config(target)
             self.root.after(0, lambda: self.done(so))
@@ -139,10 +153,11 @@ class Installer:
     def done(self, so):
         self.progress.pack_forget(); self.status_label.pack_forget()
         Label(self.root, text="✅ Установка завершена!", font=('Segoe UI', 14, 'bold'), bg='#f8fafc', fg='#10b981').pack(pady=5)
-        if so: Label(self.root, text="Ярлык на рабочем столе", font=('Segoe UI', 10), bg='#f8fafc', fg='#10b981').pack()
+        if so: Label(self.root, text="Ярлык создан на рабочем столе", font=('Segoe UI', 10), bg='#f8fafc', fg='#10b981').pack()
+        else: Label(self.root, text="Ярлык не создан", font=('Segoe UI', 10), bg='#f8fafc', fg='#ef4444').pack()
         bf = Frame(self.root, bg='#f8fafc'); bf.pack(pady=10)
-        if self.run_after.get() and self.exe_path and os.path.exists(self.exe_path):
-            Button(bf, text="🚀 Запустить", command=lambda: (os.startfile(self.exe_path), self.root.destroy()), font=('Segoe UI', 12, 'bold'), bg='#10b981', fg='white', bd=0, padx=20, pady=8, cursor='hand2').pack(side='left', padx=5)
+        if self.exe_path and os.path.exists(self.exe_path):
+            Button(bf, text="🚀 Запустить ONTEK", command=lambda: (os.startfile(self.exe_path), self.root.destroy()), font=('Segoe UI', 12, 'bold'), bg='#10b981', fg='white', bd=0, padx=20, pady=8, cursor='hand2').pack(side='left', padx=5)
         Button(bf, text="Готово", command=self.root.destroy, font=('Segoe UI', 12, 'bold'), bg='#e2e8f0', bd=0, padx=20, pady=8, cursor='hand2').pack(side='left', padx=5)
     
     def run(self): self.root.mainloop()
