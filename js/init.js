@@ -12,11 +12,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     bindAllEvents();
     loadRates();
     
-    // Сохранение настроек при закрытии программы
-    window.addEventListener('beforeunload', function() {
-        saveAll();
-    });
-    
     addTable('USD');
     document.addEventListener('keydown', handleGlobalHotkeys);
     document.addEventListener('paste', handleGlobalPaste);
