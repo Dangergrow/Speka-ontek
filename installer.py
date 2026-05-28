@@ -1,11 +1,11 @@
-import os, sys, shutil, json, threading, tempfile
+import os, sys, shutil, json, threading, tempfile, subprocess
 from tkinter import Tk, Frame, Label, Entry, Button, Checkbutton, BooleanVar, StringVar, messagebox, filedialog
 from tkinter.ttk import Progressbar
 
 APP_NAME = "ONTEK — Таблица заказов"
 APP_VERSION = "4.5.0"
 APP_FOLDER = "Ontek_Speka"
-DEFAULT_PATH = os.path.join(os.environ.get('ProgramFiles', 'C:\\Program Files'), APP_FOLDER)
+DEFAULT_PATH = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'Programs', APP_FOLDER)
 
 def get_source_dir():
     if getattr(sys, 'frozen', False): return sys._MEIPASS
@@ -14,12 +14,16 @@ def get_source_dir():
 def install_files(source_dir, target_dir, progress_callback=None):
     files = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']
     folders = ['css', 'js']
-    total = len(files) + len(folders)
+    total = len(files) + len(folders) + 1
     done = 0
     for f in files:
         src = os.path.join(source_dir, f)
         dst = os.path.join(target_dir, f)
-        if os.path.exists(src): shutil.copy2(src, dst)
+        if os.path.exists(src):
+            try:
+                if os.path.exists(dst): os.remove(dst)
+                shutil.copy2(src, dst)
+            except: pass
         done += 1
         if progress_callback: progress_callback(int(done / total * 100))
     for folder in folders:
@@ -30,34 +34,69 @@ def install_files(source_dir, target_dir, progress_callback=None):
             for f in os.listdir(src_folder):
                 sf = os.path.join(src_folder, f)
                 df = os.path.join(dst_folder, f)
-                if os.path.isfile(sf): shutil.copy2(sf, df)
+                if os.path.isfile(sf):
+                    try:
+                        if os.path.exists(df): os.remove(df)
+                        shutil.copy2(sf, df)
+                    except: pass
         done += 1
         if progress_callback: progress_callback(int(done / total * 100))
     exe_src = os.path.join(source_dir, 'ONTEK_Orders.exe')
     exe_dst = os.path.join(target_dir, 'ONTEK_Orders.exe')
-    if os.path.exists(exe_src): shutil.copy2(exe_src, exe_dst)
+    if os.path.exists(exe_src):
+        try:
+            if os.path.exists(exe_dst): os.remove(exe_dst)
+            shutil.copy2(exe_src, exe_dst)
+        except: pass
     if progress_callback: progress_callback(100)
 
 def create_shortcut(target_dir):
+    """Создать ярлык через PowerShell (работает на Windows 10/11)"""
     try:
-        import pythoncom
-        from win32com.client import Dispatch
         desktop = os.path.join(os.path.expanduser("~"), "Desktop")
         shortcut_path = os.path.join(desktop, f"{APP_NAME}.lnk")
         exe_path = os.path.join(target_dir, 'ONTEK_Orders.exe')
         icon_path = os.path.join(target_dir, 'icon.ico')
-        if not os.path.exists(exe_path): return False
-        shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(shortcut_path)
-        shortcut.Targetpath = exe_path
-        shortcut.WorkingDirectory = target_dir
-        shortcut.Description = APP_NAME
-        if os.path.exists(icon_path): shortcut.IconLocation = icon_path
-        shortcut.save()
-        return True
+        
+        if not os.path.exists(exe_path):
+            return False
+        
+        # Удаляем старый ярлык если есть
+        if os.path.exists(shortcut_path):
+            os.remove(shortcut_path)
+        
+        # PowerShell команда для создания ярлыка
+        ps_script = f'''
+$WshShell = New-Object -ComObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut("{shortcut_path}")
+$Shortcut.TargetPath = "{exe_path}"
+$Shortcut.WorkingDirectory = "{target_dir}"
+$Shortcut.Description = "{APP_NAME}"
+$Shortcut.IconLocation = "{icon_path}"
+$Shortcut.Save()
+'''
+        result = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, shell=True)
+        return os.path.exists(shortcut_path)
     except Exception as e:
         print(f"Ярлык не создан: {e}")
-        return False
+        # Запасной способ через win32com
+        try:
+            import pythoncom
+            from win32com.client import Dispatch
+            pythoncom.CoInitialize()
+            shell = Dispatch('WScript.Shell')
+            shortcut = shell.CreateShortCut(shortcut_path)
+            shortcut.Targetpath = exe_path
+            shortcut.WorkingDirectory = target_dir
+            shortcut.Description = APP_NAME
+            if os.path.exists(icon_path):
+                shortcut.IconLocation = icon_path
+            shortcut.Save()
+            pythoncom.CoUninitialize()
+            return os.path.exists(shortcut_path)
+        except Exception as e2:
+            print(f"Запасной способ не сработал: {e2}")
+            return False
 
 def write_config(target_dir):
     config = {'version': APP_VERSION, 'install_path': target_dir}
@@ -120,9 +159,10 @@ class Installer:
                 sd = get_source_dir()
                 self.root.after(0, lambda: self.status_label.config(text="Копирование файлов..."))
                 install_files(sd, target, lambda p: self.root.after(0, self.update_progress, p))
-                self.root.after(0, lambda: self.status_label.config(text="Создание ярлыка..."))
                 so = False
-                if self.create_desktop.get(): so = create_shortcut(target)
+                if self.create_desktop.get():
+                    self.root.after(0, lambda: self.status_label.config(text="Создание ярлыка..."))
+                    so = create_shortcut(target)
                 self.root.after(0, lambda: self.status_label.config(text="Сохранение конфигурации..."))
                 write_config(target)
                 self.root.after(0, lambda: self.install_done(so))
@@ -138,12 +178,14 @@ class Installer:
         Label(df, text=f"Папка:\n{self.install_path.get()}", font=('Segoe UI', 10), bg='#f8fafc', fg='#64748b', justify='center').pack(pady=5)
         if so: Label(df, text="Ярлык создан на рабочем столе", font=('Segoe UI', 10), bg='#f8fafc', fg='#10b981').pack()
         bf = Frame(df, bg='#f8fafc'); bf.pack(pady=10)
-        if self.run_after.get(): Button(bf, text="🚀 Запустить ONTEK", command=self.launch_and_close, font=('Segoe UI', 12, 'bold'), bg='#10b981', fg='white', bd=0, padx=20, pady=8, cursor='hand2').pack(side='left', padx=5)
+        if self.run_after.get():
+            Button(bf, text="🚀 Запустить ONTEK", command=self.launch_and_close, font=('Segoe UI', 12, 'bold'), bg='#10b981', fg='white', bd=0, padx=20, pady=8, cursor='hand2').pack(side='left', padx=5)
         Button(bf, text="Закрыть", command=self.root.destroy, font=('Segoe UI', 12), bg='#e2e8f0', bd=0, padx=20, pady=8, cursor='hand2').pack(side='left', padx=5)
     
     def launch_and_close(self):
         exe = os.path.join(self.install_path.get(), 'ONTEK_Orders.exe')
-        if os.path.exists(exe): os.startfile(exe)
+        if os.path.exists(exe):
+            os.startfile(exe)
         self.root.destroy()
     
     def run(self): self.root.mainloop()
