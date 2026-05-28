@@ -71,26 +71,15 @@ class Api:
             return json.dumps({"success": False, "message": str(e)})
 
 def setup_files():
-    """Копирует все файлы из MEIPASS в папку с EXE при первом запуске"""
     if not getattr(sys, 'frozen', False): return
-    
     base = sys._MEIPASS
     app = get_app_dir()
-    
-    # Список всех файлов для копирования
-    files_to_copy = [
-        'index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico'
-    ]
-    
-    # Папки для копирования
+    files_to_copy = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']
     folders = ['css', 'js']
-    
     for f in files_to_copy:
         src = os.path.join(base, f)
         dst = os.path.join(app, f)
-        if os.path.exists(src) and not os.path.exists(dst):
-            shutil.copy2(src, dst)
-    
+        if os.path.exists(src) and not os.path.exists(dst): shutil.copy2(src, dst)
     for folder in folders:
         src_folder = os.path.join(base, folder)
         dst_folder = os.path.join(app, folder)
@@ -99,8 +88,7 @@ def setup_files():
             for f in os.listdir(src_folder):
                 src_f = os.path.join(src_folder, f)
                 dst_f = os.path.join(dst_folder, f)
-                if os.path.isfile(src_f) and not os.path.exists(dst_f):
-                    shutil.copy2(src_f, dst_f)
+                if os.path.isfile(src_f) and not os.path.exists(dst_f): shutil.copy2(src_f, dst_f)
 
 def start_server(port, serve_dir):
     os.chdir(serve_dir)
@@ -108,28 +96,15 @@ def start_server(port, serve_dir):
 
 def main():
     setup_files()
-    
     app_dir = get_app_dir()
     base_dir = get_base_dir()
-    
-    # Проверяем где есть index.html
-    if os.path.exists(os.path.join(app_dir, 'index.html')):
-        serve_dir = app_dir
-    else:
-        serve_dir = base_dir
-    
+    if os.path.exists(os.path.join(app_dir, 'index.html')): serve_dir = app_dir
+    else: serve_dir = base_dir
     port = 8765
     threading.Thread(target=start_server, args=(port, serve_dir), daemon=True).start()
     time.sleep(0.5)
-    
     api = Api()
-    window = webview.create_window(
-        title=APP_NAME,
-        url=f'http://127.0.0.1:{port}/index.html',
-        js_api=api,
-        width=1400, height=900,
-        resizable=True, min_size=(900, 600)
-    )
+    window = webview.create_window(title=APP_NAME, url=f'http://127.0.0.1:{port}/index.html', js_api=api, width=1400, height=900, resizable=True, min_size=(900, 600))
     api.set_window(window)
     webview.start(debug=False)
 
