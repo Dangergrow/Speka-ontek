@@ -11,52 +11,46 @@
 </head>
 <body>
 <div class="app" id="appContainer">
+
+<!-- Сайдбар -->
+<div class="sidebar-v2" id="sidebarV2"></div>
+
+<!-- Основная рабочая область -->
 <div class="main-content">
-<div class="header">
-    <div class="header-l"><div class="logo">📊</div><div class="title">Таблица заказов<span class="ver">v4.2.0</span></div></div>
-    <div class="header-r">
-        <div class="ui-switch"><div class="ui-switch-label">Интерфейс</div><div class="ui-switch-btns"><button class="ui-btn active" id="uiV1">1</button><button class="ui-btn" id="uiV2">2</button></div></div>
-        <button class="icon-btn" id="btnTheme" title="Тёмная/Светлая">🌙</button>
-        <button class="icon-btn" id="btnColorTheme" title="Цветовая тема">🎨</button>
-        <button class="icon-btn" id="btnSettings" title="Настройки">⚙</button>
-        <button class="btn b-indigo" id="btnUpdate">🔄 Проверить обновление</button>
-        <div class="brand">ONTEK</div>
+    <!-- Шапка -->
+    <div class="header">
+        <div class="header-l"><div class="logo">📊</div><div class="title">Таблица заказов<span class="ver">v4.3.0</span></div></div>
+        <div class="header-r">
+            <div class="workspace-tabs" id="workspaceTabs"></div>
+            <button class="icon-btn" id="btnTheme" title="Тёмная/Светлая">🌙</button>
+            <button class="icon-btn" id="btnColorTheme" title="Цветовая тема">🎨</button>
+            <button class="icon-btn" id="btnSettings" title="Настройки">⚙</button>
+            <button class="btn b-indigo" id="btnUpdate">🔄 Проверить обновление</button>
+            <div class="brand">ONTEK</div>
+        </div>
     </div>
-</div>
 
-<div id="toolbarV1">
-<div class="tb-grid" id="tbGridV1"></div>
-</div>
+    <!-- Контейнер рабочих окон -->
+    <div class="workspace-container" id="workspaceContainer"></div>
 
-<div class="layout-v2" id="layoutV2">
-    <div class="sidebar-v2" id="sidebarV2"></div>
-    <div class="tables-area" id="tablesAreaV2"><div class="empty">Создайте таблицу — <b>Shift+1</b> RUB или <b>Shift+2</b> USD</div></div>
+    <!-- Подсказки -->
+    <div class="shortcuts" id="shortcutsBar"></div>
 </div>
-
-<div class="tables-area" id="tablesAreaV1"><div class="empty">Создайте таблицу — <b>Shift+1</b> RUB или <b>Shift+2</b> USD</div></div>
+</div>
 
 <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls">
-<div class="shortcuts" id="shortcutsBar"></div>
-</div>
-</div>
 
+<!-- Модалки -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
         <h2>⚙ Настройки</h2>
         <h3 id="hkToggle"><span class="arrow">▶</span> Горячие клавиши</h3>
-        <div class="hk-section" id="hkSection"><div id="hotkeyList"></div><div class="modal-btns"><button class="btn b-red" id="btnResetHotkeys">Сбросить к заводским</button></div></div>
+        <div class="hk-section" id="hkSection"><div id="hotkeyList"></div><div class="modal-btns"><button class="btn b-red" id="btnResetHotkeys">Сбросить</button></div></div>
         <h3 id="aboutToggle"><span class="arrow">▶</span> О программе</h3>
         <div class="hk-section" id="aboutSection">
-            <div style="text-align:center;padding:20px">
-                <div class="about-logo">📊</div>
-                <div style="font-size:24px;font-weight:700;margin:10px 0">ONTEK</div>
-                <div style="font-size:16px;color:var(--text2)">Таблица заказов</div>
-                <div style="font-size:14px;margin-top:8px">Версия 4.2.0</div>
-                <div style="font-size:12px;color:var(--text2);margin-top:12px">© 2026 Speka Ontek</div>
-                <div style="font-size:11px;color:var(--text2);margin-top:4px">Все права защищены</div>
-            </div>
+            <div style="text-align:center;padding:20px"><div class="about-logo">📊</div><div style="font-size:24px;font-weight:700;margin:10px 0">ONTEK</div><div>Таблица заказов v4.3.0</div><div style="font-size:12px;color:var(--text2);margin-top:12px">© 2026 Speka Ontek</div></div>
         </div>
-        <div class="modal-btns" style="margin-top:16px"><button class="btn b-slate" id="btnCloseSettings">Закрыть</button></div>
+        <div class="modal-btns"><button class="btn b-slate" id="btnCloseSettings">Закрыть</button></div>
     </div>
 </div>
 
@@ -64,7 +58,7 @@
     <div class="modal theme-modal">
         <h2>🎨 Цветовая тема</h2>
         <div class="theme-options" id="themeOptions"></div>
-        <div class="modal-btns" style="margin-top:16px"><button class="btn b-slate" id="btnCloseColorTheme">Закрыть</button></div>
+        <div class="modal-btns"><button class="btn b-slate" id="btnCloseColorTheme">Закрыть</button></div>
     </div>
 </div>
 
