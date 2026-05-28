@@ -4,7 +4,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from tkinter import Tk, filedialog
 
 APP_NAME = "ONTEK — Таблица заказов"
-APP_VERSION = "3.8.2"
+APP_VERSION = "3.8.3"
 VERSION_URL = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/version.json"
 HTML_URL = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/index.html"
 
