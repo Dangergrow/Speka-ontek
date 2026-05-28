@@ -9,5 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     applyAllSettings();
     buildShortcuts();
     bindAllEvents();
+    loadRates();
     addTable('USD');
 });
