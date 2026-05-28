@@ -49,7 +49,6 @@ class Api:
             return json.dumps({"success": False, "message": str(e)})
     
     def save_settings(self, settings_json):
-        """Сохранение настроек в файл"""
         try:
             settings_path = os.path.join(get_app_dir(), 'settings.json')
             with open(settings_path, 'w', encoding='utf-8') as f:
@@ -59,7 +58,6 @@ class Api:
             return json.dumps({"success": False, "message": str(e)})
     
     def load_settings(self):
-        """Загрузка настроек из файла"""
         try:
             settings_path = os.path.join(get_app_dir(), 'settings.json')
             if os.path.exists(settings_path):
