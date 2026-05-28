@@ -3,7 +3,7 @@ from tkinter import Tk, Frame, Label, Entry, Button, Checkbutton, BooleanVar, St
 from tkinter.ttk import Progressbar
 
 APP_NAME = "ONTEK — Таблица заказов"
-APP_VERSION = "4.0.0"
+APP_VERSION = "4.4.0"
 APP_FOLDER = "Ontek_Speka"
 DEFAULT_PATH = os.path.join(os.environ.get('ProgramFiles', 'C:\\Program Files'), APP_FOLDER)
 
