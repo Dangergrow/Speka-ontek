@@ -43,8 +43,10 @@ class Api:
             return json.dumps({"success": False, "message": str(e)})
     
     def save_settings(self, settings_json):
+        """Сохранить настройки в файл рядом с EXE"""
         try:
-            settings_path = os.path.join(get_app_dir(), 'settings.json')
+            app_dir = get_app_dir()
+            settings_path = os.path.join(app_dir, 'settings.json')
             with open(settings_path, 'w', encoding='utf-8') as f:
                 f.write(settings_json)
             return json.dumps({"success": True})
@@ -52,18 +54,21 @@ class Api:
             return json.dumps({"success": False, "message": str(e)})
     
     def load_settings(self):
+        """Загрузить настройки из файла рядом с EXE"""
         try:
-            settings_path = os.path.join(get_app_dir(), 'settings.json')
+            app_dir = get_app_dir()
+            settings_path = os.path.join(app_dir, 'settings.json')
             if os.path.exists(settings_path):
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                if content and content.strip():
+                if content and content.strip() and content.strip() != '{}':
                     return content
             return "{}"
         except:
             return "{}"
     
     def apply_update(self):
+        """Скачать и применить обновление"""
         try:
             app_dir = get_app_dir()
             files = ['index.html','css/themes.css','css/style.css','js/app.js','js/init.js']
@@ -95,6 +100,7 @@ class Api:
             return json.dumps({"success": False, "message": str(e)})
     
     def download_full_installer(self):
+        """Скачать полный установщик"""
         try:
             url = "https://github.com/Dangergrow/Speka-ontek/releases/latest/download/ONTEK_Setup.exe"
             tmp = os.path.join(tempfile.gettempdir(), "ONTEK_Setup.exe")
@@ -112,18 +118,23 @@ def first_run_copy():
     app_dir = get_app_dir()
     base_dir = sys._MEIPASS
     
-    # Проверяем, есть ли уже index.html в папке с EXE
+    # Если index.html уже есть в папке с EXE — не копируем (сохраняем обновления)
     if os.path.exists(os.path.join(app_dir, 'index.html')):
-        return  # Уже скопировано, не трогаем (чтобы не затереть обновления)
+        return
     
-    # Первый запуск — копируем всё
-    for f in ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']:
+    files = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']
+    folders = ['css', 'js']
+    
+    for f in files:
         src = os.path.join(base_dir, f)
         dst = os.path.join(app_dir, f)
         if os.path.exists(src):
-            shutil.copy2(src, dst)
+            try:
+                shutil.copy2(src, dst)
+            except:
+                pass
     
-    for folder in ['css', 'js']:
+    for folder in folders:
         src_folder = os.path.join(base_dir, folder)
         dst_folder = os.path.join(app_dir, folder)
         if os.path.exists(src_folder):
@@ -132,22 +143,33 @@ def first_run_copy():
                 sf = os.path.join(src_folder, f)
                 df = os.path.join(dst_folder, f)
                 if os.path.isfile(sf):
-                    shutil.copy2(sf, df)
+                    try:
+                        shutil.copy2(sf, df)
+                    except:
+                        pass
 
 def start_server(port, serve_dir):
+    """Запускает HTTP сервер"""
     os.chdir(serve_dir)
-    HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler).serve_forever()
+    server = HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler)
+    server.serve_forever()
 
 def main():
+    # Копируем файлы при первом запуске
     first_run_copy()
     
+    # Сервер всегда из папки с EXE
     serve_dir = get_app_dir()
     port = 8765
     
+    # Запускаем сервер в фоне
     threading.Thread(target=start_server, args=(port, serve_dir), daemon=True).start()
     time.sleep(0.5)
     
+    # Создаём API
     api = Api()
+    
+    # Создаём окно
     window = webview.create_window(
         title=APP_NAME,
         url=f'http://127.0.0.1:{port}/index.html',
@@ -157,6 +179,8 @@ def main():
         min_size=(900, 600)
     )
     api.set_window(window)
+    
+    # Запускаем
     webview.start(debug=False)
 
 if __name__ == '__main__':
