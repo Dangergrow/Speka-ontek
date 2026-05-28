@@ -10,7 +10,6 @@ let hotkeys={...defaultHotkeys};
 const keyLabels={addRow:'Добавить строку',delRow:'Удалить строку',addCol:'Добавить колонку',delCol:'Удалить колонку',recalc:'Пересчитать',paste:'Вставить',load:'Загрузить',newRUB:'Новая RUB',newUSD:'Новая USD',dup:'Дублировать',clear:'Очистить',undo:'Отменить',save:'Сохранить'};
 const themes=[{id:'blue',name:'Синяя',desc:'Классический',gradient:'linear-gradient(135deg,#3b82f6,#6366f1)',letter:'S'},{id:'green',name:'Зелёная',desc:'Природная',gradient:'linear-gradient(135deg,#10b981,#059669)',letter:'G'},{id:'purple',name:'Фиолетовая',desc:'Креативная',gradient:'linear-gradient(135deg,#8b5cf6,#7c3aed)',letter:'P'},{id:'orange',name:'Оранжевая',desc:'Тёплая',gradient:'linear-gradient(135deg,#f59e0b,#ea580c)',letter:'O'}];
 
-// ==================== УТИЛИТЫ ====================
 function toast(m,ok=true){const o=Q('.toast');if(o)o.remove();const d=document.createElement('div');d.className='toast '+(ok?'toast-ok':'toast-err');d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);}
 function active(){const ws=workspaces[activeWorkspace];if(actId===null&&ws.length)actId=ws[0].id;return ws.find(t=>t.id===actId)||null;}
 function setAct(id){actId=id;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('active',+c.dataset.tid===actId));}
@@ -27,33 +26,49 @@ function cA(r,c){let s='';while(c>0){c--;s=String.fromCharCode(65+(c%26))+s;c=Ma
 function ccl(n){const l=n.toLowerCase();if(l.includes('артикул'))return'col-article';if(l.includes('наименование'))return'col-name';if(l.includes('ко-во')||l.includes('количество'))return'col-qty';if(l.startsWith('цена'))return'col-price';if(l.startsWith('стоимость'))return'col-total';return'col-default';}
 function hkDisplay(key){if(!key)return'—';if(key==='DELETE')return'Del';return key;}
 
-// ==================== СОХРАНЕНИЕ ====================
-async function saveAll(){
+// Сохранение — вызывается при ЛЮБОМ изменении
+function saveNow(){
     const s={theme:theme,color:colorTheme,hotkeys:hotkeys,activeWorkspace:activeWorkspace};
     const json=JSON.stringify(s);
-    try{localStorage.setItem('ontek_settings',json);}catch(e){}
+    localStorage.setItem('ontek_settings',json);
     if(window.pywebview&&window.pywebview.api){
-        try{await window.pywebview.api.save_settings(json);}catch(e){}
+        window.pywebview.api.save_settings(json).then(r=>console.log('Сохранено:',r)).catch(e=>console.error(e));
     }
 }
-async function loadAll(){
+
+// Загрузка — вызывается при старте, ДОЛЖНА ДОЖДАТЬСЯ ответа от API
+async function loadSettings(){
+    // Ждём появления API (до 3 секунд)
+    for(let i=0;i<30;i++){
+        if(window.pywebview&&window.pywebview.api)break;
+        await new Promise(r=>setTimeout(r,100));
+    }
     if(window.pywebview&&window.pywebview.api){
         try{
             const json=await window.pywebview.api.load_settings();
             if(json&&json!=='{}'){
                 const s=JSON.parse(json);
-                theme=s.theme||'light';colorTheme=s.color||'blue';
+                if(s.theme)theme=s.theme;
+                if(s.color)colorTheme=s.color;
                 if(s.hotkeys)hotkeys=s.hotkeys;
                 if(s.activeWorkspace)activeWorkspace=s.activeWorkspace;
+                console.log('Настройки загружены из файла');
                 return;
             }
-        }catch(e){}
+        }catch(e){console.error('Ошибка загрузки:',e);}
     }
+    // Запасной вариант
     try{
         const s=JSON.parse(localStorage.getItem('ontek_settings'));
-        if(s){theme=s.theme||'light';colorTheme=s.color||'blue';if(s.hotkeys)hotkeys=s.hotkeys;if(s.activeWorkspace)activeWorkspace=s.activeWorkspace;}
+        if(s){
+            if(s.theme)theme=s.theme;
+            if(s.color)colorTheme=s.color;
+            if(s.hotkeys)hotkeys=s.hotkeys;
+            if(s.activeWorkspace)activeWorkspace=s.activeWorkspace;
+        }
     }catch(e){}
 }
+
 function updateAllHKDisplays(){document.querySelectorAll('.s-hotkey[data-hk]').forEach(el=>{const k=el.dataset.hk;if(hotkeys[k])el.textContent='Shift+'+hkDisplay(hotkeys[k]);});buildShortcuts();}
 
 function applyAllSettings(){
@@ -63,22 +78,18 @@ function applyAllSettings(){
     document.querySelectorAll('.workspace-tab').forEach(t=>t.classList.toggle('active',+t.dataset.ws===activeWorkspace));
     document.querySelectorAll('.workspace-panel').forEach(p=>p.classList.toggle('active',+p.dataset.ws===activeWorkspace));
     document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===colorTheme));
-    updateAllHKDisplays();saveAll();
+    updateAllHKDisplays();
 }
-function switchWorkspace(ws){activeWorkspace=ws;actId=null;applyAllSettings();}
-function toggleTheme(){theme=theme==='light'?'dark':'light';applyAllSettings();}
-function setColorTheme(t){colorTheme=t;applyAllSettings();}
+function switchWorkspace(ws){activeWorkspace=ws;actId=null;applyAllSettings();saveNow();}
+function toggleTheme(){theme=theme==='light'?'dark':'light';applyAllSettings();saveNow();}
+function setColorTheme(t){colorTheme=t;applyAllSettings();saveNow();}
 
-// ==================== КУРСЫ ВАЛЮТ ====================
 async function loadRates(){try{const r=await fetch('https://www.cbr-xml-daily.ru/daily_json.js',{cache:'no-cache'});const d=await r.json();const usd=d.Valute.USD.Value.toFixed(2),eur=d.Valute.EUR.Value.toFixed(2),usdUp=usd>d.Valute.USD.Previous,eurUp=eur>d.Valute.EUR.Previous;const rates=Q('#ratesBar');if(rates)rates.innerHTML=`💵 USD: <span class="${usdUp?'up':'down'}">${usd} ₽</span> &nbsp;💶 EUR: <span class="${eurUp?'up':'down'}">${eur} ₽</span>`;}catch(e){const rates=Q('#ratesBar');if(rates)rates.textContent='💵 USD: — ₽  💶 EUR: — ₽';}}
 
-// ==================== САЙДБАР ====================
 function buildSidebarV2(){const sb=Q('#sidebarV2');if(!sb)return;const s=[{t:'Строки и колонки',b:[{id:'btnAddRow',c:'sb-blue',i:'＋',x:'Добавить строку',h:'addRow'},{id:'btnDelRow',c:'sb-red',i:'－',x:'Удалить строку',h:'delRow'},{id:'btnAddCol',c:'sb-green',i:'＋',x:'Добавить колонку',h:'addCol'},{id:'btnDelCol',c:'sb-orange',i:'－',x:'Удалить колонку',h:'delCol'}]},{t:'Поиск',b:[{id:'btnFind',c:'sb-indigo',i:'🔍',x:'Найти',h:'find'}]},{t:'Действия',b:[{id:'btnPaste',c:'sb-orange',i:'📋',x:'Вставить',h:'paste'},{id:'btnDup',c:'sb-pink',i:'📑',x:'Дублировать',h:'dup'},{id:'btnNewRUB',c:'sb-purple',i:'🆕',x:'Новая RUB',h:'newRUB'},{id:'btnNewUSD',c:'sb-indigo',i:'🆕',x:'Новая USD',h:'newUSD'}]},{t:'Файл',b:[{id:'btnLoad',c:'sb-slate',i:'📂',x:'Открыть',h:'load'},{id:'btnSave',c:'sb-teal',i:'💾',x:'Сохранить',h:'save'},{id:'btnRecalc',c:'sb-teal',i:'🔄',x:'Пересчёт',h:'recalc'},{id:'btnClear',c:'sb-red',i:'🗑',x:'Очистить',h:'clear'},{id:'btnUndo',c:'sb-slate',i:'↩',x:'Отменить',h:'undo'}]}];sb.innerHTML=s.map(x=>`<div class="sidebar-section"><div class="sidebar-section-title">${x.t}</div>${x.b.map(b=>`<button class="sidebar-btn ${b.c}" id="${b.id}"><span class="s-icon">${b.i}</span> ${b.x} <span class="s-hotkey" data-hk="${b.h}">Shift+${hkDisplay(hotkeys[b.h])}</span></button>`).join('')}</div>`).join('');}
 
-// ==================== РАБОЧИЕ ОКНА ====================
 function buildWorkspaces(){const tabs=Q('#workspaceTabs'),container=Q('#workspaceContainer');tabs.innerHTML='';container.innerHTML='';for(let i=1;i<=5;i++){tabs.innerHTML+=`<div class="workspace-tab${i===activeWorkspace?' active':''}" data-ws="${i}" onclick="switchWorkspace(${i})">Окно ${i}</div>`;container.innerHTML+=`<div class="workspace-panel${i===activeWorkspace?' active':''}" data-ws="${i}"><div class="tables-area" id="workspaceArea_${i}"><div class="empty">Создайте таблицу — <b>Shift+1</b> RUB или <b>Shift+2</b> USD</div></div></div>`;}}
 
-// ==================== ТАБЛИЦЫ ====================
 function addTable(cur='RUB'){const ws=workspaces[activeWorkspace];upEmpty();idC++;const td={id:idC,cols:[...DC],rows:[['','','','','']],currency:cur,el:null,card:null};ws.push(td);const a=getArea();const card=buildCardDOM(td);a.appendChild(card);td.card=card;setAct(td.id);render(td);toast(`Таблица ${cur} создана`);}
 function dupTable(src){if(!src)src=active();if(!src)return;const ws=workspaces[activeWorkspace];idC++;const td={id:idC,cols:[...src.cols],rows:src.rows.map(r=>[...r]),currency:src.currency,el:null,card:null};ws.push(td);const a=getArea();const card=buildCardDOM(td);a.appendChild(card);td.card=card;render(td);toast('Дублирована');}
 
@@ -100,37 +111,30 @@ function renameCol(td,idx){const old=td.cols[idx];const n=prompt('Новое н�
 function addColEnd(td){const n=prompt('Название:','Новая колонка');if(!n||!n.trim())return;hist.push({a:'addCol',tid:td.id});td.cols.push(n.trim());td.rows.forEach(r=>r.push(''));render(td);}
 function delColEnd(td){if(td.cols.length<=2)return toast('Минимум 2 колонки!',0);hist.push({a:'delColEnd',tid:td.id,d:{i:td.cols.length-1,n:td.cols[td.cols.length-1],c:td.rows.map(r=>r[td.cols.length-1])}});td.cols.pop();td.rows.forEach(r=>r.pop());render(td);}
 
-// ==================== ОТМЕНА ====================
 function undo(){if(!hist.length)return toast('Нечего отменять',false);const l=hist.pop();const td=workspaces[activeWorkspace].find(t=>t.id===l.tid);if(!td)return toast('Таблица не найдена',false);switch(l.a){case'editCell':td.rows[l.d.ri][l.d.ci]=l.d.old;render(td);toast('Отменено: ввод');break;case'delRow':td.rows.splice(l.d.i,0,l.d.r);render(td);toast('Отменено: строка возвращена');break;case'delRowEnd':td.rows.splice(l.d.i,0,l.d.r);render(td);toast('Отменено: строка возвращена');break;case'addRow':case'insRow':if(td.rows.length>1){td.rows.pop();render(td);toast('Отменено: строка удалена');}break;case'delCol':td.cols.splice(l.d.i,0,l.d.n);td.rows.forEach(r=>r.splice(l.d.i,0,l.d.c));render(td);toast('Отменено: колонка возвращена');break;case'delColEnd':td.cols.splice(l.d.i,0,l.d.n);td.rows.forEach(r=>r.splice(l.d.i,0,l.d.c));render(td);toast('Отменено: колонка возвращена');break;case'addCol':if(td.cols.length>2){td.cols.pop();td.rows.forEach(r=>r.pop());render(td);toast('Отменено: колонка удалена');}break;case'insCol':td.cols.splice(l.d.i,1);td.rows.forEach(r=>r.splice(l.d.i,1));render(td);toast('Отменено: колонка удалена');break;case'paste':td.rows.splice(l.d.si,l.d.count);render(td);toast(`Отменено: ${l.d.count} стр.`);break;}}
 
-// ==================== БУФЕР ====================
 function parseCB(text){if(!text||!text.trim())return[];return text.trim().split(/\r?\n/).map(l=>l.includes('\t')?l.split('\t'):l.split('|')?l.split('|').map(c=>c.trim()).filter(c=>c):l.split(/\s{2,}/)).filter(r=>r.some(c=>c.trim()));}
 function paste(){const td=active();if(!td)return toast('Выберите таблицу!',0);navigator.clipboard.readText().then(text=>{const p=parseCB(text);if(!p.length)return toast('Нет данных',0);const si=td.rows.length;p.forEach(r=>{const nr=[];for(let i=0;i<td.cols.length;i++){let v=r[i]??'';const cn=td.cols[i].toLowerCase();if(cn.includes('ко-во')||cn.includes('количество')||cn.startsWith('цена')){const n=pn(v);if(!isNaN(n))v=n.toFixed(2);}nr.push(v);}td.rows.push(nr);calc(nr,td.cols);});hist.push({a:'paste',tid:td.id,d:{si:si,count:p.length}});render(td);toast(`Вставлено строк: ${p.length}`);}).catch(()=>{const m=prompt('Вставьте:','');if(m){const p=parseCB(m);const si=td.rows.length;p.forEach(r=>{const nr=[];for(let i=0;i<td.cols.length;i++){let v=r[i]??'';const cn=td.cols[i].toLowerCase();if(cn.includes('ко-во')||cn.includes('количество')||cn.startsWith('цена')){const n=pn(v);if(!isNaN(n))v=n.toFixed(2);}nr.push(v);}td.rows.push(nr);calc(nr,td.cols);});hist.push({a:'paste',tid:td.id,d:{si:si,count:p.length}});render(td);}});}
 
-// ==================== ПОИСК ====================
 function findInTable(){const td=active();if(!td)return toast('Выберите таблицу!',0);const q=prompt('Что искать:','');if(!q||!q.trim())return;const res=[];td.rows.forEach((r,ri)=>{r.forEach((v,ci)=>{if(String(v??'').toLowerCase().includes(q.toLowerCase()))res.push({ri,ci});});});if(!res.length)return toast('Ничего не найдено',false);toast(`Найдено: ${res.length}`);let idx=0;hlRes(td,res[idx]);window._nr=()=>{idx=(idx+1)%res.length;hlRes(td,res[idx]);};}
 function hlRes(td,res){const rows=td.el.querySelectorAll('tbody tr:not(.tot)');if(res.ri<rows.length){const tds=rows[res.ri].querySelectorAll('td:not(.rn):not(.act-cell)');if(res.ci<tds.length){const inp=tds[res.ci].querySelector('input');if(inp){inp.focus();inp.select();rows[res.ri].classList.add('sel');}}}}
 
-// ==================== ОБНОВЛЕНИЕ ====================
 async function checkUpdate(){toast('Проверка обновлений...');try{const r=await fetch('https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/version.json',{cache:'no-cache'});const d=await r.json();if(d.version>'4.5.0'){if(confirm(`🆕 Версия ${d.version}!\n\n${d.notes||''}\n\nОбновить?`)){if(window.pywebview&&window.pywebview.api){const result=JSON.parse(await window.pywebview.api.apply_update());if(result.success){toast('✅ Обновлено!');setTimeout(()=>location.reload(),1500);}else toast('Ошибка',false);}}}else toast('✅ Последняя версия');}catch(e){toast('Ошибка проверки',false);}}
 
-// ==================== EXCEL ====================
 function save(){const ws=workspaces[activeWorkspace];if(!ws.length)return toast('Нет таблиц!',0);const wb=new ExcelJS.Workbook();const wsheet=wb.addWorksheet('Заказы');let cr=1;const mc=Math.max(...ws.map(t=>t.cols.length),5);wsheet.columns=[{width:6},...Array(mc).fill({width:24})];ws.forEach(td=>{const ni=ci(td.cols,'Наименование');if(ni>=0)wsheet.getColumn(ni+2).width=88;const qi=getQi(td.cols);if(qi>=0)wsheet.getColumn(qi+2).width=18;const pi=ci(td.cols,'Цена');if(pi>=0)wsheet.getColumn(pi+2).width=22;const toti=ci(td.cols,'Стоимость');if(toti>=0)wsheet.getColumn(toti+2).width=22;});ws.forEach(td=>{const tc=td.cols.length,qi=getQi(td.cols),pi=ci(td.cols,'Цена'),toti=ci(td.cols,'Стоимость'),ni=ci(td.cols,'Наименование');const hr=wsheet.getRow(cr);hr.getCell(1).value='№';hr.getCell(1).font={bold:true,size:12,color:{argb:'FFCBD5E1'},name:'Calibri'};hr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF64748B'}};hdrs(td.cols,td.currency).forEach((h,ci)=>{const c=hr.getCell(ci+2);c.value=h;c.font={bold:true,size:12,color:{argb:'FFFFFFFF'},name:'Calibri'};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF64748B'}};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border={top:{style:'thin',color:{argb:'FF475569'}},bottom:{style:'thin',color:{argb:'FF475569'}},left:{style:'thin',color:{argb:'FF475569'}},right:{style:'thin',color:{argb:'FF475569'}}};});hr.height=28;cr++;const fdr=cr;for(let r=0;r<td.rows.length;r++){const row=wsheet.getRow(cr),bg=r%2===0?'FFEFF6FF':'FFDBEAFE';row.getCell(1).value=r+1;row.getCell(1).font={size:9,color:{argb:'FF94A3B8'},name:'Calibri'};row.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF1F5F9'}};for(let c=0;c<tc;c++){const cell=row.getCell(c+2);if(c===toti)cell.value={formula:`${cA(cr,qi+2)}*${cA(cr,pi+2)}`,result:pn(td.rows[r][c])||0};else if(c===qi||c===pi){const v=pn(td.rows[r][c]);cell.value=isNaN(v)?td.rows[r][c]:v;}else cell.value=td.rows[r][c]??'';if(c===toti||c===qi||c===pi)cell.numFmt='#,##0.00';cell.font={size:11,color:{argb:'FF1E293B'},name:'Calibri'};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:bg}};cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};cell.border={top:{style:'thin',color:{argb:'FFBFDBFE'}},bottom:{style:'thin',color:{argb:'FFBFDBFE'}},left:{style:'thin',color:{argb:'FFBFDBFE'}},right:{style:'thin',color:{argb:'FFBFDBFE'}}};if(c===ni)cell.alignment.horizontal='left';if(c===qi||c===pi||c===toti)cell.alignment.horizontal='right';}cr++;}const ldr=cr-1,totr=wsheet.getRow(cr);totr.getCell(1).value='';totr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2E8F0'}};for(let c=0;c<tc;c++){const cell=totr.getCell(c+2);if(c===(toti>=0?toti-1:tc-2))cell.value='Итого';else if(c===toti)cell.value={formula:`SUM(${cA(fdr,toti+2)}:${cA(ldr,toti+2)})`,result:sumT(td)};if(c===toti)cell.numFmt='#,##0.00';cell.font={bold:true,size:12,name:'Calibri'};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2E8F0'}};cell.alignment={horizontal:'right',vertical:'middle',wrapText:true};cell.border={top:{style:'medium',color:{argb:'FF64748B'}},bottom:{style:'medium',color:{argb:'FF64748B'}},left:{style:'thin',color:{argb:'FFBFDBFE'}},right:{style:'thin',color:{argb:'FFBFDBFE'}}};}totr.height=28;cr++;});wb.xlsx.writeBuffer().then(buf=>{const fn=`Заказы_ONTEK_${new Date().toISOString().slice(0,10)}.xlsx`;if(window.pywebview&&window.pywebview.api){const b64=btoa(String.fromCharCode(...new Uint8Array(buf)));window.pywebview.api.save_file(b64,fn).then(r=>{const j=JSON.parse(r);if(j.success)toast('✅ Сохранено!');else toast('Отменено',false);});}else{const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('✅ Сохранено!');}}).catch(e=>{toast('Ошибка сохранения',false);});}
 function load(file){const r=new FileReader();r.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});processWB(wb);}catch(er){toast('Ошибка',0);if(!workspaces[activeWorkspace].length)addTable('USD');}};r.readAsArrayBuffer(file);}
 async function loadViaDialog(){if(window.pywebview&&window.pywebview.api){const r=JSON.parse(await window.pywebview.api.load_file());if(r.success){const bs=atob(r.data);const bytes=new Uint8Array(bs.length);for(let i=0;i<bs.length;i++)bytes[i]=bs.charCodeAt(i);processWB(XLSX.read(bytes,{type:'array'}));}}else Q('#fileInput').click();}
 function processWB(wb){const a=getArea();a.innerHTML='';const ws=workspaces[activeWorkspace];ws.length=0;idC=0;actId=null;wb.SheetNames.forEach(n=>{const raw=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});if(!raw.length)return;let cur=null,ec=0;for(let i=0;i<raw.length;i++){const row=raw[i],emp=!row||row.every(c=>String(c??'').trim()==='');if(emp){ec++;if(ec>=2&&cur&&cur.rows.length){fin(cur);cur=null;}continue;}ec=0;const f=String(row[0]||'').trim();if(f.toLowerCase()==='итого'){if(cur&&cur.rows.length){fin(cur);cur=null;}continue;}if(row.some(c=>['артикул','наименование','ко-во','количество','цена','стоимость'].some(k=>String(c||'').toLowerCase().includes(k)))){if(cur&&cur.rows.length)fin(cur);const hd=row.map(c=>String(c||'').trim().replace(/,?\s*(USD|RUB)\s*с НДС/i,''));let det=row.join(' ').includes('USD')?'USD':'RUB';cur={cols:hd.filter(h=>h),rows:[],currency:det};if(!cur.cols.length)cur.cols=[...DC];continue;}if(!cur)cur={cols:[...DC],rows:[],currency:'RUB'};const dr=row.map(c=>{const v=String(c??'').trim();const num=pn(v);return!isNaN(num)?parseFloat(num.toFixed(2)):v;});while(dr.length<cur.cols.length)dr.push('');cur.rows.push(dr.slice(0,cur.cols.length));}if(cur&&cur.rows.length)fin(cur);function fin(c){if(!c.cols.length)c.cols=[...DC];if(!c.rows.length)c.rows=[Array(c.cols.length).fill('')];idC++;ws.push({id:idC,cols:c.cols,rows:c.rows,currency:c.currency,el:null,card:null});}});ws.forEach(td=>{const card=buildCardDOM(td);a.appendChild(card);td.card=card;render(td);});upEmpty();if(!ws.length)addTable('USD');else{setAct(ws[0].id);toast(`Загружено: ${ws.length} табл.`);}}
 
-// ==================== ГОРЯЧИЕ КЛАВИШИ ====================
 function findHotkeyConflict(key,excludeHk){for(const[k,v]of Object.entries(hotkeys)){if(k!==excludeHk&&v===key)return k;}return null;}
 function renderHotkeyList(){const container=Q('#hotkeyList');if(!container)return;container.innerHTML=Object.keys(defaultHotkeys).map(k=>{const key=hotkeys[k]||'';return`<div class="hotkey-row"><span class="hk-label">${keyLabels[k]||k}</span><span class="hk-current${!key?' conflict':''}" data-hk="${k}">${key?'Shift+'+hkDisplay(key):'—'}</span></div>`;}).join('');container.querySelectorAll('.hk-current').forEach(el=>{el.onclick=()=>startRecording(el);});}
-function startRecording(el){if(recordingKey){recordingKey.classList.remove('recording','conflict');}recordingKey=el;recordingHk=el.dataset.hk;el.classList.add('recording');el.textContent='...';const handler=e=>{e.preventDefault();e.stopPropagation();let key=e.key.toUpperCase();if(key==='DELETE'||key==='DEL')key='DELETE';if(key==='CONTROL'||key==='SHIFT'||key==='ALT')return;const conflict=findHotkeyConflict(key,recordingHk);if(conflict&&conflict!==recordingHk){if(!confirm(`Клавиша «Shift+${hkDisplay(key)}» уже назначена на «${keyLabels[conflict]}».\n\nПереназначить?`)){el.textContent=hotkeys[recordingHk]?'Shift+'+hkDisplay(hotkeys[recordingHk]):'—';el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;document.removeEventListener('keydown',handler);return;}hotkeys[conflict]='';}hotkeys[recordingHk]=key;el.textContent='Shift+'+hkDisplay(key);el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;saveAll();updateAllHKDisplays();renderHotkeyList();document.removeEventListener('keydown',handler);toast(`«${keyLabels[recordingHk]}» → Shift+${hkDisplay(key)}`);};document.addEventListener('keydown',handler);}
+function startRecording(el){if(recordingKey){recordingKey.classList.remove('recording','conflict');}recordingKey=el;recordingHk=el.dataset.hk;el.classList.add('recording');el.textContent='...';const handler=e=>{e.preventDefault();e.stopPropagation();let key=e.key.toUpperCase();if(key==='DELETE'||key==='DEL')key='DELETE';if(key==='CONTROL'||key==='SHIFT'||key==='ALT')return;const conflict=findHotkeyConflict(key,recordingHk);if(conflict&&conflict!==recordingHk){if(!confirm(`Клавиша «Shift+${hkDisplay(key)}» уже назначена на «${keyLabels[conflict]}».\n\nПереназначить?`)){el.textContent=hotkeys[recordingHk]?'Shift+'+hkDisplay(hotkeys[recordingHk]):'—';el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;document.removeEventListener('keydown',handler);return;}hotkeys[conflict]='';}hotkeys[recordingHk]=key;el.textContent='Shift+'+hkDisplay(key);el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;saveNow();updateAllHKDisplays();renderHotkeyList();document.removeEventListener('keydown',handler);toast(`«${keyLabels[recordingHk]}» → Shift+${hkDisplay(key)}`);};document.addEventListener('keydown',handler);}
 function renderThemeOptions(containerId){const container=document.getElementById(containerId||'themeOptions');if(!container)return;container.innerHTML=themes.map(t=>`<div class="theme-card${t.id===colorTheme?' active':''}" data-theme="${t.id}"><div class="theme-preview" style="background:${t.gradient}">${t.letter}</div><div class="theme-name">${t.name}</div><div class="theme-desc">${t.desc}</div></div>`).join('');container.querySelectorAll('.theme-card').forEach(c=>c.onclick=()=>setColorTheme(c.dataset.theme));}
 function toggleSection(toggleId,sectionId){const toggle=document.getElementById(toggleId);const section=document.getElementById(sectionId);if(!toggle||!section)return;toggle.classList.toggle('open');section.classList.toggle('open');}
 function hideCtx(){Q('#ctxMenu').style.display='none';}
 Q('#ctxMenu').addEventListener('click',e=>{const item=e.target.closest('.ctx-item');if(!item)return;const a=item.dataset.action;hideCtx();const td=active();if(!td&&!['paste','dupTable'].includes(a))return;if(td)setAct(td.id);switch(a){case'addRowAbove':if(td&&ctxD.r!==null)insRowAbove(td,ctxD.r);break;case'addRowBelow':if(td&&ctxD.r!==null)insRowBelow(td,ctxD.r);break;case'delRow':if(td&&ctxD.r!==null)delRow(td,ctxD.r);break;case'renameCol':if(td&&ctxD.c!==null)renameCol(td,ctxD.c);break;case'addColBefore':if(td&&ctxD.c!==null)insCol(td,ctxD.c);break;case'addColAfter':if(td&&ctxD.c!==null)insCol(td,ctxD.c+1);break;case'delCol':if(td&&ctxD.c!==null)delCol(td,ctxD.c);break;case'paste':paste();break;case'dupTable':if(td)dupTable(td);else dupTable();break;case'delTable':if(td&&workspaces[activeWorkspace].length>1){td.card.remove();const ws=workspaces[activeWorkspace];ws.splice(ws.indexOf(td),1);if(actId===td.id)actId=ws.length?ws[0].id:null;upEmpty();}break;}});
 document.addEventListener('click',e=>{if(!Q('#ctxMenu').contains(e.target))hideCtx();});
 
-// ==================== ГЛОБАЛЬНЫЕ ХОТКЕИ ====================
 function handleGlobalHotkeys(e){
     if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}
     if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='f'){e.preventDefault();findInTable();return;}
@@ -148,28 +152,22 @@ function handleGlobalHotkeys(e){
 function gPaste(e){const td=active();if(!td)return;if(e)e.preventDefault();navigator.clipboard.readText().then(text=>{const p=parseCB(text);if(!p.length)return toast('Нет данных',0);p.forEach(r=>{const nr=[];for(let i=0;i<td.cols.length;i++){let v=r[i]??'';const cn=td.cols[i].toLowerCase();if(cn.includes('ко-во')||cn.includes('количество')||cn.startsWith('цена')){const n=pn(v);if(!isNaN(n))v=n.toFixed(2);}nr.push(v);}td.rows.push(nr);calc(nr,td.cols);});render(td);toast(`Вставлено строк: ${p.length}`);}).catch(()=>{});}
 function handleGlobalPaste(e){if(e.target.closest('input'))return;e.preventDefault();gPaste(e);}
 
-// ==================== ПОДСКАЗКИ ====================
 function buildShortcuts(){const bar=Q('#shortcutsBar');if(!bar)return;bar.innerHTML='<span><kbd>Shift+'+hkDisplay(hotkeys.addRow)+'</kbd> Строка</span> <span><kbd>Shift+'+hkDisplay(hotkeys.undo)+'</kbd> Отмена</span> <span><kbd>Shift+'+hkDisplay(hotkeys.save)+'</kbd> Сохранить</span> <span><kbd>Ctrl+Z</kbd> Отмена</span> <span><kbd>Ctrl+F</kbd> Поиск</span> <span><kbd>ПКМ</kbd> Меню</span>';}
 
-// ==================== ПРИВЯЗКА СОБЫТИЙ ====================
 function bindAllEvents(){
     document.getElementById('btnTheme').onclick=toggleTheme;
     document.getElementById('btnUpdate').onclick=checkUpdate;
     document.getElementById('fileInput').onchange=e=>{if(e.target.files[0]){load(e.target.files[0]);e.target.value='';}};
-    document.getElementById('btnSettings').onclick=function(){
-        document.getElementById('settingsModal').classList.add('show');
-        renderHotkeyList();
-        renderThemeOptions('themeOptionsSettings');
-    };
-    document.getElementById('btnCloseSettings').onclick=function(){document.getElementById('settingsModal').classList.remove('show');};
+    document.getElementById('btnSettings').onclick=()=>{document.getElementById('settingsModal').classList.add('show');renderHotkeyList();renderThemeOptions('themeOptionsSettings');};
+    document.getElementById('btnCloseSettings').onclick=()=>document.getElementById('settingsModal').classList.remove('show');
     document.getElementById('settingsModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
-    document.getElementById('hkToggle').onclick=function(){toggleSection('hkToggle','hkSection');};
-    document.getElementById('themeToggle').onclick=function(){toggleSection('themeToggle','themeSection');renderThemeOptions('themeOptionsSettings');};
-    document.getElementById('backupToggle').onclick=function(){toggleSection('backupToggle','backupSection');};
-    document.getElementById('aboutToggle').onclick=function(){toggleSection('aboutToggle','aboutSection');};
-    document.getElementById('btnResetHotkeys').onclick=function(){hotkeys={...defaultHotkeys};saveAll();updateAllHKDisplays();renderHotkeyList();toast('Сброшено');};
-    document.getElementById('btnColorTheme').onclick=function(){document.getElementById('colorThemeModal').classList.add('show');renderThemeOptions('colorThemeOptions');};
-    document.getElementById('btnCloseColorTheme').onclick=function(){document.getElementById('colorThemeModal').classList.remove('show');};
+    document.getElementById('hkToggle').onclick=()=>toggleSection('hkToggle','hkSection');
+    document.getElementById('themeToggle').onclick=()=>{toggleSection('themeToggle','themeSection');renderThemeOptions('themeOptionsSettings');};
+    document.getElementById('backupToggle').onclick=()=>toggleSection('backupToggle','backupSection');
+    document.getElementById('aboutToggle').onclick=()=>toggleSection('aboutToggle','aboutSection');
+    document.getElementById('btnResetHotkeys').onclick=()=>{hotkeys={...defaultHotkeys};saveNow();updateAllHKDisplays();renderHotkeyList();toast('Сброшено');};
+    document.getElementById('btnColorTheme').onclick=()=>{document.getElementById('colorThemeModal').classList.add('show');renderThemeOptions('colorThemeOptions');};
+    document.getElementById('btnCloseColorTheme').onclick=()=>document.getElementById('colorThemeModal').classList.remove('show');
     document.getElementById('colorThemeModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
     const bv=(id,fn)=>{const el=document.getElementById(id);if(el)el.onclick=fn;};
     bv('btnAddRow',()=>{const t=active();t?addRowEnd(t):toast('Выберите таблицу!',0);});bv('btnDelRow',()=>{const t=active();t?delRowEnd(t):toast('Выберите таблицу!',0);});
