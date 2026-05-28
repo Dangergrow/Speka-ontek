@@ -52,7 +52,7 @@ def install_files(source_dir, target_dir, progress_callback=None):
     if progress_callback: progress_callback(100)
 
 def create_shortcut(target_dir):
-    """Создать ярлык через Python (без VBS/PowerShell)"""
+    """Создать ярлык через Python"""
     try:
         desktop = os.path.join(os.path.expanduser("~"), "Desktop")
         shortcut_path = os.path.join(desktop, f"{SHORTCUT_NAME}.lnk")
@@ -75,37 +75,30 @@ def create_shortcut(target_dir):
             shortcut = shell.CreateShortCut(shortcut_path)
             shortcut.Targetpath = exe_path
             shortcut.WorkingDirectory = target_dir
-            if os.path.exists(icon_path):
-                shortcut.IconLocation = icon_path
+            shortcut.IconLocation = icon_path if os.path.exists(icon_path) else exe_path + ",0"
             shortcut.Save()
             pythoncom.CoUninitialize()
-            if os.path.exists(shortcut_path):
-                return True
-        except Exception as e:
-            print(f"win32com не сработал: {e}")
+            return os.path.exists(shortcut_path)
+        except:
+            pass
         
-        # Способ 2: PowerShell с коротким путём
+        # Способ 2: PowerShell с двойными кавычками
         try:
-            import ctypes
-            # Получаем короткий путь (8.3)
-            buf = ctypes.create_unicode_buffer(260)
-            ctypes.windll.kernel32.GetShortPathNameW(exe_path, buf, 260)
-            short_exe = buf.value
-            
-            ps = f'$WshShell = New-Object -ComObject WScript.Shell; $s = $WshShell.CreateShortcut("{shortcut_path}"); $s.TargetPath = "{short_exe}"; $s.WorkingDirectory = "{target_dir}"; $s.Save()'
-            
+            ps = f'''$WshShell = New-Object -ComObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut("{shortcut_path}")
+$Shortcut.TargetPath = "{exe_path}"
+$Shortcut.WorkingDirectory = "{target_dir}"
+$Shortcut.IconLocation = "{icon_path}"
+$Shortcut.Save()
+Write-Host "OK"'''
             ps_file = os.path.join(tempfile.gettempdir(), 'mk_shortcut.ps1')
             with open(ps_file, 'w', encoding='utf-8') as f:
                 f.write(ps)
-            
-            subprocess.run(['powershell', '-ExecutionPolicy', 'Bypass', '-File', ps_file], capture_output=True, shell=True, timeout=10)
-            
+            result = subprocess.run(['powershell', '-ExecutionPolicy', 'Bypass', '-File', ps_file], capture_output=True, text=True, shell=True, timeout=10)
             try: os.remove(ps_file)
             except: pass
-            
             return os.path.exists(shortcut_path)
-        except Exception as e:
-            print(f"PowerShell не сработал: {e}")
+        except:
             return False
             
     except Exception as e:
@@ -121,17 +114,18 @@ class Installer:
     def __init__(self):
         self.root = Tk()
         self.root.title(f"Установка {APP_NAME}")
-        self.root.geometry("560x480")
+        self.root.geometry("560x520")
         self.root.resizable(False, False)
         self.root.configure(bg='#f8fafc')
         self.root.update_idletasks()
-        w=560;h=480
+        w=560;h=520
         x=(self.root.winfo_screenwidth()//2)-(w//2)
         y=(self.root.winfo_screenheight()//2)-(h//2)
         self.root.geometry(f'{w}x{h}+{x}+{y}')
         self.install_path = StringVar(value=DEFAULT_PATH)
         self.create_desktop = BooleanVar(value=True)
         self.exe_path = None
+        self.install_done_flag = False
         self.setup_ui()
     
     def setup_ui(self):
@@ -141,9 +135,13 @@ class Installer:
         Label(header, text=f"Установка {APP_NAME}", font=('Segoe UI', 22, 'bold'), fg='white', bg='#1e40af').pack(pady=(22,5))
         Label(header, text=f"Версия {APP_VERSION}", font=('Segoe UI', 12), fg='#93c5fd', bg='#1e40af').pack()
         
+        # Контейнер для всего
+        self.main_frame = Frame(self.root, bg='#f8fafc')
+        self.main_frame.pack(fill='both', expand=True)
+        
         # Тело
-        body = Frame(self.root, bg='#f8fafc', padx=30, pady=25)
-        body.pack(fill='both', expand=True)
+        body = Frame(self.main_frame, bg='#f8fafc', padx=30, pady=25)
+        body.pack(fill='x')
         
         Label(body, text="Папка установки:", font=('Segoe UI', 12, 'bold'), bg='#f8fafc', anchor='w').pack(fill='x')
         pf = Frame(body, bg='#f8fafc')
@@ -153,15 +151,18 @@ class Installer:
         
         Checkbutton(body, text="Создать ярлык на рабочем столе", variable=self.create_desktop, font=('Segoe UI', 12), bg='#f8fafc', activebackground='#f8fafc', cursor='hand2').pack(anchor='w', pady=12)
         
-        Frame(body, bg='#e2e8f0', height=1).pack(fill='x', pady=20)
-        
-        # Прогресс (скрыт)
+        # Прогресс
         self.progress = Progressbar(body, mode='determinate', length=500)
         self.status_label = Label(body, text="", font=('Segoe UI', 10), bg='#f8fafc', fg='#64748b')
         
         # Кнопка Установить
-        self.install_btn = Button(body, text="Установить", command=self.start_install, font=('Segoe UI', 14, 'bold'), bg='#1e40af', fg='white', bd=0, padx=50, pady=12, cursor='hand2', activebackground='#1e3a8a', activeforeground='white')
+        self.install_btn = Button(body, text="Установить", command=self.start_install, font=('Segoe UI', 14, 'bold'), bg='#1e40af', fg='white', bd=0, padx=50, pady=12, cursor='hand2')
         self.install_btn.pack(pady=15)
+        
+        # Результат (скрыт)
+        self.result_frame = Frame(self.main_frame, bg='#f8fafc')
+        self.launch_btn = None
+        self.done_btn = None
     
     def browse(self):
         path = filedialog.askdirectory(title="Выберите папку для установки", initialdir=self.install_path.get())
@@ -198,10 +199,9 @@ class Installer:
                     self.root.after(0, lambda: self.status_label.config(text="Создание ярлыка..."))
                     shortcut_ok = create_shortcut(target)
                 
-                self.root.after(0, lambda: self.status_label.config(text="Сохранение конфигурации..."))
                 write_config(target)
                 
-                self.root.after(0, lambda: self.install_done(shortcut_ok))
+                self.root.after(0, lambda: self.show_done(shortcut_ok))
             except Exception as e:
                 self.root.after(0, lambda: messagebox.showerror("Ошибка", str(e)))
         
@@ -210,30 +210,31 @@ class Installer:
     def update_progress(self, value):
         self.progress['value'] = value
     
-    def install_done(self, shortcut_ok=False):
+    def show_done(self, shortcut_ok=False):
         self.progress.pack_forget()
         self.status_label.pack_forget()
         
-        # Заголовок результат
-        result_frame = Frame(self.root, bg='#f8fafc')
-        result_frame.pack(pady=10)
+        self.result_frame.pack(pady=15, fill='x')
         
-        Label(result_frame, text="✅ Установка завершена!", font=('Segoe UI', 16, 'bold'), bg='#f8fafc', fg='#10b981').pack(pady=5)
-        Label(result_frame, text=f"Папка:\n{self.install_path.get()}", font=('Segoe UI', 11), bg='#f8fafc', fg='#64748b', justify='center').pack(pady=5)
+        # Очищаем
+        for w in self.result_frame.winfo_children():
+            w.destroy()
+        
+        Label(self.result_frame, text="✅ Установка завершена!", font=('Segoe UI', 16, 'bold'), bg='#f8fafc', fg='#10b981').pack(pady=5)
+        Label(self.result_frame, text=f"Папка:\n{self.install_path.get()}", font=('Segoe UI', 11), bg='#f8fafc', fg='#64748b', justify='center').pack(pady=5)
         
         if shortcut_ok:
-            Label(result_frame, text="Ярлык создан на рабочем столе", font=('Segoe UI', 11), bg='#f8fafc', fg='#10b981').pack()
+            Label(self.result_frame, text="Ярлык создан на рабочем столе", font=('Segoe UI', 11), bg='#f8fafc', fg='#10b981').pack()
         else:
-            Label(result_frame, text="⚠ Ярлык не создан (запустите из папки установки)", font=('Segoe UI', 11), bg='#f8fafc', fg='#f59e0b').pack()
+            Label(self.result_frame, text="⚠ Ярлык не создан", font=('Segoe UI', 11), bg='#f8fafc', fg='#f59e0b').pack()
         
-        # Кнопки
-        btn_frame = Frame(self.root, bg='#f8fafc')
+        btn_frame = Frame(self.result_frame, bg='#f8fafc')
         btn_frame.pack(pady=15)
         
         if self.exe_path and os.path.exists(self.exe_path):
-            Button(btn_frame, text="🚀 Запустить ONTEK", command=self.launch_and_close, font=('Segoe UI', 13, 'bold'), bg='#10b981', fg='white', bd=0, padx=30, pady=12, cursor='hand2', activebackground='#059669', activeforeground='white').pack(side='left', padx=8)
+            Button(btn_frame, text="🚀 Запустить ONTEK", command=self.launch_and_close, font=('Segoe UI', 13, 'bold'), bg='#10b981', fg='white', bd=0, padx=30, pady=12, cursor='hand2').pack(side='left', padx=8)
         
-        Button(btn_frame, text="Готово", command=self.root.destroy, font=('Segoe UI', 13, 'bold'), bg='#475569', fg='white', bd=0, padx=30, pady=12, cursor='hand2', activebackground='#334155', activeforeground='white').pack(side='left', padx=8)
+        Button(btn_frame, text="Готово", command=self.root.destroy, font=('Segoe UI', 13, 'bold'), bg='#475569', fg='white', bd=0, padx=30, pady=12, cursor='hand2').pack(side='left', padx=8)
     
     def launch_and_close(self):
         if self.exe_path and os.path.exists(self.exe_path):
