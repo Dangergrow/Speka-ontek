@@ -109,3 +109,22 @@ td.act-cell{min-width:44px;width:44px;padding:2px 3px!important;background:var(-
 /* Цвет input при тёмной теме */
 .dark tbody td input{color:#e2e8f0}
 .dark tbody td input:focus{color:#1e293b}
+/* Курсы валют */
+.rates{font-size:11px;color:var(--text2);margin-top:1px;display:flex;gap:14px}
+.rates span{font-weight:600;color:var(--text)}
+.rates .up{color:#10b981}.rates .down{color:#ef4444}
+
+/* Фикс фона таблицы при цветовых темах */
+.theme-green .card,.theme-green tbody td{background:#f0fdf4!important}
+.theme-green tbody tr:nth-child(even) td{background:#d1fae5!important}
+.theme-purple .card,.theme-purple tbody td{background:#faf5ff!important}
+.theme-purple tbody tr:nth-child(even) td{background:#ede9fe!important}
+.theme-orange .card,.theme-orange tbody td{background:#fff7ed!important}
+.theme-orange tbody tr:nth-child(even) td{background:#fed7aa!important}
+
+.dark.theme-green .card,.dark.theme-green tbody td{background:#0a1f14!important}
+.dark.theme-green tbody tr:nth-child(even) td{background:#064e3b!important}
+.dark.theme-purple .card,.dark.theme-purple tbody td{background:#1a0f2e!important}
+.dark.theme-purple tbody tr:nth-child(even) td{background:#3b0764!important}
+.dark.theme-orange .card,.dark.theme-orange tbody td{background:#1c0f02!important}
+.dark.theme-orange tbody tr:nth-child(even) td{background:#78350f!important}
