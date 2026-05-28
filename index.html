@@ -26,6 +26,7 @@
         .theme-blue {--accent:#3b82f6;--accent2:#6366f1;--brand:#1e40af;}
         .theme-green {--accent:#10b981;--accent2:#059669;--brand:#065f46;}
         .theme-purple {--accent:#8b5cf6;--accent2:#7c3aed;--brand:#5b21b6;}
+        .theme-orange {--accent:#f59e0b;--accent2:#ea580c;--brand:#c2410c;}
         
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);min-height:100vh;padding:16px;color:var(--text);user-select:none;transition:background 0.3s,color 0.3s}
@@ -38,10 +39,9 @@
         .title{font-size:22px;font-weight:700;color:var(--text)}.ver{font-size:9px;color:var(--text2);margin-left:4px}
         .header-r{display:flex;align-items:center;gap:8px}
         .brand{background:var(--brand);color:#fff;font-size:26px;font-weight:800;padding:8px 22px;border-radius:12px;letter-spacing:3px}
-        .thm-btn{width:36px;height:36px;border-radius:10px;border:2px solid var(--border);background:var(--tsbg);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-        .thm-btn:hover{border-color:var(--accent)}
-        .settings-btn{width:36px;height:36px;border-radius:10px;border:2px solid var(--border);background:var(--tsbg);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-        .settings-btn:hover{border-color:var(--accent)}
+        .icon-btn{width:36px;height:36px;border-radius:10px;border:2px solid var(--border);background:var(--tsbg);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+        .icon-btn:hover{border-color:var(--accent)}
+        .icon-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
         .ui-switch{display:flex;flex-direction:column;align-items:center;gap:1px}
         .ui-switch-label{font-size:7px;font-weight:700;text-transform:uppercase;color:var(--text2)}
         .ui-switch-btns{display:flex;gap:2px}
@@ -50,14 +50,12 @@
         
         .main-content{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
         
-        /* Вариант 1 */
         .tb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px;background:var(--tbg);border-radius:14px;border:1px solid var(--border);margin-bottom:16px}
         @media(max-width:1100px){.tb-grid{grid-template-columns:repeat(2,1fr)}}
         .tb-cell{background:var(--tsbg);border-radius:10px;border:1px solid var(--border);padding:8px 10px;display:flex;flex-direction:column;gap:4px}
         .tb-lbl{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:0.5px;text-align:center}
         .tb-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
         
-        /* Вариант 2 */
         .layout-v2{display:none;flex:1;gap:14px;height:100%}
         .layout-v2.active{display:flex}
         .sidebar-v2{width:240px;min-width:240px;display:flex;flex-direction:column;gap:6px;padding:14px;background:var(--sidebar-bg);border-radius:14px;border:1px solid var(--border);overflow-y:auto;position:sticky;top:0;max-height:calc(100vh - 200px)}
@@ -112,24 +110,38 @@
         .ctx-item:hover{background:var(--card-act)}.ctx-div{height:1px;background:var(--border);margin:3px 0}
         .hidden{display:none}
         
-        /* Модальное окно настроек */
+        /* Модальные окна */
         .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10001;justify-content:center;align-items:center}
         .modal-overlay.show{display:flex}
-        .modal{background:var(--app-bg);border-radius:16px;padding:24px;min-width:600px;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);color:var(--text)}
-        .modal h2{font-size:20px;margin-bottom:16px;color:var(--text)}
-        .modal h3{font-size:14px;margin-bottom:10px;color:var(--text2)}
+        .modal{background:var(--app-bg);border-radius:16px;padding:24px;min-width:500px;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);color:var(--text)}
+        .modal h2{font-size:20px;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:8px}
+        .modal h3{font-size:13px;margin-bottom:8px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;padding:6px 0}
+        .modal h3:hover{color:var(--accent)}
+        .modal h3 .arrow{transition:transform 0.2s;font-size:10px}
+        .modal h3.open .arrow{transform:rotate(90deg)}
+        .hk-section{display:none;margin-bottom:12px}
+        .hk-section.open{display:block}
         .hotkey-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
         .hotkey-row .hk-label{flex:1;font-size:13px;font-weight:500}
-        .hotkey-row .hk-current{padding:6px 12px;background:var(--tbg);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;min-width:100px;text-align:center}
+        .hotkey-row .hk-current{padding:6px 12px;background:var(--tbg);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;min-width:90px;text-align:center;transition:all 0.2s}
         .hotkey-row .hk-current:hover{background:var(--card-act)}
-        .hotkey-row .hk-current.recording{background:#fef3c7;border-color:#f59e0b}
+        .hotkey-row .hk-current.recording{background:#fef3c7;border-color:#f59e0b;animation:pulse 0.8s infinite}
+        .hotkey-row .hk-current.conflict{background:#fee2e2;border-color:#ef4444}
+        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0)}}
         .modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-        .theme-options{display:flex;gap:10px;margin-bottom:16px}
-        .theme-dot{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.2s}
-        .theme-dot.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,0.2)}
-        .theme-dot.blue{background:linear-gradient(135deg,#3b82f6,#6366f1)}
-        .theme-dot.green{background:linear-gradient(135deg,#10b981,#059669)}
-        .theme-dot.purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
+        
+        /* Модальное окно цветовых тем */
+        .theme-modal{min-width:400px}
+        .theme-options{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+        .theme-card{padding:16px;border-radius:12px;border:2px solid var(--border);cursor:pointer;text-align:center;transition:all 0.2s;background:var(--tsbg)}
+        .theme-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+        .theme-card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
+        .theme-card .theme-preview{width:100%;height:60px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;font-weight:700}
+        .theme-card .theme-name{font-weight:600;font-size:14px;color:var(--text)}
+        .tp-blue{background:linear-gradient(135deg,#3b82f6,#6366f1)}
+        .tp-green{background:linear-gradient(135deg,#10b981,#059669)}
+        .tp-purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
+        .tp-orange{background:linear-gradient(135deg,#f59e0b,#ea580c)}
     </style>
 </head>
 <body class="theme-blue">
@@ -139,50 +151,51 @@
     <div class="header-l"><div class="logo">📊</div><div class="title">Таблица заказов<span class="ver">v4.1.0</span></div></div>
     <div class="header-r">
         <div class="ui-switch"><div class="ui-switch-label">Интерфейс</div><div class="ui-switch-btns"><button class="ui-btn active" id="uiV1">1</button><button class="ui-btn" id="uiV2">2</button></div></div>
-        <button class="thm-btn" id="btnTheme" title="Тёмная/Светлая">🌙</button>
-        <button class="settings-btn" id="btnSettings" title="Настройки">⚙</button>
-        <button class="btn b-indigo" id="btnUpdate" title="Обновление">🔄 Проверить обновление</button>
+        <button class="icon-btn" id="btnTheme" title="Тёмная/Светлая">🌙</button>
+        <button class="icon-btn" id="btnColorTheme" title="Цветовая тема">🎨</button>
+        <button class="icon-btn" id="btnSettings" title="Настройки">⚙</button>
+        <button class="btn b-indigo" id="btnUpdate">🔄 Проверить обновление</button>
         <div class="brand">ONTEK</div>
     </div>
 </div>
 
 <div id="toolbarV1">
 <div class="tb-grid">
-    <div class="tb-cell"><div class="tb-lbl">Строки</div><div class="tb-btns"><button class="btn b-blue" id="btnAddRow1">＋ <span class="hk">Shift+A</span></button><button class="btn b-red" id="btnDelRow1">－ <span class="hk">Shift+D</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Колонки</div><div class="tb-btns"><button class="btn b-green" id="btnAddCol1">＋ <span class="hk">Shift+C</span></button><button class="btn b-orange" id="btnDelCol1">－ <span class="hk">Shift+X</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Поиск</div><div class="tb-btns"><button class="btn b-indigo" id="btnFind1">🔍 <span class="hk">Ctrl+F</span></button><button class="btn b-purple" id="btnReplace1">🔄 <span class="hk">Ctrl+H</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Буфер</div><div class="tb-btns"><button class="btn b-orange" id="btnPaste1">📋 <span class="hk">Shift+V</span></button><button class="btn b-pink" id="btnDup1">📑 <span class="hk">Shift+U</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Новая</div><div class="tb-btns"><button class="btn b-purple" id="btnNewRUB1">RUB <span class="hk">Shift+1</span></button><button class="btn b-indigo" id="btnNewUSD1">USD <span class="hk">Shift+2</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Файл</div><div class="tb-btns"><button class="btn b-slate" id="btnLoad1">📂 <span class="hk">Shift+O</span></button><button class="btn b-teal" id="btnSave1">💾 <span class="hk">Ctrl+S</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Инструменты</div><div class="tb-btns"><button class="btn b-teal" id="btnRecalc1">🔄 <span class="hk">Shift+R</span></button><button class="btn b-red" id="btnClear1">🗑 <span class="hk">Shift+Del</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Отмена</div><div class="tb-btns"><button class="btn b-slate" id="btnUndo1">↩ <span class="hk">Ctrl+Z</span></button></div></div>
+    <div class="tb-cell"><div class="tb-lbl">Строки</div><div class="tb-btns"><button class="btn b-blue" id="btnAddRow1">＋ <span class="hk" data-hk="addRow">Shift+A</span></button><button class="btn b-red" id="btnDelRow1">－ <span class="hk" data-hk="delRow">Shift+D</span></button></div></div>
+    <div class="tb-cell"><div class="tb-lbl">Колонки</div><div class="tb-btns"><button class="btn b-green" id="btnAddCol1">＋ <span class="hk" data-hk="addCol">Shift+C</span></button><button class="btn b-orange" id="btnDelCol1">－ <span class="hk" data-hk="delCol">Shift+X</span></button></div></div>
+    <div class="tb-cell"><div class="tb-lbl">Поиск</div><div class="tb-btns"><button class="btn b-indigo" id="btnFind1">🔍 <span class="hk" data-hk="find">Ctrl+F</span></button><button class="btn b-purple" id="btnReplace1">🔄 <span class="hk" data-hk="replace">Ctrl+H</span></button></div></div>
+    <div class="tb-cell"><div class="tb-lbl">Буфер</div><div class="tb-btns"><button class="btn b-orange" id="btnPaste1">📋 <span class="hk" data-hk="paste">Shift+V</span></button><button class="btn b-pink" id="btnDup1">📑 <span class="hk" data-hk="dup">Shift+U</span></button></div></div>
+    <div class="tb-cell"><div class="tb-lbl">Новая</div><div class="tb-btns"><button class="btn b-purple" id="btnNewRUB1">RUB <span class="hk" data-hk="newRUB">Shift+1</span></button><button class="btn b-indigo" id="btnNewUSD1">USD <span class="hk" data-hk="newUSD">Shift+2</span></button></div></div>
+    <div class="tb-cell"><div class="tb-lbl">Файл</div><div class="tb-btns"><button class="btn b-slate" id="btnLoad1">📂 <span class="hk" data-hk="load">Shift+O</span></button><button class="btn b-teal" id="btnSave1">💾 <span class="hk" data-hk="save">Ctrl+S</span></button></div></div>
+    <div class="tb-cell"><div class="tb-lbl">Инструменты</div><div class="tb-btns"><button class="btn b-teal" id="btnRecalc1">🔄 <span class="hk" data-hk="recalc">Shift+R</span></button><button class="btn b-red" id="btnClear1">🗑 <span class="hk" data-hk="clear">Shift+Del</span></button></div></div>
+    <div class="tb-cell"><div class="tb-lbl">Отмена</div><div class="tb-btns"><button class="btn b-slate" id="btnUndo1">↩ <span class="hk" data-hk="undo">Ctrl+Z</span></button></div></div>
 </div>
 </div>
 
 <div class="layout-v2" id="layoutV2">
     <div class="sidebar-v2" id="sidebar">
         <div class="sidebar-section"><div class="sidebar-section-title">Строки и колонки</div>
-            <button class="sidebar-btn sb-blue" id="btnAddRow2"><span class="s-icon">＋</span> Добавить строку <span class="s-hotkey">Shift+A</span></button>
-            <button class="sidebar-btn sb-red" id="btnDelRow2"><span class="s-icon">－</span> Удалить строку <span class="s-hotkey">Shift+D</span></button>
-            <button class="sidebar-btn sb-green" id="btnAddCol2"><span class="s-icon">＋</span> Добавить колонку <span class="s-hotkey">Shift+C</span></button>
-            <button class="sidebar-btn sb-orange" id="btnDelCol2"><span class="s-icon">－</span> Удалить колонку <span class="s-hotkey">Shift+X</span></button>
+            <button class="sidebar-btn sb-blue" id="btnAddRow2"><span class="s-icon">＋</span> Добавить строку <span class="s-hotkey" data-hk="addRow">Shift+A</span></button>
+            <button class="sidebar-btn sb-red" id="btnDelRow2"><span class="s-icon">－</span> Удалить строку <span class="s-hotkey" data-hk="delRow">Shift+D</span></button>
+            <button class="sidebar-btn sb-green" id="btnAddCol2"><span class="s-icon">＋</span> Добавить колонку <span class="s-hotkey" data-hk="addCol">Shift+C</span></button>
+            <button class="sidebar-btn sb-orange" id="btnDelCol2"><span class="s-icon">－</span> Удалить колонку <span class="s-hotkey" data-hk="delCol">Shift+X</span></button>
         </div>
         <div class="sidebar-section"><div class="sidebar-section-title">Поиск</div>
-            <button class="sidebar-btn sb-indigo" id="btnFind2"><span class="s-icon">🔍</span> Найти <span class="s-hotkey">Ctrl+F</span></button>
-            <button class="sidebar-btn sb-purple" id="btnReplace2"><span class="s-icon">🔄</span> Заменить <span class="s-hotkey">Ctrl+H</span></button>
+            <button class="sidebar-btn sb-indigo" id="btnFind2"><span class="s-icon">🔍</span> Найти <span class="s-hotkey" data-hk="find">Ctrl+F</span></button>
+            <button class="sidebar-btn sb-purple" id="btnReplace2"><span class="s-icon">🔄</span> Заменить <span class="s-hotkey" data-hk="replace">Ctrl+H</span></button>
         </div>
         <div class="sidebar-section"><div class="sidebar-section-title">Действия</div>
-            <button class="sidebar-btn sb-orange" id="btnPaste2"><span class="s-icon">📋</span> Вставить <span class="s-hotkey">Shift+V</span></button>
-            <button class="sidebar-btn sb-pink" id="btnDup2"><span class="s-icon">📑</span> Дублировать <span class="s-hotkey">Shift+U</span></button>
-            <button class="sidebar-btn sb-purple" id="btnNewRUB2"><span class="s-icon">🆕</span> Новая RUB <span class="s-hotkey">Shift+1</span></button>
-            <button class="sidebar-btn sb-indigo" id="btnNewUSD2"><span class="s-icon">🆕</span> Новая USD <span class="s-hotkey">Shift+2</span></button>
+            <button class="sidebar-btn sb-orange" id="btnPaste2"><span class="s-icon">📋</span> Вставить <span class="s-hotkey" data-hk="paste">Shift+V</span></button>
+            <button class="sidebar-btn sb-pink" id="btnDup2"><span class="s-icon">📑</span> Дублировать <span class="s-hotkey" data-hk="dup">Shift+U</span></button>
+            <button class="sidebar-btn sb-purple" id="btnNewRUB2"><span class="s-icon">🆕</span> Новая RUB <span class="s-hotkey" data-hk="newRUB">Shift+1</span></button>
+            <button class="sidebar-btn sb-indigo" id="btnNewUSD2"><span class="s-icon">🆕</span> Новая USD <span class="s-hotkey" data-hk="newUSD">Shift+2</span></button>
         </div>
         <div class="sidebar-section"><div class="sidebar-section-title">Файл и инструменты</div>
-            <button class="sidebar-btn sb-slate" id="btnLoad2"><span class="s-icon">📂</span> Открыть <span class="s-hotkey">Shift+O</span></button>
-            <button class="sidebar-btn sb-teal" id="btnSave2"><span class="s-icon">💾</span> Сохранить <span class="s-hotkey">Ctrl+S</span></button>
-            <button class="sidebar-btn sb-teal" id="btnRecalc2"><span class="s-icon">🔄</span> Пересчёт <span class="s-hotkey">Shift+R</span></button>
-            <button class="sidebar-btn sb-red" id="btnClear2"><span class="s-icon">🗑</span> Очистить <span class="s-hotkey">Shift+Del</span></button>
-            <button class="sidebar-btn sb-slate" id="btnUndo2"><span class="s-icon">↩</span> Отменить <span class="s-hotkey">Ctrl+Z</span></button>
+            <button class="sidebar-btn sb-slate" id="btnLoad2"><span class="s-icon">📂</span> Открыть <span class="s-hotkey" data-hk="load">Shift+O</span></button>
+            <button class="sidebar-btn sb-teal" id="btnSave2"><span class="s-icon">💾</span> Сохранить <span class="s-hotkey" data-hk="save">Ctrl+S</span></button>
+            <button class="sidebar-btn sb-teal" id="btnRecalc2"><span class="s-icon">🔄</span> Пересчёт <span class="s-hotkey" data-hk="recalc">Shift+R</span></button>
+            <button class="sidebar-btn sb-red" id="btnClear2"><span class="s-icon">🗑</span> Очистить <span class="s-hotkey" data-hk="clear">Shift+Del</span></button>
+            <button class="sidebar-btn sb-slate" id="btnUndo2"><span class="s-icon">↩</span> Отменить <span class="s-hotkey" data-hk="undo">Ctrl+Z</span></button>
         </div>
     </div>
     <div class="tables-area" id="tablesAreaV2"><div class="empty">Создайте таблицу — <b>Shift+1</b> RUB или <b>Shift+2</b> USD</div></div>
@@ -195,24 +208,47 @@
 </div>
 </div>
 
-<!-- Модальное окно настроек -->
+<!-- Модальное окно настроек горячих клавиш -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <h2>⚙ Настройки</h2>
-        
-        <h3>Цветовая тема</h3>
-        <div class="theme-options">
-            <div class="theme-dot blue active" data-theme="blue" title="Синяя"></div>
-            <div class="theme-dot green" data-theme="green" title="Зелёная"></div>
-            <div class="theme-dot purple" data-theme="purple" title="Фиолетовая"></div>
+        <h2>⚙ Настройки горячих клавиш</h2>
+        <h3 id="hkToggle" class="open"><span class="arrow">▶</span> Горячие клавиши</h3>
+        <div class="hk-section open" id="hkSection">
+            <div id="hotkeyList"></div>
+            <div class="modal-btns">
+                <button class="btn b-red" id="btnResetHotkeys">Сбросить к заводским</button>
+            </div>
         </div>
-        
-        <h3>Горячие клавиши</h3>
-        <div id="hotkeyList"></div>
-        
-        <div class="modal-btns">
-            <button class="btn b-red" id="btnResetHotkeys">Сбросить к заводским</button>
+        <div class="modal-btns" style="margin-top:16px">
             <button class="btn b-slate" id="btnCloseSettings">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно цветовых тем -->
+<div class="modal-overlay" id="colorThemeModal">
+    <div class="modal theme-modal">
+        <h2>🎨 Цветовая тема</h2>
+        <div class="theme-options">
+            <div class="theme-card active" data-theme="blue">
+                <div class="theme-preview tp-blue">B</div>
+                <div class="theme-name">Синяя</div>
+            </div>
+            <div class="theme-card" data-theme="green">
+                <div class="theme-preview tp-green">G</div>
+                <div class="theme-name">Зелёная</div>
+            </div>
+            <div class="theme-card" data-theme="purple">
+                <div class="theme-preview tp-purple">P</div>
+                <div class="theme-name">Фиолетовая</div>
+            </div>
+            <div class="theme-card" data-theme="orange">
+                <div class="theme-preview tp-orange">O</div>
+                <div class="theme-name">Оранжевая</div>
+            </div>
+        </div>
+        <div class="modal-btns" style="margin-top:16px">
+            <button class="btn b-slate" id="btnCloseColorTheme">Закрыть</button>
         </div>
     </div>
 </div>
@@ -240,19 +276,16 @@ const T=[],DC=['Артикул','Наименование','Ко-во, шт','Ц
 let idC=0,actId=null,ctxD={t:null,r:null,c:null},hist=[],uiMode='v1';
 const RU={'Ф':'A','А':'A','В':'D','Д':'D','С':'C','Ц':'C','Ч':'X','Х':'X','К':'R','Р':'R','М':'V','Ж':'V','Щ':'O','О':'O','Г':'U','У':'U','Ы':'S','Я':'Z'};
 const Q=s=>document.querySelector(s),ctxM=Q('#ctxMenu');
-let ttTimer,theme='light',colorTheme='blue',recordingKey=null;
+let ttTimer,theme='light',colorTheme='blue',recordingKey=null,recordingHk=null;
 
-// Горячие клавиши по умолчанию
-const defaultHotkeys={
-    addRow:'A',delRow:'D',addCol:'C',delCol:'X',recalc:'R',paste:'V',load:'O',
-    newRUB:'1',newUSD:'2',dup:'U',clear:'DELETE',find:'F',replace:'H',undo:'Z',save:'S'
-};
+const defaultHotkeys={addRow:'A',delRow:'D',addCol:'C',delCol:'X',recalc:'R',paste:'V',load:'O',newRUB:'1',newUSD:'2',dup:'U',clear:'DELETE',find:'F',replace:'H',undo:'Z',save:'S'};
 let hotkeys={...defaultHotkeys};
+const keyLabels={addRow:'Добавить строку',delRow:'Удалить строку',addCol:'Добавить колонку',delCol:'Удалить колонку',recalc:'Пересчитать',paste:'Вставить',load:'Загрузить',newRUB:'Новая RUB',newUSD:'Новая USD',dup:'Дублировать',clear:'Очистить',find:'Найти',replace:'Заменить',undo:'Отменить',save:'Сохранить'};
 
 const VER='4.1.0',UP_URL='https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/version.json';
 
-function saveSettings(){try{localStorage.setItem('ontek_ui',uiMode);localStorage.setItem('ontek_theme',theme);localStorage.setItem('ontek_color',colorTheme);localStorage.setItem('ontek_hotkeys',JSON.stringify(hotkeys));}catch(e){}}
-function loadSettings(){try{uiMode=localStorage.getItem('ontek_ui')||'v1';theme=localStorage.getItem('ontek_theme')||'light';colorTheme=localStorage.getItem('ontek_color')||'blue';const hk=localStorage.getItem('ontek_hotkeys');if(hk)hotkeys=JSON.parse(hk);}catch(e){}}
+function saveSettings(){try{const s={ui:uiMode,theme,color:colorTheme,hotkeys};localStorage.setItem('ontek_settings',JSON.stringify(s));}catch(e){}}
+function loadSettings(){try{const s=JSON.parse(localStorage.getItem('ontek_settings'));if(s){uiMode=s.ui||'v1';theme=s.theme||'light';colorTheme=s.color||'blue';if(s.hotkeys)hotkeys=s.hotkeys;}}catch(e){}}
 loadSettings();
 
 function getArea(){return uiMode==='v2'?Q('#tablesAreaV2'):Q('#tablesAreaV1');}
@@ -272,6 +305,21 @@ function hdrs(cols,cur){return cols.map(c=>c.toLowerCase().startsWith('цена'
 function cA(r,c){let s='';while(c>0){c--;s=String.fromCharCode(65+(c%26))+s;c=Math.floor(c/26);}return s+r;}
 function ccl(n){const l=n.toLowerCase();if(l.includes('артикул'))return'col-article';if(l.includes('наименование'))return'col-name';if(l.includes('ко-во')||l.includes('количество'))return'col-qty';if(l.startsWith('цена'))return'col-price';if(l.startsWith('стоимость'))return'col-total';return'col-default';}
 
+function hkDisplay(key){if(!key)return'—';if(key==='DELETE')return'Del';if(key==='CTRL+Z')return'Ctrl+Z';return key;}
+
+// Обновить все отображения горячих клавиш
+function updateAllHKDisplays(){
+    document.querySelectorAll('.hk[data-hk]').forEach(el=>{
+        const k=el.dataset.hk;
+        if(hotkeys[k])el.textContent=hotkeys[k]==='DELETE'?'Del':hotkeys[k];
+    });
+    document.querySelectorAll('.s-hotkey[data-hk]').forEach(el=>{
+        const k=el.dataset.hk;
+        if(hotkeys[k])el.textContent=hotkeys[k]==='DELETE'?'Del':hotkeys[k];
+    });
+    renderHotkeyList();
+}
+
 function applyAllSettings(){
     document.body.classList.toggle('dark',theme==='dark');
     Q('#btnTheme').textContent=theme==='dark'?'☀️':'🌙';
@@ -282,15 +330,15 @@ function applyAllSettings(){
     Q('#toolbarV1').style.display=uiMode==='v1'?'block':'none';
     Q('#tablesAreaV1').style.display=uiMode==='v1'?'block':'none';
     Q('#layoutV2').classList.toggle('active',uiMode==='v2');
-    if(uiMode==='v2'){reRenderAll();}
+    document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===colorTheme));
+    updateAllHKDisplays();
     saveSettings();
-    renderHotkeyList();
 }
 applyAllSettings();
 
 function switchUI(mode){uiMode=mode;applyAllSettings();if(mode==='v2')reRenderAll();}
 function toggleTheme(){theme=theme==='light'?'dark':'light';applyAllSettings();}
-function setColorTheme(t){colorTheme=t;applyAllSettings();document.querySelectorAll('.theme-dot').forEach(d=>d.classList.toggle('active',d.dataset.theme===t));}
+function setColorTheme(t){colorTheme=t;applyAllSettings();}
 
 function reRenderAll(){const a=area();a.innerHTML='';T.forEach(td=>{td.el=null;td.card=null;});T.forEach(td=>{const card=buildCardDOM(td);a.appendChild(card);td.card=card;});T.forEach(td=>{if(td.el)render(td);});upEmpty();}
 
@@ -311,22 +359,19 @@ function insRow(td,idx){td.rows.splice(idx,0,Array(td.cols.length).fill(''));cal
 function delRow(td,idx){if(td.rows.length<=1)return toast('Нельзя удалить строку!',0);hist.push({a:'delRow',tid:td.id,d:{i:idx,r:[...td.rows[idx]]}});td.rows.splice(idx,1);render(td);toast('Строка удалена');}
 function addRowEnd(td){td.rows.push(Array(td.cols.length).fill(''));calc(td.rows[td.rows.length-1],td.cols);render(td);toast('Строка добавлена в конец');}
 function delRowEnd(td){if(td.rows.length<=1)return toast('Нельзя удалить строку!',0);td.rows.pop();render(td);toast('Последняя строка удалена');}
-function insCol(td,idx){const n=prompt('Название:','Новая колонка');if(!n||!n.trim())return;td.cols.splice(idx,0,n.trim());td.rows.forEach(r=>r.splice(idx,0,''));render(td);toast(`Колонка «${n.trim()}» добавлена`);}
+function insCol(td,idx){const n=prompt('Название:','Новая колонка');if(!n||!n.trim())return;td.cols.splice(idx,0,n.trim());td.rows.forEach(r=>r.splice(idx,0,''));render(td);toast(`Колонка добавлена`);}
 function delCol(td,idx){if(td.cols.length<=2)return toast('Минимум 2 колонки!',0);td.cols.splice(idx,1);td.rows.forEach(r=>r.splice(idx,1));render(td);toast('Колонка удалена');}
 function renameCol(td,idx){const old=td.cols[idx];const n=prompt('Новое название:',old);if(!n||!n.trim()||n.trim()===old)return;td.cols[idx]=n.trim();render(td);toast(`«${old}» → «${n.trim()}»`);}
-function addColEnd(td){const n=prompt('Название:','Новая колонка');if(!n||!n.trim())return;td.cols.push(n.trim());td.rows.forEach(r=>r.push(''));render(td);toast(`Колонка «${n.trim()}» добавлена`);}
+function addColEnd(td){const n=prompt('Название:','Новая колонка');if(!n||!n.trim())return;td.cols.push(n.trim());td.rows.forEach(r=>r.push(''));render(td);toast(`Колонка добавлена`);}
 function delColEnd(td){if(td.cols.length<=2)return toast('Минимум 2 колонки!',0);td.cols.pop();td.rows.forEach(r=>r.pop());render(td);toast('Последняя колонка удалена');}
 
 function parseCB(text){if(!text||!text.trim())return[];return text.trim().split(/\r?\n/).map(l=>l.includes('\t')?l.split('\t'):l.includes('|')?l.split('|').map(c=>c.trim()).filter(c=>c):l.split(/\s{2,}/)).filter(r=>r.some(c=>c.trim()));}
 function paste(){const td=active();if(!td)return toast('Выберите таблицу!',0);const dp=text=>{const p=parseCB(text);if(!p.length)return toast('Нет данных',0);p.forEach(r=>{const nr=[];for(let i=0;i<td.cols.length;i++){let v=r[i]??'';const cn=td.cols[i].toLowerCase();if(cn.includes('ко-во')||cn.includes('количество')||cn.startsWith('цена')){const n=pn(v);if(!isNaN(n))v=n.toFixed(2);}nr.push(v);}td.rows.push(nr);calc(nr,td.cols);});render(td);toast(`Вставлено строк: ${p.length}`);};navigator.clipboard.readText().then(dp).catch(()=>{const m=prompt('Вставьте:','');if(m)dp(m);});}
-
 function findInTable(){const td=active();if(!td)return toast('Выберите таблицу!',0);const q=prompt('Что искать:','');if(!q||!q.trim())return;const res=[];td.rows.forEach((r,ri)=>{r.forEach((v,ci)=>{if(String(v??'').toLowerCase().includes(q.toLowerCase()))res.push({ri,ci});});});if(!res.length)return toast('Ничего не найдено',false);toast(`Найдено: ${res.length}`);let idx=0;hlRes(td,res[idx]);window._nr=()=>{idx=(idx+1)%res.length;hlRes(td,res[idx]);};}
 function hlRes(td,res){const rows=td.el.querySelectorAll('tbody tr:not(.tot)');if(res.ri<rows.length){const tds=rows[res.ri].querySelectorAll('td:not(.rn):not(.act-cell)');if(res.ci<tds.length){const inp=tds[res.ci].querySelector('input');if(inp){inp.focus();inp.select();rows[res.ri].classList.add('sel');}}}}
 function replaceInTable(){const td=active();if(!td)return toast('Выберите таблицу!',0);const q=prompt('Что заменить:','');if(!q||!q.trim())return;const rp=prompt('На что:','');if(rp===null)return;let c=0;td.rows.forEach(r=>{for(let i=0;i<r.length;i++){if(String(r[i]??'').toLowerCase().includes(q.toLowerCase())){r[i]=String(r[i]??'').replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),rp);c++;}}});render(td);toast(`Заменено: ${c}`);}
-
 async function checkUpdate(){toast('Проверка обновлений...');try{const r=await fetch(UP_URL,{cache:'no-cache'});const d=await r.json();if(d.version>VER){if(confirm(`🆕 Версия ${d.version}!\n\n${d.notes||''}\n\nОбновить?`)){if(window.pywebview&&window.pywebview.api){const result=JSON.parse(await window.pywebview.api.apply_update());if(result.success){toast('✅ Обновлено! Перезагрузка...');setTimeout(()=>location.reload(),1500);}else{toast('Ошибка',false);}}}}else{toast('✅ Последняя версия');}}catch(e){toast('Ошибка проверки',false);}}
 
-// Сохранение Excel (сокращённая версия)
 async function save(){if(!T.length)return toast('Нет таблиц!',0);try{const wb=new ExcelJS.Workbook();const ws=wb.addWorksheet('Заказы');let cr=1;const mc=Math.max(...T.map(t=>t.cols.length),5);ws.columns=[{width:6},...Array(mc).fill({width:24})];for(let ti=0;ti<T.length;ti++){const td=T[ti],tc=td.cols.length,qi=getQi(td.cols),pi=ci(td.cols,'Цена'),toti=ci(td.cols,'Стоимость');const hr=ws.getRow(cr);hr.getCell(1).value='№';hr.getCell(1).font={bold:true,size:12,color:{argb:'FFCBD5E1'}};hr.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF64748B'}};hdrs(td.cols,td.currency).forEach((h,ci)=>{const c=hr.getCell(ci+2);c.value=h;c.font={bold:true,size:12,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF64748B'}};});hr.height=28;cr++;const fdr=cr;for(let r=0;r<td.rows.length;r++){const row=ws.getRow(cr);row.getCell(1).value=r+1;for(let c=0;c<tc;c++){const cell=row.getCell(c+2);if(c===toti)cell.value={formula:`${cA(cr,qi+2)}*${cA(cr,pi+2)}`};else if(c===qi||c===pi)cell.value=pn(td.rows[r][c])||td.rows[r][c];else cell.value=td.rows[r][c]??'';if(c===toti||c===qi||c===pi)cell.numFmt='#,##0.00';cell.font={size:11};}cr++;}const totr=ws.getRow(cr);for(let c=0;c<tc;c++){const cell=totr.getCell(c+2);if(c===(toti>=0?toti-1:tc-2))cell.value='Итого';else if(c===toti)cell.value={formula:`SUM(${cA(fdr,toti+2)}:${cA(cr-1,toti+2)})`};cell.font={bold:true,size:12};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE2E8F0'}};}cr++;if(ti<T.length-1)cr+=2;}const buf=await wb.xlsx.writeBuffer();const fn=`Заказы_ONTEK_${new Date().toISOString().slice(0,10)}.xlsx`;if(window.pywebview&&window.pywebview.api){const b64=btoa(String.fromCharCode(...new Uint8Array(buf)));const r=JSON.parse(await window.pywebview.api.save_file(b64,fn));if(r.success)toast('✅ Сохранено!');}else{const blob=new Blob([buf]);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('✅ Сохранено!');}}catch(e){toast('Ошибка сохранения',false);}}
 
 function processWB(wb){const a=area();a.innerHTML='';T.length=0;idC=0;actId=null;wb.SheetNames.forEach(n=>{const raw=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});if(!raw.length)return;let cur=null,ec=0;for(let i=0;i<raw.length;i++){const row=raw[i],emp=!row||row.every(c=>String(c??'').trim()==='');if(emp){ec++;if(ec>=2&&cur&&cur.rows.length){fin(cur);cur=null;}continue;}ec=0;const f=String(row[0]||'').trim();if(f.toLowerCase()==='итого'){if(cur&&cur.rows.length){fin(cur);cur=null;}continue;}if(row.some(c=>['артикул','наименование','ко-во','количество','цена','стоимость'].some(k=>String(c||'').toLowerCase().includes(k)))){if(cur&&cur.rows.length)fin(cur);const hd=row.map(c=>String(c||'').trim().replace(/,?\s*(USD|RUB)\s*с НДС/i,''));let det=row.join(' ').includes('USD')?'USD':'RUB';cur={cols:hd.filter(h=>h),rows:[],currency:det};if(!cur.cols.length)cur.cols=[...DC];continue;}if(!cur)cur={cols:[...DC],rows:[],currency:'RUB'};const dr=row.map(c=>String(c??'').trim());while(dr.length<cur.cols.length)dr.push('');cur.rows.push(dr.slice(0,cur.cols.length));}if(cur&&cur.rows.length)fin(cur);function fin(c){if(!c.cols.length)c.cols=[...DC];if(!c.rows.length)c.rows=[Array(c.cols.length).fill('')];idC++;T.push({id:idC,cols:c.cols,rows:c.rows,currency:c.currency,el:null,card:null});}});T.forEach(td=>{const card=buildCardDOM(td);a.appendChild(card);td.card=card;render(td);});upEmpty();if(!T.length)addTable('USD');else{setAct(T[0].id);toast(`Загружено: ${T.length} табл.`);}}
@@ -334,39 +379,71 @@ function load(file){const r=new FileReader();r.onload=e=>{try{processWB(XLSX.rea
 async function loadViaDialog(){if(window.pywebview&&window.pywebview.api){const r=JSON.parse(await window.pywebview.api.load_file());if(r.success){const bs=atob(r.data);const bytes=new Uint8Array(bs.length);for(let i=0;i<bs.length;i++)bytes[i]=bs.charCodeAt(i);processWB(XLSX.read(bytes,{type:'array'}));}}else Q('#fileInput').click();}
 
 function hideCtx(){ctxM.style.display='none';}
-ctxM.addEventListener('click',e=>{const item=e.target.closest('.ctx-item');if(!item)return;const a=item.dataset.action;hideCtx();const td=T.find(t=>t.id===ctxD.t);if(!td&&!['paste','dupTable'].includes(a))return;if(td)setAct(td.id);switch(a){case'addRowAbove':if(td&&ctxD.r!==null)insRowAbove(td,ctxD.r);break;case'addRowBelow':if(td&&ctxD.r!==null)insRowBelow(td,ctxD.r);break;case'delRow':if(td&&ctxD.r!==null)delRow(td,ctxD.r);break;case'renameCol':if(td&&ctxD.c!==null&&ctxD.c<td.cols.length)renameCol(td,ctxD.c);break;case'addColBefore':if(td&&ctxD.c!==null&&ctxD.c<td.cols.length)insCol(td,ctxD.c);break;case'addColAfter':if(td&&ctxD.c!==null&&ctxD.c<td.cols.length)insCol(td,ctxD.c+1);break;case'delCol':if(td&&ctxD.c!==null&&ctxD.c<td.cols.length)delCol(td,ctxD.c);break;case'paste':paste();break;case'dupTable':if(td)dupTable(td);else dupTable();break;case'delTable':if(td&&T.length>1){td.card.remove();T.splice(T.indexOf(td),1);if(actId===td.id)actId=T.length?T[0].id:null;upEmpty();}break;}});
+ctxM.addEventListener('click',e=>{const item=e.target.closest('.ctx-item');if(!item)return;const a=item.dataset.action;hideCtx();const td=T.find(t=>t.id===ctxD.t);if(!td&&!['paste','dupTable'].includes(a))return;if(td)setAct(td.id);switch(a){case'addRowAbove':if(td&&ctxD.r!==null)insRowAbove(td,ctxD.r);break;case'addRowBelow':if(td&&ctxD.r!==null)insRowBelow(td,ctxD.r);break;case'delRow':if(td&&ctxD.r!==null)delRow(td,ctxD.r);break;case'renameCol':if(td&&ctxD.c!==null)renameCol(td,ctxD.c);break;case'addColBefore':if(td&&ctxD.c!==null)insCol(td,ctxD.c);break;case'addColAfter':if(td&&ctxD.c!==null)insCol(td,ctxD.c+1);break;case'delCol':if(td&&ctxD.c!==null)delCol(td,ctxD.c);break;case'paste':paste();break;case'dupTable':if(td)dupTable(td);else dupTable();break;case'delTable':if(td&&T.length>1){td.card.remove();T.splice(T.indexOf(td),1);if(actId===td.id)actId=T.length?T[0].id:null;upEmpty();}break;}});
 document.addEventListener('click',e=>{if(!ctxM.contains(e.target))hideCtx();});
 
 function undo(){if(!hist.length)return toast('Нечего отменять',false);const l=hist.pop();const td=T.find(t=>t.id===l.tid);if(!td)return;td.rows.splice(l.d.i,0,l.d.r);render(td);toast('Отменено');}
 
-// Настройки горячих клавиш
+// Горячие клавиши
+function findHotkeyConflict(key,excludeHk){
+    for(const[k,v]of Object.entries(hotkeys)){if(k!==excludeHk&&v===key)return k;}
+    return null;
+}
+
 function renderHotkeyList(){
     const container=Q('#hotkeyList');if(!container)return;
-    const labels={addRow:'Добавить строку',delRow:'Удалить строку',addCol:'Добавить колонку',delCol:'Удалить колонку',recalc:'Пересчитать',paste:'Вставить',load:'Загрузить',newRUB:'Новая RUB',newUSD:'Новая USD',dup:'Дублировать',clear:'Очистить',find:'Найти',replace:'Заменить',undo:'Отменить',save:'Сохранить'};
     container.innerHTML=Object.keys(defaultHotkeys).map(k=>{
-        const key=hotkeys[k]||defaultHotkeys[k];
-        return `<div class="hotkey-row"><span class="hk-label">${labels[k]||k}</span><span class="hk-current" data-hk="${k}">${key==='DELETE'?'Del':key}</span></div>`;
+        const key=hotkeys[k]||'';
+        const conflict=key&&findHotkeyConflict(key,k);
+        let cls='';
+        if(!key)cls='conflict';
+        return `<div class="hotkey-row"><span class="hk-label">${keyLabels[k]||k}</span><span class="hk-current ${cls}" data-hk="${k}">${hkDisplay(key)}</span></div>`;
     }).join('');
     container.querySelectorAll('.hk-current').forEach(el=>{el.addEventListener('click',()=>startRecording(el));});
 }
 
 function startRecording(el){
-    if(recordingKey){recordingKey.classList.remove('recording');}
-    recordingKey=el;el.classList.add('recording');el.textContent='...';
+    if(recordingKey){recordingKey.classList.remove('recording','conflict');}
+    recordingKey=el;recordingHk=el.dataset.hk;el.classList.add('recording');el.textContent='...';
     const handler=e=>{
         e.preventDefault();e.stopPropagation();
-        let key=e.key.toUpperCase();if(key==='DELETE'||key==='DEL')key='DELETE';if(key==='CONTROL'||key==='SHIFT'||key==='ALT')return;
-        if(key.length===1&&e.ctrlKey)key='CTRL+'+key;
-        const hk=el.dataset.hk;hotkeys[hk]=key;el.textContent=key==='DELETE'?'Del':key;el.classList.remove('recording');recordingKey=null;
-        saveSettings();document.removeEventListener('keydown',handler);
-        toast(`Клавиша «${key}» назначена`);
+        let key=e.key.toUpperCase();
+        if(key==='DELETE'||key==='DEL')key='DELETE';
+        if(key==='CONTROL'||key==='SHIFT'||key==='ALT')return;
+        if(key.length===1&&e.ctrlKey){key='CTRL+'+key;}
+
+        const conflict=findHotkeyConflict(key,recordingHk);
+        if(conflict&&conflict!==recordingHk){
+            if(!confirm(`Клавиша «${hkDisplay(key)}» уже назначена на «${keyLabels[conflict]}».\n\nПереназначить? (с «${keyLabels[conflict]}» клавиша снимется)`)){
+                el.textContent=hkDisplay(hotkeys[recordingHk]);
+                el.classList.remove('recording','conflict');
+                recordingKey=null;recordingHk=null;
+                document.removeEventListener('keydown',handler);
+                return;
+            }
+            hotkeys[conflict]='';
+        }
+
+        hotkeys[recordingHk]=key;
+        el.textContent=hkDisplay(key);
+        el.classList.remove('recording','conflict');
+        recordingKey=null;recordingHk=null;
+        saveSettings();updateAllHKDisplays();
+        document.removeEventListener('keydown',handler);
+        toast(`«${keyLabels[recordingHk]}» → ${hkDisplay(key)}`);
     };
     document.addEventListener('keydown',handler);
 }
 
-function resetHotkeys(){hotkeys={...defaultHotkeys};saveSettings();renderHotkeyList();toast('Сброшено к заводским');}
+function resetHotkeys(){hotkeys={...defaultHotkeys};saveSettings();updateAllHKDisplays();toast('Сброшено к заводским');}
 
-// Привязка кнопок V1
+// Toggle секции
+Q('#hkToggle').addEventListener('click',()=>{
+    Q('#hkToggle').classList.toggle('open');
+    Q('#hkSection').classList.toggle('open');
+});
+
+// Кнопки V1
 function bindV1(){
     Q('#btnAddRow1').onclick=()=>{const t=active();t?addRowEnd(t):toast('Выберите таблицу!',0);};
     Q('#btnDelRow1').onclick=()=>{const t=active();t?delRowEnd(t):toast('Выберите таблицу!',0);};
@@ -397,11 +474,16 @@ Q('#btnUpdate').onclick=checkUpdate;
 Q('#fileInput').onchange=e=>{if(e.target.files[0]){load(e.target.files[0]);e.target.value='';}};
 
 // Настройки
-Q('#btnSettings').onclick=()=>{Q('#settingsModal').classList.add('show');renderHotkeyList();document.querySelectorAll('.theme-dot').forEach(d=>d.classList.toggle('active',d.dataset.theme===colorTheme));};
+Q('#btnSettings').onclick=()=>{Q('#settingsModal').classList.add('show');renderHotkeyList();};
 Q('#btnCloseSettings').onclick=()=>Q('#settingsModal').classList.remove('show');
 Q('#btnResetHotkeys').onclick=resetHotkeys;
-document.querySelectorAll('.theme-dot').forEach(d=>d.onclick=()=>setColorTheme(d.dataset.theme));
 Q('#settingsModal').onclick=e=>{if(e.target===Q('#settingsModal'))Q('#settingsModal').classList.remove('show');};
+
+// Цветовые темы
+Q('#btnColorTheme').onclick=()=>Q('#colorThemeModal').classList.add('show');
+Q('#btnCloseColorTheme').onclick=()=>Q('#colorThemeModal').classList.remove('show');
+Q('#colorThemeModal').onclick=e=>{if(e.target===Q('#colorThemeModal'))Q('#colorThemeModal').classList.remove('show');};
+document.querySelectorAll('.theme-card').forEach(c=>c.onclick=()=>setColorTheme(c.dataset.theme));
 
 document.addEventListener('keydown',e=>{
     if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&(e.key==='z'||e.key==='я')){e.preventDefault();undo();return;}
@@ -410,7 +492,15 @@ document.addEventListener('keydown',e=>{
     if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&(e.key==='t'||e.key==='е')){e.preventDefault();toggleTheme();return;}
     if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&(e.key==='u'||e.key==='г')){e.preventDefault();checkUpdate();return;}
     if(e.key==='F3'){e.preventDefault();if(window._nr)window._nr();return;}
-    if(e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.target.closest('input')){let key=e.key.toUpperCase();if(RU[key])key=RU[key];if(e.code==='Digit1')key='1';if(e.code==='Digit2')key='2';if(e.code==='Delete')key='DELETE';if(key===hotkeys.addRow)Q('#btnAddRow1').click();if(key===hotkeys.delRow)Q('#btnDelRow1').click();if(key===hotkeys.addCol)Q('#btnAddCol1').click();if(key===hotkeys.delCol)Q('#btnDelCol1').click();if(key===hotkeys.recalc)Q('#btnRecalc1').click();if(key===hotkeys.paste)Q('#btnPaste1').click();if(key===hotkeys.load)Q('#btnLoad1').click();if(key===hotkeys.newRUB)Q('#btnNewRUB1').click();if(key===hotkeys.newUSD)Q('#btnNewUSD1').click();if(key===hotkeys.dup)Q('#btnDup1').click();if(key===hotkeys.clear)Q('#btnClear1').click();}
+    if(e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.target.closest('input')&&!recordingKey){
+        let key=e.key.toUpperCase();if(RU[key])key=RU[key];if(e.code==='Digit1')key='1';if(e.code==='Digit2')key='2';if(e.code==='Delete')key='DELETE';
+        if(key===hotkeys.addRow)Q('#btnAddRow1').click();if(key===hotkeys.delRow)Q('#btnDelRow1').click();
+        if(key===hotkeys.addCol)Q('#btnAddCol1').click();if(key===hotkeys.delCol)Q('#btnDelCol1').click();
+        if(key===hotkeys.recalc)Q('#btnRecalc1').click();if(key===hotkeys.paste)Q('#btnPaste1').click();
+        if(key===hotkeys.load)Q('#btnLoad1').click();if(key===hotkeys.newRUB)Q('#btnNewRUB1').click();
+        if(key===hotkeys.newUSD)Q('#btnNewUSD1').click();if(key===hotkeys.dup)Q('#btnDup1').click();
+        if(key===hotkeys.clear)Q('#btnClear1').click();
+    }
     if(e.ctrlKey&&!e.shiftKey&&!e.altKey){const k=e.key.toLowerCase();if((k==='v'||k==='м')&&!e.target.closest('input')){e.preventDefault();gPaste(e);}if(k==='s'||k==='ы'){e.preventDefault();save();}if(k==='o'||k==='щ'){e.preventDefault();loadViaDialog();}if((k==='d'||k==='в')&&!e.target.closest('input')){e.preventDefault();dupTable();}}
 });
 function gPaste(e){const td=active();if(!td)return;if(e)e.preventDefault();navigator.clipboard.readText().then(text=>{const p=parseCB(text);if(!p.length)return toast('Нет данных',0);const sel=td.el.querySelector('tbody tr.sel:not(.tot)');if(sel){const ri=+sel.dataset.ri;let ci=0;const ae=document.activeElement;if(ae&&ae.closest('td')){const tds=[...sel.querySelectorAll('td:not(.rn):not(.act-cell)')];ci=tds.indexOf(ae.closest('td'));if(ci>=td.cols.length)ci=0;}pastePos(td,ri,ci,p);}else{p.forEach(r=>{const nr=[];for(let i=0;i<td.cols.length;i++){let v=r[i]??'';const cn=td.cols[i].toLowerCase();if(cn.includes('ко-во')||cn.includes('количество')||cn.startsWith('цена')){const n=pn(v);if(!isNaN(n))v=n.toFixed(2);}nr.push(v);}td.rows.push(nr);calc(nr,td.cols);});render(td);toast(`Вставлено строк: ${p.length}`);}}).catch(()=>{});}
