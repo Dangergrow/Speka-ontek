@@ -8,14 +8,12 @@ APP_FOLDER = "Ontek_Speka"
 DEFAULT_PATH = os.path.join(os.environ.get('ProgramFiles', 'C:\\Program Files'), APP_FOLDER)
 
 def get_source_dir():
-    """Папка откуда брать файлы (MEIPASS или рядом со скриптом)"""
     if getattr(sys, 'frozen', False):
         return sys._MEIPASS
     else:
         return os.path.dirname(os.path.abspath(__file__))
 
 def install_files(source_dir, target_dir, progress_callback=None):
-    """Копирует файлы в папку установки"""
     files = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']
     total = len(files)
     
@@ -27,7 +25,6 @@ def install_files(source_dir, target_dir, progress_callback=None):
         if progress_callback:
             progress_callback(int((i + 1) / (total + 1) * 100))
     
-    # Копируем EXE программы
     exe_src = os.path.join(source_dir, 'ONTEK_Orders.exe')
     exe_dst = os.path.join(target_dir, 'ONTEK_Orders.exe')
     if os.path.exists(exe_src):
@@ -36,7 +33,6 @@ def install_files(source_dir, target_dir, progress_callback=None):
         progress_callback(100)
 
 def create_shortcut(target_dir):
-    """Создать ярлык на рабочем столе"""
     try:
         import pythoncom
         from win32com.client import Dispatch
@@ -63,11 +59,10 @@ def create_shortcut(target_dir):
         return False
 
 def write_config(target_dir):
-    """Записать конфиг установки"""
     config = {
         'version': APP_VERSION,
         'install_path': target_dir
-四十}
+    }
     with open(os.path.join(target_dir, 'config.json'), 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2)
 
@@ -79,9 +74,9 @@ class Installer:
         self.root.resizable(False, False)
         self.root.configure(bg='#f8fafc')
         
-        # Центрирование
         self.root.update_idletasks()
-        w = 540; h = 460
+        w = 540
+        h = 460
         x = (self.root.winfo_screenwidth() // 2) - (w // 2)
         y = (self.root.winfo_screenheight() // 2) - (h // 2)
         self.root.geometry(f'{w}x{h}+{x}+{y}')
@@ -122,7 +117,6 @@ class Installer:
     def browse(self):
         path = filedialog.askdirectory(title="Выберите папку для установки", initialdir=self.install_path.get())
         if path:
-            # Добавляем папку Ontek_Speka к выбранному пути
             full_path = os.path.join(path, APP_FOLDER)
             self.install_path.set(full_path)
     
@@ -132,7 +126,6 @@ class Installer:
             messagebox.showerror("Ошибка", "Укажите папку установки!")
             return
         
-        # Создаём папку (включая все родительские)
         try:
             os.makedirs(target, exist_ok=True)
         except Exception as e:
@@ -146,18 +139,14 @@ class Installer:
         def install_thread():
             try:
                 source_dir = get_source_dir()
-                
                 self.root.after(0, lambda: self.status_label.config(text="Копирование файлов..."))
                 install_files(source_dir, target, lambda p: self.root.after(0, self.update_progress, p))
-                
                 self.root.after(0, lambda: self.status_label.config(text="Создание ярлыка..."))
                 shortcut_ok = False
                 if self.create_desktop.get():
                     shortcut_ok = create_shortcut(target)
-                
                 self.root.after(0, lambda: self.status_label.config(text="Сохранение конфигурации..."))
                 write_config(target)
-                
                 self.root.after(0, lambda: self.install_done(shortcut_ok))
             except Exception as e:
                 self.root.after(0, lambda: messagebox.showerror("Ошибка", str(e)))
