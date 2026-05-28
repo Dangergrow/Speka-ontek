@@ -76,25 +76,8 @@ function renameCol(td,idx){const old=td.cols[idx];const n=prompt('Новое н�
 function addColEnd(td){const n=prompt('Название:','Новая колонка');if(!n||!n.trim())return;hist.push({a:'addCol',tid:td.id});td.cols.push(n.trim());td.rows.forEach(r=>r.push(''));render(td);}
 function delColEnd(td){if(td.cols.length<=2)return toast('Минимум 2 колонки!',0);hist.push({a:'delColEnd',tid:td.id,d:{i:td.cols.length-1,n:td.cols[td.cols.length-1],c:td.rows.map(r=>r[td.cols.length-1])}});td.cols.pop();td.rows.forEach(r=>r.pop());render(td);}
 
-// ==================== ОТМЕНА (ПОЛНОСТЬЮ ИСПРАВЛЕНО) ====================
-function undo(){
-    if(!hist.length)return toast('Нечего отменять',false);
-    const l=hist.pop();
-    const td=workspaces[activeWorkspace].find(t=>t.id===l.tid);
-    if(!td)return toast('Таблица не найдена',false);
-    
-    switch(l.a){
-        case'editCell':td.rows[l.d.ri][l.d.ci]=l.d.old;render(td);toast('Отменено: ввод');break;
-        case'delRow':td.rows.splice(l.d.i,0,l.d.r);render(td);toast('Отменено: строка возвращена');break;
-        case'delRowEnd':td.rows.splice(l.d.i,0,l.d.r);render(td);toast('Отменено: строка возвращена');break;
-        case'addRow':case'insRow':if(td.rows.length>1){td.rows.pop();render(td);toast('Отменено: строка удалена');}break;
-        case'delCol':td.cols.splice(l.d.i,0,l.d.n);td.rows.forEach(r=>r.splice(l.d.i,0,l.d.c));render(td);toast('Отменено: колонка возвращена');break;
-        case'delColEnd':td.cols.splice(l.d.i,0,l.d.n);td.rows.forEach(r=>r.splice(l.d.i,0,l.d.c));render(td);toast('Отменено: колонка возвращена');break;
-        case'addCol':if(td.cols.length>2){td.cols.pop();td.rows.forEach(r=>r.pop());render(td);toast('Отменено: колонка удалена');}break;
-        case'insCol':td.cols.splice(l.d.i,1);td.rows.forEach(r=>r.splice(l.d.i,1));render(td);toast('Отменено: колонка удалена');break;
-        case'paste':td.rows.splice(l.d.si,l.d.count);render(td);toast(`Отменено: ${l.d.count} стр.`);break;
-    }
-}
+// ==================== ОТМЕНА ====================
+function undo(){if(!hist.length)return toast('Нечего отменять',false);const l=hist.pop();const td=workspaces[activeWorkspace].find(t=>t.id===l.tid);if(!td)return toast('Таблица не найдена',false);switch(l.a){case'editCell':td.rows[l.d.ri][l.d.ci]=l.d.old;render(td);toast('Отменено: ввод');break;case'delRow':td.rows.splice(l.d.i,0,l.d.r);render(td);toast('Отменено: строка возвращена');break;case'delRowEnd':td.rows.splice(l.d.i,0,l.d.r);render(td);toast('Отменено: строка возвращена');break;case'addRow':case'insRow':if(td.rows.length>1){td.rows.pop();render(td);toast('Отменено: строка удалена');}break;case'delCol':td.cols.splice(l.d.i,0,l.d.n);td.rows.forEach(r=>r.splice(l.d.i,0,l.d.c));render(td);toast('Отменено: колонка возвращена');break;case'delColEnd':td.cols.splice(l.d.i,0,l.d.n);td.rows.forEach(r=>r.splice(l.d.i,0,l.d.c));render(td);toast('Отменено: колонка возвращена');break;case'addCol':if(td.cols.length>2){td.cols.pop();td.rows.forEach(r=>r.pop());render(td);toast('Отменено: колонка удалена');}break;case'insCol':td.cols.splice(l.d.i,1);td.rows.forEach(r=>r.splice(l.d.i,1));render(td);toast('Отменено: колонка удалена');break;case'paste':td.rows.splice(l.d.si,l.d.count);render(td);toast(`Отменено: ${l.d.count} стр.`);break;}}
 
 // ==================== БУФЕР ====================
 function parseCB(text){if(!text||!text.trim())return[];return text.trim().split(/\r?\n/).map(l=>l.includes('\t')?l.split('\t'):l.split('|')?l.split('|').map(c=>c.trim()).filter(c=>c):l.split(/\s{2,}/)).filter(r=>r.some(c=>c.trim()));}
@@ -117,7 +100,7 @@ function processWB(wb){const a=getArea();a.innerHTML='';const ws=workspaces[acti
 function findHotkeyConflict(key,excludeHk){for(const[k,v]of Object.entries(hotkeys)){if(k!==excludeHk&&v===key)return k;}return null;}
 function renderHotkeyList(){const container=Q('#hotkeyList');if(!container)return;container.innerHTML=Object.keys(defaultHotkeys).map(k=>{const key=hotkeys[k]||'';return`<div class="hotkey-row"><span class="hk-label">${keyLabels[k]||k}</span><span class="hk-current${!key?' conflict':''}" data-hk="${k}">${key?'Shift+'+hkDisplay(key):'—'}</span></div>`;}).join('');container.querySelectorAll('.hk-current').forEach(el=>{el.onclick=()=>startRecording(el);});}
 function startRecording(el){if(recordingKey){recordingKey.classList.remove('recording','conflict');}recordingKey=el;recordingHk=el.dataset.hk;el.classList.add('recording');el.textContent='...';const handler=e=>{e.preventDefault();e.stopPropagation();let key=e.key.toUpperCase();if(key==='DELETE'||key==='DEL')key='DELETE';if(key==='CONTROL'||key==='SHIFT'||key==='ALT')return;const conflict=findHotkeyConflict(key,recordingHk);if(conflict&&conflict!==recordingHk){if(!confirm(`Клавиша «Shift+${hkDisplay(key)}» уже назначена на «${keyLabels[conflict]}».\n\nПереназначить?`)){el.textContent=hotkeys[recordingHk]?'Shift+'+hkDisplay(hotkeys[recordingHk]):'—';el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;document.removeEventListener('keydown',handler);return;}hotkeys[conflict]='';}hotkeys[recordingHk]=key;el.textContent='Shift+'+hkDisplay(key);el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;saveAll();updateAllHKDisplays();renderHotkeyList();document.removeEventListener('keydown',handler);toast(`«${keyLabels[recordingHk]}» → Shift+${hkDisplay(key)}`);};document.addEventListener('keydown',handler);}
-function renderThemeOptions(){const container=Q('#themeOptions');if(!container)return;container.innerHTML=themes.map(t=>`<div class="theme-card${t.id===colorTheme?' active':''}" data-theme="${t.id}"><div class="theme-preview" style="background:${t.gradient}">${t.letter}</div><div class="theme-name">${t.name}</div><div class="theme-desc">${t.desc}</div></div>`).join('');container.querySelectorAll('.theme-card').forEach(c=>c.onclick=()=>setColorTheme(c.dataset.theme));}
+function renderThemeOptions(containerId){const container=document.getElementById(containerId||'themeOptions');if(!container)return;container.innerHTML=themes.map(t=>`<div class="theme-card${t.id===colorTheme?' active':''}" data-theme="${t.id}"><div class="theme-preview" style="background:${t.gradient}">${t.letter}</div><div class="theme-name">${t.name}</div><div class="theme-desc">${t.desc}</div></div>`).join('');container.querySelectorAll('.theme-card').forEach(c=>c.onclick=()=>setColorTheme(c.dataset.theme));}
 function toggleSection(toggleId,sectionId){const toggle=document.getElementById(toggleId);const section=document.getElementById(sectionId);if(!toggle||!section)return;toggle.classList.toggle('open');section.classList.toggle('open');}
 function hideCtx(){Q('#ctxMenu').style.display='none';}
 Q('#ctxMenu').addEventListener('click',e=>{const item=e.target.closest('.ctx-item');if(!item)return;const a=item.dataset.action;hideCtx();const td=active();if(!td&&!['paste','dupTable'].includes(a))return;if(td)setAct(td.id);switch(a){case'addRowAbove':if(td&&ctxD.r!==null)insRowAbove(td,ctxD.r);break;case'addRowBelow':if(td&&ctxD.r!==null)insRowBelow(td,ctxD.r);break;case'delRow':if(td&&ctxD.r!==null)delRow(td,ctxD.r);break;case'renameCol':if(td&&ctxD.c!==null)renameCol(td,ctxD.c);break;case'addColBefore':if(td&&ctxD.c!==null)insCol(td,ctxD.c);break;case'addColAfter':if(td&&ctxD.c!==null)insCol(td,ctxD.c+1);break;case'delCol':if(td&&ctxD.c!==null)delCol(td,ctxD.c);break;case'paste':paste();break;case'dupTable':if(td)dupTable(td);else dupTable();break;case'delTable':if(td&&workspaces[activeWorkspace].length>1){td.card.remove();const ws=workspaces[activeWorkspace];ws.splice(ws.indexOf(td),1);if(actId===td.id)actId=ws.length?ws[0].id:null;upEmpty();}break;}});
@@ -149,15 +132,36 @@ function bindAllEvents(){
     document.getElementById('btnTheme').onclick=toggleTheme;
     document.getElementById('btnUpdate').onclick=checkUpdate;
     document.getElementById('fileInput').onchange=e=>{if(e.target.files[0]){load(e.target.files[0]);e.target.value='';}};
-    document.getElementById('btnSettings').onclick=()=>{document.getElementById('settingsModal').classList.add('show');renderHotkeyList();};
-    document.getElementById('btnCloseSettings').onclick=()=>document.getElementById('settingsModal').classList.remove('show');
-    document.getElementById('settingsModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
-    document.getElementById('hkToggle').onclick=()=>toggleSection('hkToggle','hkSection');
-    document.getElementById('aboutToggle').onclick=()=>toggleSection('aboutToggle','aboutSection');
-    document.getElementById('btnResetHotkeys').onclick=()=>{hotkeys={...defaultHotkeys};saveAll();updateAllHKDisplays();renderHotkeyList();toast('Сброшено');};
-    document.getElementById('btnColorTheme').onclick=()=>{document.getElementById('colorThemeModal').classList.add('show');renderThemeOptions();};
-    document.getElementById('btnCloseColorTheme').onclick=()=>document.getElementById('colorThemeModal').classList.remove('show');
-    document.getElementById('colorThemeModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+    
+    document.getElementById('btnSettings').onclick=function(){
+        document.getElementById('settingsModal').classList.add('show');
+        renderHotkeyList();
+        renderThemeOptions('themeOptionsSettings');
+    };
+    document.getElementById('btnCloseSettings').onclick=function(){
+        document.getElementById('settingsModal').classList.remove('show');
+    };
+    document.getElementById('settingsModal').addEventListener('click',function(e){
+        if(e.target===this)this.classList.remove('show');
+    });
+    
+    document.getElementById('hkToggle').onclick=function(){toggleSection('hkToggle','hkSection');};
+    document.getElementById('themeToggle').onclick=function(){toggleSection('themeToggle','themeSection');renderThemeOptions('themeOptionsSettings');};
+    document.getElementById('backupToggle').onclick=function(){toggleSection('backupToggle','backupSection');};
+    document.getElementById('aboutToggle').onclick=function(){toggleSection('aboutToggle','aboutSection');};
+    document.getElementById('btnResetHotkeys').onclick=function(){hotkeys={...defaultHotkeys};saveAll();updateAllHKDisplays();renderHotkeyList();toast('Сброшено');};
+    
+    document.getElementById('btnColorTheme').onclick=function(){
+        document.getElementById('colorThemeModal').classList.add('show');
+        renderThemeOptions('colorThemeOptions');
+    };
+    document.getElementById('btnCloseColorTheme').onclick=function(){
+        document.getElementById('colorThemeModal').classList.remove('show');
+    };
+    document.getElementById('colorThemeModal').addEventListener('click',function(e){
+        if(e.target===this)this.classList.remove('show');
+    });
+    
     const bv=(id,fn)=>{const el=document.getElementById(id);if(el)el.onclick=fn;};
     bv('btnAddRow',()=>{const t=active();t?addRowEnd(t):toast('Выберите таблицу!',0);});bv('btnDelRow',()=>{const t=active();t?delRowEnd(t):toast('Выберите таблицу!',0);});
     bv('btnAddCol',()=>{const t=active();t?addColEnd(t):toast('Выберите таблицу!',0);});bv('btnDelCol',()=>{const t=active();t?delColEnd(t):toast('Выберите таблицу!',0);});
