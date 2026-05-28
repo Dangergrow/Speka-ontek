@@ -25,24 +25,27 @@
 
 /* ===== ЗЕЛЁНАЯ ТЕМА ===== */
 .theme-green {
-    --accent:#10b981;--accent2:#059669;--brand:#065f46;--accent-light:#d1fae5;
+    --app-bg:#f0fdf4;--accent:#10b981;--accent2:#059669;--brand:#065f46;--accent-light:#d1fae5;
     --btn-blue-bg:#10b981;--btn-green-bg:#059669;--btn-purple-bg:#7c3aed;
     --btn-teal-bg:#0d9488;--btn-slate-bg:#374151;--btn-pink-bg:#db2777;--btn-indigo-bg:#4f46e5;
     --thbg:#065f46;
 }
+.dark.theme-green {--app-bg:#0a1f14;}
 
 /* ===== ФИОЛЕТОВАЯ ТЕМА ===== */
 .theme-purple {
-    --accent:#8b5cf6;--accent2:#7c3aed;--brand:#5b21b6;--accent-light:#ede9fe;
+    --app-bg:#faf5ff;--accent:#8b5cf6;--accent2:#7c3aed;--brand:#5b21b6;--accent-light:#ede9fe;
     --btn-blue-bg:#8b5cf6;--btn-slate-bg:#4338ca;--thbg:#5b21b6;
 }
+.dark.theme-purple {--app-bg:#1a0f2e;}
 
 /* ===== ОРАНЖЕВАЯ ТЕМА ===== */
 .theme-orange {
-    --accent:#f59e0b;--accent2:#ea580c;--brand:#c2410c;--accent-light:#fed7aa;
+    --app-bg:#fff7ed;--accent:#f59e0b;--accent2:#ea580c;--brand:#c2410c;--accent-light:#fed7aa;
     --btn-blue-bg:#f59e0b;--btn-orange-bg:#ea580c;--btn-slate-bg:#78350f;--btn-pink-bg:#be123c;
     --thbg:#c2410c;
 }
+.dark.theme-orange {--app-bg:#1c0f02;}
 
 /* ===== КНОПКИ ===== */
 .b-blue{background:var(--btn-blue-bg)!important;color:#fff}
@@ -55,7 +58,6 @@
 .b-pink{background:var(--btn-pink-bg)!important;color:#fff}
 .b-indigo{background:var(--btn-indigo-bg)!important;color:#fff}
 
-/* ===== САЙДБАР КНОПКИ ===== */
 .sb-blue{background:#3b82f6}.sb-green{background:#10b981}.sb-red{background:#ef4444}
 .sb-orange{background:#f59e0b}.sb-purple{background:#8b5cf6}.sb-teal{background:#14b8a6}
 .sb-slate{background:#475569}.sb-pink{background:#ec4899}.sb-indigo{background:#6366f1}
