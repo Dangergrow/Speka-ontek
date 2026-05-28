@@ -17,6 +17,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     document.addEventListener('keydown', handleGlobalHotkeys);
     document.addEventListener('paste', handleGlobalPaste);
-    
-    console.log('ONTEK v4.5.0 готов');
 });
