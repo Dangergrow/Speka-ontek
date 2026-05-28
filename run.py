@@ -48,6 +48,27 @@ class Api:
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
     
+    def save_settings(self, settings_json):
+        """Сохранение настроек в файл"""
+        try:
+            settings_path = os.path.join(get_app_dir(), 'settings.json')
+            with open(settings_path, 'w', encoding='utf-8') as f:
+                f.write(settings_json)
+            return json.dumps({"success": True})
+        except Exception as e:
+            return json.dumps({"success": False, "message": str(e)})
+    
+    def load_settings(self):
+        """Загрузка настроек из файла"""
+        try:
+            settings_path = os.path.join(get_app_dir(), 'settings.json')
+            if os.path.exists(settings_path):
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            return "{}"
+        except:
+            return "{}"
+    
     def apply_update(self):
         try:
             app_dir = get_app_dir()
