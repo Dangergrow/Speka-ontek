@@ -25,62 +25,26 @@
 </div>
 
 <div id="toolbarV1">
-<div class="tb-grid">
-    <div class="tb-cell"><div class="tb-lbl">Строки</div><div class="tb-btns"><button class="btn b-blue" id="btnAddRow1">＋ <span class="hk" data-hk="addRow">Shift+A</span></button><button class="btn b-red" id="btnDelRow1">－ <span class="hk" data-hk="delRow">Shift+D</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Колонки</div><div class="tb-btns"><button class="btn b-green" id="btnAddCol1">＋ <span class="hk" data-hk="addCol">Shift+C</span></button><button class="btn b-orange" id="btnDelCol1">－ <span class="hk" data-hk="delCol">Shift+X</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Поиск</div><div class="tb-btns"><button class="btn b-indigo" id="btnFind1">🔍 <span class="hk" data-hk="find">Ctrl+F</span></button><button class="btn b-purple" id="btnReplace1">🔄 <span class="hk" data-hk="replace">Ctrl+H</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Буфер</div><div class="tb-btns"><button class="btn b-orange" id="btnPaste1">📋 <span class="hk" data-hk="paste">Shift+V</span></button><button class="btn b-pink" id="btnDup1">📑 <span class="hk" data-hk="dup">Shift+U</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Новая</div><div class="tb-btns"><button class="btn b-purple" id="btnNewRUB1">RUB <span class="hk" data-hk="newRUB">Shift+1</span></button><button class="btn b-indigo" id="btnNewUSD1">USD <span class="hk" data-hk="newUSD">Shift+2</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Файл</div><div class="tb-btns"><button class="btn b-slate" id="btnLoad1">📂 <span class="hk" data-hk="load">Shift+O</span></button><button class="btn b-teal" id="btnSave1">💾 <span class="hk" data-hk="save">Ctrl+S</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Инструменты</div><div class="tb-btns"><button class="btn b-teal" id="btnRecalc1">🔄 <span class="hk" data-hk="recalc">Shift+R</span></button><button class="btn b-red" id="btnClear1">🗑 <span class="hk" data-hk="clear">Shift+Del</span></button></div></div>
-    <div class="tb-cell"><div class="tb-lbl">Отмена</div><div class="tb-btns"><button class="btn b-slate" id="btnUndo1">↩ <span class="hk" data-hk="undo">Ctrl+Z</span></button></div></div>
-</div>
+<div class="tb-grid" id="tbGridV1"></div>
 </div>
 
 <div class="layout-v2" id="layoutV2">
-    <div class="sidebar-v2" id="sidebar">
-        <div class="sidebar-section"><div class="sidebar-section-title">Строки и колонки</div>
-            <button class="sidebar-btn sb-blue" id="btnAddRow2"><span class="s-icon">＋</span> Добавить строку <span class="s-hotkey" data-hk="addRow">Shift+A</span></button>
-            <button class="sidebar-btn sb-red" id="btnDelRow2"><span class="s-icon">－</span> Удалить строку <span class="s-hotkey" data-hk="delRow">Shift+D</span></button>
-            <button class="sidebar-btn sb-green" id="btnAddCol2"><span class="s-icon">＋</span> Добавить колонку <span class="s-hotkey" data-hk="addCol">Shift+C</span></button>
-            <button class="sidebar-btn sb-orange" id="btnDelCol2"><span class="s-icon">－</span> Удалить колонку <span class="s-hotkey" data-hk="delCol">Shift+X</span></button>
-        </div>
-        <div class="sidebar-section"><div class="sidebar-section-title">Поиск</div>
-            <button class="sidebar-btn sb-indigo" id="btnFind2"><span class="s-icon">🔍</span> Найти <span class="s-hotkey" data-hk="find">Ctrl+F</span></button>
-            <button class="sidebar-btn sb-purple" id="btnReplace2"><span class="s-icon">🔄</span> Заменить <span class="s-hotkey" data-hk="replace">Ctrl+H</span></button>
-        </div>
-        <div class="sidebar-section"><div class="sidebar-section-title">Действия</div>
-            <button class="sidebar-btn sb-orange" id="btnPaste2"><span class="s-icon">📋</span> Вставить <span class="s-hotkey" data-hk="paste">Shift+V</span></button>
-            <button class="sidebar-btn sb-pink" id="btnDup2"><span class="s-icon">📑</span> Дублировать <span class="s-hotkey" data-hk="dup">Shift+U</span></button>
-            <button class="sidebar-btn sb-purple" id="btnNewRUB2"><span class="s-icon">🆕</span> Новая RUB <span class="s-hotkey" data-hk="newRUB">Shift+1</span></button>
-            <button class="sidebar-btn sb-indigo" id="btnNewUSD2"><span class="s-icon">🆕</span> Новая USD <span class="s-hotkey" data-hk="newUSD">Shift+2</span></button>
-        </div>
-        <div class="sidebar-section"><div class="sidebar-section-title">Файл и инструменты</div>
-            <button class="sidebar-btn sb-slate" id="btnLoad2"><span class="s-icon">📂</span> Открыть <span class="s-hotkey" data-hk="load">Shift+O</span></button>
-            <button class="sidebar-btn sb-teal" id="btnSave2"><span class="s-icon">💾</span> Сохранить <span class="s-hotkey" data-hk="save">Ctrl+S</span></button>
-            <button class="sidebar-btn sb-teal" id="btnRecalc2"><span class="s-icon">🔄</span> Пересчёт <span class="s-hotkey" data-hk="recalc">Shift+R</span></button>
-            <button class="sidebar-btn sb-red" id="btnClear2"><span class="s-icon">🗑</span> Очистить <span class="s-hotkey" data-hk="clear">Shift+Del</span></button>
-            <button class="sidebar-btn sb-slate" id="btnUndo2"><span class="s-icon">↩</span> Отменить <span class="s-hotkey" data-hk="undo">Ctrl+Z</span></button>
-        </div>
-    </div>
+    <div class="sidebar-v2" id="sidebarV2"></div>
     <div class="tables-area" id="tablesAreaV2"><div class="empty">Создайте таблицу — <b>Shift+1</b> RUB или <b>Shift+2</b> USD</div></div>
 </div>
 
 <div class="tables-area" id="tablesAreaV1"><div class="empty">Создайте таблицу — <b>Shift+1</b> RUB или <b>Shift+2</b> USD</div></div>
 
 <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls">
-<div class="shortcuts"><span><kbd>Tab</kbd> След.</span> <span><kbd>Enter</kbd> Вниз</span> <span><kbd>Ctrl+F</kbd> Поиск</span> <span><kbd>Ctrl+T</kbd> Тема</span> <span><kbd>Ctrl+Z</kbd> Отмена</span> <span><kbd>ПКМ</kbd> Меню</span></div>
+<div class="shortcuts" id="shortcutsBar"></div>
 </div>
 </div>
 
-<!-- Модальное окно настроек -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
         <h2>⚙ Настройки</h2>
-        
         <h3 id="hkToggle"><span class="arrow">▶</span> Горячие клавиши</h3>
         <div class="hk-section" id="hkSection"><div id="hotkeyList"></div><div class="modal-btns"><button class="btn b-red" id="btnResetHotkeys">Сбросить к заводским</button></div></div>
-        
         <h3 id="aboutToggle"><span class="arrow">▶</span> О программе</h3>
         <div class="hk-section" id="aboutSection">
             <div style="text-align:center;padding:20px">
@@ -92,12 +56,10 @@
                 <div style="font-size:11px;color:var(--text2);margin-top:4px">Все права защищены</div>
             </div>
         </div>
-        
         <div class="modal-btns" style="margin-top:16px"><button class="btn b-slate" id="btnCloseSettings">Закрыть</button></div>
     </div>
 </div>
 
-<!-- Модальное окно цветовых тем -->
 <div class="modal-overlay" id="colorThemeModal">
     <div class="modal theme-modal">
         <h2>🎨 Цветовая тема</h2>
@@ -122,9 +84,7 @@
     <div class="ctx-item" data-action="delTable">🗑 Удалить таблицу</div>
 </div>
 
-<script src="js/core.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/hotkeys.js"></script>
-<script src="js/excel.js"></script>
+<script src="js/app.js"></script>
+<script src="js/init.js"></script>
 </body>
 </html>
