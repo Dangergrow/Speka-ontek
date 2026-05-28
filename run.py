@@ -43,32 +43,34 @@ class Api:
             return json.dumps({"success": False, "message": str(e)})
     
     def save_settings(self, settings_json):
-        """Сохранить настройки в файл рядом с EXE"""
         try:
             app_dir = get_app_dir()
             settings_path = os.path.join(app_dir, 'settings.json')
             with open(settings_path, 'w', encoding='utf-8') as f:
                 f.write(settings_json)
+            print(f"[OK] Настройки сохранены: {settings_path}")
             return json.dumps({"success": True})
         except Exception as e:
+            print(f"[ERROR] Ошибка сохранения: {e}")
             return json.dumps({"success": False, "message": str(e)})
     
     def load_settings(self):
-        """Загрузить настройки из файла рядом с EXE"""
         try:
             app_dir = get_app_dir()
             settings_path = os.path.join(app_dir, 'settings.json')
+            print(f"[INFO] Ищем настройки: {settings_path}")
             if os.path.exists(settings_path):
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                if content and content.strip() and content.strip() != '{}':
-                    return content
+                print(f"[OK] Настройки загружены ({len(content)} байт)")
+                return content
+            print("[INFO] Файл настроек не найден, возвращаю пустой JSON")
             return "{}"
-        except:
+        except Exception as e:
+            print(f"[ERROR] Ошибка загрузки: {e}")
             return "{}"
     
     def apply_update(self):
-        """Скачать и применить обновление"""
         try:
             app_dir = get_app_dir()
             files = ['index.html','css/themes.css','css/style.css','js/app.js','js/init.js']
@@ -82,105 +84,54 @@ class Api:
                     with urllib.request.urlopen(req, timeout=15) as r:
                         content = r.read()
                         text = content.decode('utf-8', errors='ignore')
-                        if text.strip().startswith('<!DOCTYPE') or text.strip().startswith('<html'):
-                            continue
-                        if os.path.exists(local_path):
-                            os.remove(local_path)
-                        with open(local_path, 'wb') as out:
-                            out.write(content)
+                        if text.strip().startswith('<!DOCTYPE') or text.strip().startswith('<html'): continue
+                        if os.path.exists(local_path): os.remove(local_path)
+                        with open(local_path, 'wb') as out: out.write(content)
                         updated += 1
-                except Exception as e:
-                    print(f"Ошибка скачивания {f}: {e}")
-                    continue
-            
-            if updated > 0:
-                return json.dumps({"success": True, "message": f"Обновлено файлов: {updated}. Перезагрузка..."})
-            return json.dumps({"success": False, "message": "Не удалось скачать обновления"})
-        except Exception as e:
-            return json.dumps({"success": False, "message": str(e)})
-    
-    def download_full_installer(self):
-        """Скачать полный установщик"""
-        try:
-            url = "https://github.com/Dangergrow/Speka-ontek/releases/latest/download/ONTEK_Setup.exe"
-            tmp = os.path.join(tempfile.gettempdir(), "ONTEK_Setup.exe")
-            urllib.request.urlretrieve(url, tmp)
-            os.startfile(tmp)
-            return json.dumps({"success": True})
+                except: continue
+            if updated > 0: return json.dumps({"success": True, "message": f"Обновлено: {updated} файлов"})
+            return json.dumps({"success": False, "message": "Не удалось скачать"})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
 
 def first_run_copy():
-    """Копирует файлы из _MEIPASS в папку с EXE только при первом запуске"""
-    if not getattr(sys, 'frozen', False):
-        return
-    
+    if not getattr(sys, 'frozen', False): return
     app_dir = get_app_dir()
     base_dir = sys._MEIPASS
-    
-    # Если index.html уже есть в папке с EXE — не копируем (сохраняем обновления)
-    if os.path.exists(os.path.join(app_dir, 'index.html')):
-        return
-    
+    if os.path.exists(os.path.join(app_dir, 'index.html')): return
     files = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']
     folders = ['css', 'js']
-    
     for f in files:
-        src = os.path.join(base_dir, f)
-        dst = os.path.join(app_dir, f)
+        src = os.path.join(base_dir, f); dst = os.path.join(app_dir, f)
         if os.path.exists(src):
-            try:
-                shutil.copy2(src, dst)
-            except:
-                pass
-    
+            try: shutil.copy2(src, dst)
+            except: pass
     for folder in folders:
-        src_folder = os.path.join(base_dir, folder)
-        dst_folder = os.path.join(app_dir, folder)
+        src_folder = os.path.join(base_dir, folder); dst_folder = os.path.join(app_dir, folder)
         if os.path.exists(src_folder):
             os.makedirs(dst_folder, exist_ok=True)
             for f in os.listdir(src_folder):
-                sf = os.path.join(src_folder, f)
-                df = os.path.join(dst_folder, f)
+                sf = os.path.join(src_folder, f); df = os.path.join(dst_folder, f)
                 if os.path.isfile(sf):
-                    try:
-                        shutil.copy2(sf, df)
-                    except:
-                        pass
+                    try: shutil.copy2(sf, df)
+                    except: pass
 
 def start_server(port, serve_dir):
-    """Запускает HTTP сервер"""
     os.chdir(serve_dir)
-    server = HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler)
-    server.serve_forever()
+    HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler).serve_forever()
 
 def main():
-    # Копируем файлы при первом запуске
     first_run_copy()
-    
-    # Сервер всегда из папки с EXE
     serve_dir = get_app_dir()
     port = 8765
-    
-    # Запускаем сервер в фоне
     threading.Thread(target=start_server, args=(port, serve_dir), daemon=True).start()
     time.sleep(0.5)
-    
-    # Создаём API
     api = Api()
-    
-    # Создаём окно
     window = webview.create_window(
-        title=APP_NAME,
-        url=f'http://127.0.0.1:{port}/index.html',
-        js_api=api,
-        maximized=True,
-        resizable=True,
-        min_size=(900, 600)
+        title=APP_NAME, url=f'http://127.0.0.1:{port}/index.html',
+        js_api=api, maximized=True, resizable=True, min_size=(900, 600)
     )
     api.set_window(window)
-    
-    # Запускаем
     webview.start(debug=False)
 
 if __name__ == '__main__':
