@@ -39,6 +39,10 @@ function updateAllHKDisplays(){
 
 function applyAllSettings(){
     document.body.classList.toggle('dark',theme==='dark');
+    
+    const bodyColors={'blue':theme==='dark'?'#0f172a':'#eef1f5','green':theme==='dark'?'#0a1f14':'#ecfdf5','purple':theme==='dark'?'#1a0f2e':'#f5f3ff','orange':theme==='dark'?'#1c0f02':'#fff7ed'};
+    document.body.style.background=bodyColors[colorTheme]||bodyColors['blue'];
+    
     const tb=Q('#btnTheme');if(tb)tb.textContent=theme==='dark'?'☀️':'🌙';
     document.body.className=document.body.className.replace(/theme-\w+/g,'');
     document.body.classList.add('theme-'+colorTheme);
@@ -184,13 +188,13 @@ function processWB(wb){const a=getArea();a.innerHTML='';T.length=0;idC=0;actId=n
 // ==================== ГОРЯЧИЕ КЛАВИШИ ====================
 function findHotkeyConflict(key,excludeHk){for(const[k,v]of Object.entries(hotkeys)){if(k!==excludeHk&&v===key)return k;}return null;}
 function renderHotkeyList(){const container=Q('#hotkeyList');if(!container)return;container.innerHTML=Object.keys(defaultHotkeys).map(k=>{const key=hotkeys[k]||'';return`<div class="hotkey-row"><span class="hk-label">${keyLabels[k]||k}</span><span class="hk-current${!key?' conflict':''}" data-hk="${k}">${hkDisplay(key)}</span></div>`;}).join('');container.querySelectorAll('.hk-current').forEach(el=>{el.onclick=()=>startRecording(el);});}
-function startRecording(el){if(recordingKey){recordingKey.classList.remove('recording','conflict');}recordingKey=el;recordingHk=el.dataset.hk;el.classList.add('recording');el.textContent='...';const handler=e=>{e.preventDefault();e.stopPropagation();let key=e.key.toUpperCase();if(key==='DELETE'||key==='DEL')key='DELETE';if(key==='CONTROL'||key==='SHIFT'||key==='ALT')return;if(key.length===1&&e.ctrlKey)key='CTRL+'+key;const conflict=findHotkeyConflict(key,recordingHk);if(conflict&&conflict!==recordingHk){if(!confirm(`Клавиша «${hkDisplay(key)}» уже назначена на «${keyLabels[conflict]}».\n\nПереназначить?`)){el.textContent=hkDisplay(hotkeys[recordingHk]||'');el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;document.removeEventListener('keydown',handler);return;}hotkeys[conflict]='';}hotkeys[recordingHk]=key;el.textContent=hkDisplay(key);el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;saveAll();updateAllHKDisplays();document.removeEventListener('keydown',handler);toast(`«${keyLabels[recordingHk]}» → ${hkDisplay(key)}`);};document.addEventListener('keydown',handler);}
+function startRecording(el){if(recordingKey){recordingKey.classList.remove('recording','conflict');}recordingKey=el;recordingHk=el.dataset.hk;el.classList.add('recording');el.textContent='...';const handler=e=>{e.preventDefault();e.stopPropagation();let key=e.key.toUpperCase();if(key==='DELETE'||key==='DEL')key='DELETE';if(key==='CONTROL'||key==='SHIFT'||key==='ALT')return;if(key.length===1&&e.ctrlKey)key='CTRL+'+key;const conflict=findHotkeyConflict(key,recordingHk);if(conflict&&conflict!==recordingHk){if(!confirm(`Клавиша «${hkDisplay(key)}» уже назначена на «${keyLabels[conflict]}».\n\nПереназначить?`)){el.textContent=hkDisplay(hotkeys[recordingHk]||'');el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;document.removeEventListener('keydown',handler);return;}hotkeys[conflict]='';}hotkeys[recordingHk]=key;el.textContent=hkDisplay(key);el.classList.remove('recording','conflict');recordingKey=null;recordingHk=null;saveAll();updateAllHKDisplays();renderHotkeyList();document.removeEventListener('keydown',handler);toast(`«${keyLabels[recordingHk]}» → ${hkDisplay(key)}`);};document.addEventListener('keydown',handler);}
 
 // ==================== ЦВЕТОВЫЕ ТЕМЫ ====================
 function renderThemeOptions(){const container=Q('#themeOptions');if(!container)return;container.innerHTML=themes.map(t=>`<div class="theme-card${t.id===colorTheme?' active':''}" data-theme="${t.id}"><div class="theme-preview" style="background:${t.gradient}">${t.letter}</div><div class="theme-name">${t.name}</div><div class="theme-desc">${t.desc}</div></div>`).join('');container.querySelectorAll('.theme-card').forEach(c=>c.onclick=()=>setColorTheme(c.dataset.theme));}
 
 // ==================== МОДАЛКИ ====================
-function toggleSection(toggleId,sectionId){Q(toggleId).classList.toggle('open');Q(sectionId).classList.toggle('open');}
+function toggleSection(toggleId,sectionId){const t=Q(toggleId),s=Q(sectionId);if(t)t.classList.toggle('open');if(s)s.classList.toggle('open');}
 function hideCtx(){Q('#ctxMenu').style.display='none';}
 
 // ==================== КОНТЕКСТНОЕ МЕНЮ ====================
@@ -222,22 +226,22 @@ function handleGlobalPaste(e){if(e.target.closest('input'))return;e.preventDefau
 // ==================== ПРИВЯЗКА СОБЫТИЙ ====================
 function bindAllEvents(){
     // Шапка
-    bind('uiV1',()=>switchUI('v1'));bind('uiV2',()=>switchUI('v2'));
-    bind('btnTheme',toggleTheme);bind('btnUpdate',checkUpdate);
+    bind('uiV1','click',()=>switchUI('v1'));bind('uiV2','click',()=>switchUI('v2'));
+    bind('btnTheme','click',toggleTheme);bind('btnUpdate','click',checkUpdate);
     bind('fileInput','change',e=>{if(e.target.files[0]){load(e.target.files[0]);e.target.value='';}});
     
     // Настройки
-    bind('btnSettings',()=>{Q('#settingsModal').classList.add('show');renderHotkeyList();});
-    bind('btnCloseSettings',()=>Q('#settingsModal').classList.remove('show'));
-    bind('settingsModal','click',e=>{if(e.target===Q('#settingsModal'))Q('#settingsModal').classList.remove('show');});
-    bind('hkToggle',()=>toggleSection('hkToggle','hkSection'));
-    bind('aboutToggle',()=>toggleSection('aboutToggle','aboutSection'));
-    bind('btnResetHotkeys',()=>{hotkeys={...defaultHotkeys};saveAll();updateAllHKDisplays();renderHotkeyList();toast('Сброшено');});
+    bind('btnSettings','click',()=>{Q('#settingsModal').classList.add('show');renderHotkeyList();});
+    bind('btnCloseSettings','click',()=>Q('#settingsModal').classList.remove('show'));
+    Q('#settingsModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+    bind('hkToggle','click',()=>toggleSection('hkToggle','hkSection'));
+    bind('aboutToggle','click',()=>toggleSection('aboutToggle','aboutSection'));
+    bind('btnResetHotkeys','click',()=>{hotkeys={...defaultHotkeys};saveAll();updateAllHKDisplays();renderHotkeyList();toast('Сброшено');});
     
     // Цветовые темы
-    bind('btnColorTheme',()=>{Q('#colorThemeModal').classList.add('show');renderThemeOptions();});
-    bind('btnCloseColorTheme',()=>Q('#colorThemeModal').classList.remove('show'));
-    bind('colorThemeModal','click',e=>{if(e.target===Q('#colorThemeModal'))Q('#colorThemeModal').classList.remove('show');});
+    bind('btnColorTheme','click',()=>{Q('#colorThemeModal').classList.add('show');renderThemeOptions();});
+    bind('btnCloseColorTheme','click',()=>Q('#colorThemeModal').classList.remove('show'));
+    Q('#colorThemeModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
     
     // V1 кнопки
     bindV1('btnAddRow1',()=>{const t=active();t?addRowEnd(t):toast('Выберите таблицу!',0);});
