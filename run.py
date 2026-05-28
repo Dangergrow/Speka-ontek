@@ -1,11 +1,12 @@
 import os, sys, json, base64, threading, time, urllib.request, shutil, tempfile
 import webview
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-from tkinter import Tk, filedialog, messagebox
+from tkinter import Tk, filedialog
 
 APP_NAME = "ONTEK — Таблица заказов"
-APP_VERSION = "3.9.0"
+APP_VERSION = "4.0.0"
 VERSION_URL = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/version.json"
+HTML_URL = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/index.html"
 UPDATE_INFO_URL = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/update_info.json"
 
 def get_app_dir():
@@ -22,53 +23,19 @@ def get_base_dir():
     else:
         return os.path.dirname(os.path.abspath(__file__))
 
-def create_shortcut():
-    """Создать ярлык на рабочем столе (Windows)"""
-    try:
-        import pythoncom
-        from win32com.client import Dispatch
-        
-        desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-        shortcut_path = os.path.join(desktop, f"{APP_NAME}.lnk")
-        exe_path = sys.executable
-        
-        if os.path.exists(shortcut_path):
-            return  # Ярлык уже есть
-        
-        shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(shortcut_path)
-        shortcut.Targetpath = exe_path
-        shortcut.WorkingDirectory = get_app_dir()
-        shortcut.IconLocation = exe_path
-        shortcut.save()
-        print(f"Ярлык создан: {shortcut_path}")
-    except Exception as e:
-        print(f"Не удалось создать ярлык: {e}")
+def load_config():
+    """Загрузить конфиг установки"""
+    config_path = os.path.join(get_app_dir(), 'config.json')
+    if os.path.exists(config_path):
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {'version': APP_VERSION, 'install_path': get_app_dir()}
 
-def first_run_setup():
-    """Первоначальная настройка при первом запуске"""
-    app_dir = get_app_dir()
-    
-    # Копируем файлы из MEIPASS в папку с EXE (только при первом запуске)
-    if getattr(sys, 'frozen', False):
-        base = sys._MEIPASS
-        files_to_copy = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js']
-        
-        for f in files_to_copy:
-            src = os.path.join(base, f)
-            dst = os.path.join(app_dir, f)
-            if os.path.exists(src) and not os.path.exists(dst):
-                shutil.copy2(src, dst)
-                print(f"Установлен: {f}")
-    
-    # Создаём ярлык
-    create_shortcut()
-    
-    # Создаём файл версии
-    version_file = os.path.join(app_dir, 'version.txt')
-    if not os.path.exists(version_file):
-        with open(version_file, 'w') as f:
-            f.write(APP_VERSION)
+def save_config(config):
+    """Сохранить конфиг"""
+    config_path = os.path.join(get_app_dir(), 'config.json')
+    with open(config_path, 'w', encoding='utf-8') as f:
+        json.dump(config, f, indent=2)
 
 class Api:
     def __init__(self):
@@ -106,46 +73,39 @@ class Api:
         return APP_VERSION
     
     def get_app_dir_path(self):
-        """Вернуть путь к папке программы"""
         return get_app_dir()
     
     def apply_update(self):
-        """Скачать и применить обновление"""
+        """Скачать и применить обновление index.html"""
         try:
             app_dir = get_app_dir()
-            
-            # Скачиваем новый index.html
-            index_url = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main/index.html"
             index_path = os.path.join(app_dir, 'index.html')
             
-            # Скачиваем во временный файл
+            # Скачиваем новый index.html
             tmp = os.path.join(tempfile.gettempdir(), 'ontek_index_update.html')
-            urllib.request.urlretrieve(index_url, tmp)
+            urllib.request.urlretrieve(HTML_URL, tmp)
             
             # Заменяем файл
             if os.path.exists(index_path):
                 os.remove(index_path)
             shutil.move(tmp, index_path)
             
-            # Обновляем файл версии
-            version_file = os.path.join(app_dir, 'version.txt')
-            with open(version_file, 'w') as f:
-                f.write(APP_VERSION)
+            # Обновляем версию в конфиге
+            config = load_config()
+            config['version'] = APP_VERSION
+            save_config(config)
             
             return json.dumps({"success": True, "message": "Обновление применено!"})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
     
     def download_full_installer(self):
-        """Скачать полный установщик (для старых версий)"""
+        """Скачать полный установщик"""
         try:
-            url = "https://github.com/Dangergrow/Speka-ontek/releases/latest/download/ONTEK_Orders.exe"
+            url = "https://github.com/Dangergrow/Speka-ontek/releases/latest/download/ONTEK_Setup.exe"
             tmp = os.path.join(tempfile.gettempdir(), "ONTEK_Setup.exe")
             urllib.request.urlretrieve(url, tmp)
-            
-            # Запускаем установщик
             os.startfile(tmp)
-            
             return json.dumps({"success": True})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
@@ -155,14 +115,19 @@ def start_server(port, serve_dir):
     HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler).serve_forever()
 
 def main():
-    # Первый запуск — настройка
-    first_run_setup()
-    
-    # Определяем откуда сервер будет раздавать файлы
     app_dir = get_app_dir()
     base_dir = get_base_dir()
     
-    # Если index.html есть в папке с EXE — используем его
+    # Копируем файлы из MEIPASS в папку с EXE (если нужно)
+    if getattr(sys, 'frozen', False):
+        files_to_copy = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']
+        for f in files_to_copy:
+            src = os.path.join(base_dir, f)
+            dst = os.path.join(app_dir, f)
+            if os.path.exists(src) and not os.path.exists(dst):
+                shutil.copy2(src, dst)
+    
+    # Определяем откуда сервер будет раздавать файлы
     if os.path.exists(os.path.join(app_dir, 'index.html')):
         serve_dir = app_dir
     else:
