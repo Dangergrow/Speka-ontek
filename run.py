@@ -13,12 +13,6 @@ def get_app_dir():
     else:
         return os.path.dirname(os.path.abspath(__file__))
 
-def get_base_dir():
-    if getattr(sys, 'frozen', False):
-        return sys._MEIPASS
-    else:
-        return os.path.dirname(os.path.abspath(__file__))
-
 class Api:
     def __init__(self): self._window = None
     def set_window(self, w): self._window = w
@@ -62,7 +56,9 @@ class Api:
             settings_path = os.path.join(get_app_dir(), 'settings.json')
             if os.path.exists(settings_path):
                 with open(settings_path, 'r', encoding='utf-8') as f:
-                    return f.read()
+                    content = f.read()
+                if content and content.strip():
+                    return content
             return "{}"
         except:
             return "{}"
@@ -78,16 +74,22 @@ class Api:
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 req = urllib.request.Request(url, headers={'User-Agent':'ONTEK-Updater/1.0','Accept':'text/plain'})
                 try:
-                    with urllib.request.urlopen(req, timeout=10) as r:
+                    with urllib.request.urlopen(req, timeout=15) as r:
                         content = r.read()
                         text = content.decode('utf-8', errors='ignore')
-                        if text.strip().startswith('<!DOCTYPE') or text.strip().startswith('<html'): continue
-                        if os.path.exists(local_path): os.remove(local_path)
-                        with open(local_path, 'wb') as out: out.write(content)
+                        if text.strip().startswith('<!DOCTYPE') or text.strip().startswith('<html'):
+                            continue
+                        if os.path.exists(local_path):
+                            os.remove(local_path)
+                        with open(local_path, 'wb') as out:
+                            out.write(content)
                         updated += 1
-                except: continue
+                except Exception as e:
+                    print(f"Ошибка скачивания {f}: {e}")
+                    continue
+            
             if updated > 0:
-                return json.dumps({"success": True, "message": f"Обновлено файлов: {updated}"})
+                return json.dumps({"success": True, "message": f"Обновлено файлов: {updated}. Перезагрузка..."})
             return json.dumps({"success": False, "message": "Не удалось скачать обновления"})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
@@ -102,34 +104,49 @@ class Api:
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
 
-def setup_files():
-    if not getattr(sys, 'frozen', False): return
-    base = sys._MEIPASS
-    app = get_app_dir()
-    for f in ['index.html','exceljs.min.js','xlsx.full.min.js','icon.ico']:
-        src = os.path.join(base, f)
-        dst = os.path.join(app, f)
-        if os.path.exists(src) and not os.path.exists(dst): shutil.copy2(src, dst)
-    for folder in ['css','js']:
-        src_folder = os.path.join(base, folder)
-        dst_folder = os.path.join(app, folder)
+def first_run_copy():
+    """Копирует файлы из _MEIPASS в папку с EXE только при первом запуске"""
+    if not getattr(sys, 'frozen', False):
+        return
+    
+    app_dir = get_app_dir()
+    base_dir = sys._MEIPASS
+    
+    # Проверяем, есть ли уже index.html в папке с EXE
+    if os.path.exists(os.path.join(app_dir, 'index.html')):
+        return  # Уже скопировано, не трогаем (чтобы не затереть обновления)
+    
+    # Первый запуск — копируем всё
+    for f in ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']:
+        src = os.path.join(base_dir, f)
+        dst = os.path.join(app_dir, f)
+        if os.path.exists(src):
+            shutil.copy2(src, dst)
+    
+    for folder in ['css', 'js']:
+        src_folder = os.path.join(base_dir, folder)
+        dst_folder = os.path.join(app_dir, folder)
         if os.path.exists(src_folder):
             os.makedirs(dst_folder, exist_ok=True)
             for f in os.listdir(src_folder):
-                src_f = os.path.join(src_folder, f)
-                dst_f = os.path.join(dst_folder, f)
-                if os.path.isfile(src_f) and not os.path.exists(dst_f): shutil.copy2(src_f, dst_f)
+                sf = os.path.join(src_folder, f)
+                df = os.path.join(dst_folder, f)
+                if os.path.isfile(sf):
+                    shutil.copy2(sf, df)
 
 def start_server(port, serve_dir):
     os.chdir(serve_dir)
     HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler).serve_forever()
 
 def main():
-    setup_files()
+    first_run_copy()
+    
     serve_dir = get_app_dir()
     port = 8765
+    
     threading.Thread(target=start_server, args=(port, serve_dir), daemon=True).start()
     time.sleep(0.5)
+    
     api = Api()
     window = webview.create_window(
         title=APP_NAME,
