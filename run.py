@@ -3,7 +3,6 @@ import sys
 import json
 import base64
 import threading
-import urllib.request
 import webview
 from tkinter import Tk, filedialog
 
@@ -17,18 +16,44 @@ try:
     TRAY_AVAILABLE = True
 except ImportError:
     TRAY_AVAILABLE = False
-    print("pystray/Pillow не установлены. Трей отключён.")
 
-def get_html():
+def get_file_content(filename):
+    """Получить содержимое файла (из EXE или из папки)"""
     if getattr(sys, 'frozen', False):
         base = sys._MEIPASS
     else:
         base = os.path.dirname(os.path.abspath(__file__))
-    html_path = os.path.join(base, 'index.html')
-    if not os.path.exists(html_path):
-        raise FileNotFoundError(f'Файл не найден: {html_path}')
-    with open(html_path, 'r', encoding='utf-8') as f:
+    
+    path = os.path.join(base, filename)
+    if not os.path.exists(path):
+        return None
+    
+    with open(path, 'r', encoding='utf-8') as f:
         return f.read()
+
+def get_html():
+    """Собрать HTML со встроенными библиотеками"""
+    html = get_file_content('index.html')
+    if not html:
+        raise FileNotFoundError('index.html не найден')
+    
+    # Вшиваем ExcelJS
+    exceljs = get_file_content('exceljs.min.js')
+    if exceljs:
+        html = html.replace(
+            '<script src="exceljs.min.js"></script>',
+            '<script>' + exceljs + '</script>'
+        )
+    
+    # Вшиваем XLSX
+    xlsx = get_file_content('xlsx.full.min.js')
+    if xlsx:
+        html = html.replace(
+            '<script src="xlsx.full.min.js"></script>',
+            '<script>' + xlsx + '</script>'
+        )
+    
+    return html
 
 def create_tray_icon(window):
     if not TRAY_AVAILABLE:
@@ -79,15 +104,29 @@ class Api:
 def main():
     api = Api()
     html = get_html()
-    window = webview.create_window(APP_NAME, html=html, js_api=api, width=1400, height=900, resizable=True, min_size=(900, 600))
+    
+    window = webview.create_window(
+        title=APP_NAME,
+        html=html,
+        js_api=api,
+        width=1400,
+        height=900,
+        resizable=True,
+        min_size=(900, 600)
+    )
+    
     api.set_window(window)
+    
     if TRAY_AVAILABLE:
         tray = create_tray_icon(window)
         if tray:
             threading.Thread(target=tray.run, daemon=True).start()
+    
     webview.start(debug=False)
-    if TRAY_AVAILABLE and tray:
-        tray.stop()
+    
+    if TRAY_AVAILABLE:
+        try: tray.stop()
+        except: pass
 
 if __name__ == '__main__':
     main()
