@@ -71,37 +71,50 @@ class Api:
                 local_path = os.path.join(app_dir, f)
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 
-                # Удаляем старый файл перед скачиванием
-                if os.path.exists(local_path):
-                    try: os.remove(local_path)
-                    except: pass
+                req = urllib.request.Request(url, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                    'Accept': 'text/plain,application/octet-stream,*/*',
+                    'Cache-Control': 'no-cache'
+                })
                 
-                req = urllib.request.Request(url, headers={'User-Agent':'ONTEK/1.0','Cache-Control':'no-cache'})
                 try:
-                    with urllib.request.urlopen(req, timeout=15) as r:
-                        content = r.read()
-                        if len(content) > 500:
-                            with open(local_path, 'wb') as out:
-                                out.write(content)
-                            updated += 1
-                            print(f"[UPDATE] Обновлён: {f} ({len(content)} байт)")
+                    with urllib.request.urlopen(req, timeout=15) as response:
+                        content = response.read()
+                        text = content.decode('utf-8', errors='ignore')
+                        
+                        # Проверяем что это не HTML-страница GitHub
+                        if text.strip().startswith('<!DOCTYPE html>') or 'github' in text.lower()[:300]:
+                            print(f"[UPDATE] Пропущен (страница GitHub): {f}")
+                            continue
+                        
+                        if len(content) < 200:
+                            print(f"[UPDATE] Пропущен (слишком маленький): {f} ({len(content)} байт)")
+                            continue
+                        
+                        if os.path.exists(local_path):
+                            os.remove(local_path)
+                        
+                        with open(local_path, 'wb') as out:
+                            out.write(content)
+                        
+                        updated += 1
+                        print(f"[UPDATE] Обновлён: {f} ({len(content)} байт)")
+                        
                 except Exception as e:
                     print(f"[UPDATE] Ошибка {f}: {e}")
                     continue
             
-            print(f"[UPDATE] Всего обновлено: {updated} файлов")
+            print(f"[UPDATE] Всего обновлено: {updated} из {len(files)}")
             
             if updated > 0:
-                # Перезапуск программы
                 exe_path = os.path.join(app_dir, 'ONTEK_Orders.exe')
                 if os.path.exists(exe_path):
                     subprocess.Popen([exe_path], shell=True)
-                else:
-                    subprocess.Popen([sys.executable] + sys.argv, shell=True)
                 os._exit(0)
                 return json.dumps({"success": True})
             
-            return json.dumps({"success": False, "message": "Не удалось скачать обновления"})
+            return json.dumps({"success": False, "message": "Не удалось скачать обновления. Проверьте интернет."})
+            
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
 
@@ -112,7 +125,6 @@ def start_server(port, serve_dir):
 def main():
     app_dir = get_app_dir()
     
-    # Если запущены из EXE и index.html нет в папке — копируем из _MEIPASS (первый запуск)
     if getattr(sys, 'frozen', False):
         index_path = os.path.join(app_dir, 'index.html')
         if not os.path.exists(index_path):
@@ -132,7 +144,6 @@ def main():
                             try: shutil.copy2(sf, df)
                             except: pass
     
-    # Всегда используем папку с EXE
     serve_dir = app_dir
     port = 8765
     
