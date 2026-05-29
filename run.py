@@ -60,60 +60,44 @@ class Api:
         except: return "{}"
     
     def apply_update(self):
-        """Скачать обновления, перезаписать файлы, перезапустить"""
         try:
             app_dir = get_app_dir()
-            files = ['index.html', 'css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']
-            updated = 0
+            # Загружаем index.html напрямую и проверяем версию
+            url = f"{GITHUB_RAW}/index.html?t={int(time.time())}"
+            req = urllib.request.Request(url, headers={'User-Agent':'ONTEK/1.0'})
             
+            with urllib.request.urlopen(req, timeout=15) as r:
+                content = r.read().decode('utf-8', errors='ignore')
+            
+            # Проверяем что контент содержит ONTEK (не страница GitHub)
+            if 'ONTEK' not in content[:500]:
+                return json.dumps({"success": False, "message": "Не удалось скачать обновление"})
+            
+            # Сохраняем index.html
+            with open(os.path.join(app_dir, 'index.html'), 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            # Скачиваем остальные файлы
+            files = ['css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']
             for f in files:
-                url = f"{GITHUB_RAW}/{f}"
-                local_path = os.path.join(app_dir, f)
-                os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                
-                req = urllib.request.Request(url, headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                    'Accept': 'text/plain,application/octet-stream,*/*',
-                    'Cache-Control': 'no-cache'
-                })
-                
                 try:
-                    with urllib.request.urlopen(req, timeout=15) as response:
-                        content = response.read()
-                        text = content.decode('utf-8', errors='ignore')
-                        
-                        # Проверяем что это не HTML-страница GitHub
-                        if text.strip().startswith('<!DOCTYPE html>') or 'github' in text.lower()[:300]:
-                            print(f"[UPDATE] Пропущен (страница GitHub): {f}")
-                            continue
-                        
-                        if len(content) < 200:
-                            print(f"[UPDATE] Пропущен (слишком маленький): {f} ({len(content)} байт)")
-                            continue
-                        
-                        if os.path.exists(local_path):
-                            os.remove(local_path)
-                        
-                        with open(local_path, 'wb') as out:
-                            out.write(content)
-                        
-                        updated += 1
-                        print(f"[UPDATE] Обновлён: {f} ({len(content)} байт)")
-                        
-                except Exception as e:
-                    print(f"[UPDATE] Ошибка {f}: {e}")
-                    continue
+                    file_url = f"{GITHUB_RAW}/{f}?t={int(time.time())}"
+                    file_req = urllib.request.Request(file_url, headers={'User-Agent':'ONTEK/1.0'})
+                    with urllib.request.urlopen(file_req, timeout=15) as fr:
+                        file_content = fr.read()
+                        if len(file_content) > 200:
+                            local_path = os.path.join(app_dir, f)
+                            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                            with open(local_path, 'wb') as fout:
+                                fout.write(file_content)
+                except: continue
             
-            print(f"[UPDATE] Всего обновлено: {updated} из {len(files)}")
-            
-            if updated > 0:
-                exe_path = os.path.join(app_dir, 'ONTEK_Orders.exe')
-                if os.path.exists(exe_path):
-                    subprocess.Popen([exe_path], shell=True)
-                os._exit(0)
-                return json.dumps({"success": True})
-            
-            return json.dumps({"success": False, "message": "Не удалось скачать обновления. Проверьте интернет."})
+            # Перезапуск
+            exe_path = os.path.join(app_dir, 'ONTEK_Orders.exe')
+            if os.path.exists(exe_path):
+                subprocess.Popen([exe_path], shell=True)
+            os._exit(0)
+            return json.dumps({"success": True})
             
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
