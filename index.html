@@ -22,7 +22,7 @@
         <div class="header-l">
             <div class="logo">📊</div>
             <div>
-                <div class="title">Таблица заказов<span class="ver">v4.7.0</span></div>
+                <div class="title">Таблица заказов<span class="ver">v4.8.0</span></div>
                 <div class="rates" id="ratesBar">Загрузка курсов...</div>
             </div>
         </div>
@@ -69,8 +69,9 @@
             <div style="text-align:center;padding:20px">
                 <div class="about-logo">📊</div>
                 <div style="font-size:24px;font-weight:700;margin:10px 0">ONTEK</div>
-                <div>Автор: Камашев В.Е.</div>
-                <div style="font-size:12px;color:var(--text2);margin-top:12px">© 2026 Speka Ontek</div>
+                <div>Таблица заказов v4.8.0</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:8px">Автор: Камашев В.Е.</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:4px">© 2026 Speka Ontek</div>
             </div>
         </div>
         <div class="modal-btns"><button class="btn b-slate" id="btnCloseSettings">Закрыть</button></div>
@@ -108,7 +109,7 @@
     </div>
 </div>
 
-<!-- Окно результатов поиска -->
+<!-- Окно результатов поиска (увеличенное, растягиваемое) -->
 <div class="modal-overlay" id="priceResultsModal">
     <div class="modal price-results-modal" id="priceResultsDialog">
         <div class="price-search-header" id="priceResultsDragHandle">
@@ -155,7 +156,7 @@
     </div>
 </div>
 
-<!-- Окно просмотра прайса -->
+<!-- Окно просмотра прайса (растягиваемое) -->
 <div class="modal-overlay" id="priceViewModal">
     <div class="modal price-view-modal" id="priceViewDialog">
         <div class="price-search-header" id="priceViewDragHandle">
@@ -168,9 +169,7 @@
 </div>
 
 <!-- Контекстное меню просмотра прайса -->
-<div class="ctx" id="priceViewCtxMenu">
-    <div class="ctx-item" data-action="transferToTable">📋 Перенести в таблицу</div>
-</div>
+<div class="ctx" id="priceViewCtxMenu"></div>
 
 <!-- Окно "Показать что нашлось" (листы без артикула/наименования) -->
 <div class="modal-overlay" id="priceFallbackModal">
