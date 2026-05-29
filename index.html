@@ -22,7 +22,7 @@
         <div class="header-l">
             <div class="logo">📊</div>
             <div>
-                <div class="title">Таблица заказов<span class="ver">v4.6.0</span></div>
+                <div class="title">Таблица заказов<span class="ver">v4.7.0</span></div>
                 <div class="rates" id="ratesBar">Загрузка курсов...</div>
             </div>
         </div>
@@ -42,44 +42,37 @@
 </div>
 
 <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls">
+<input type="file" id="priceFileInput" class="hidden" accept=".xlsx,.xls">
 
 <!-- Настройки -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
         <h2>⚙ Настройки</h2>
-        
         <h3 id="hkToggle"><span class="arrow">▶</span> Горячие клавиши</h3>
         <div class="hk-section" id="hkSection">
             <div id="hotkeyList"></div>
             <div class="modal-btns"><button class="btn b-red" id="btnResetHotkeys">Сбросить</button></div>
         </div>
-        
         <h3 id="themeToggle"><span class="arrow">▶</span> Цветовая тема</h3>
         <div class="hk-section" id="themeSection">
             <div class="theme-options" id="themeOptionsSettings"></div>
         </div>
-        
         <h3 id="backupToggle"><span class="arrow">▶</span> Сохранение настроек</h3>
         <div class="hk-section" id="backupSection">
             <div style="padding:10px 0">
                 <div style="font-size:13px;color:var(--text);margin-bottom:6px">✅ Настройки сохраняются автоматически</div>
-                <div style="font-size:11px;color:var(--text2);">
-                    Тема, цветовая схема и горячие клавиши сохраняются при изменении.<br>
-                    При следующем запуске все настройки восстановятся.
-                </div>
+                <div style="font-size:11px;color:var(--text2);">Тема, цветовая схема и горячие клавиши сохраняются при изменении.<br>При следующем запуске все настройки восстановятся.</div>
             </div>
         </div>
-        
         <h3 id="aboutToggle"><span class="arrow">▶</span> О программе</h3>
         <div class="hk-section" id="aboutSection">
             <div style="text-align:center;padding:20px">
                 <div class="about-logo">📊</div>
                 <div style="font-size:24px;font-weight:700;margin:10px 0">ONTEK</div>
-                <div>Таблица заказов v4.6.0</div>
+                <div>Таблица заказов v4.7.0</div>
                 <div style="font-size:12px;color:var(--text2);margin-top:12px">© 2026 Speka Ontek</div>
             </div>
         </div>
-        
         <div class="modal-btns"><button class="btn b-slate" id="btnCloseSettings">Закрыть</button></div>
     </div>
 </div>
@@ -90,6 +83,115 @@
         <h2>🎨 Цветовая тема</h2>
         <div class="theme-options" id="colorThemeOptions"></div>
         <div class="modal-btns"><button class="btn b-slate" id="btnCloseColorTheme">Закрыть</button></div>
+    </div>
+</div>
+
+<!-- Окно поиска в прайсе (перемещаемое) -->
+<div class="modal-overlay" id="priceSearchModal">
+    <div class="modal price-search-modal" id="priceSearchDialog">
+        <div class="price-search-header" id="priceSearchDragHandle">
+            <h2>🔎 Поиск в прайс-листе</h2>
+            <button class="icon-btn" id="btnClosePriceSearch" style="width:28px;height:28px;font-size:14px;">✕</button>
+        </div>
+        <div class="price-search-body">
+            <div class="search-type-row">
+                <label class="radio-label"><input type="radio" name="searchType" value="article" checked> По артикулу</label>
+                <label class="radio-label"><input type="radio" name="searchType" value="name"> По наименованию</label>
+            </div>
+            <input type="text" class="search-input" id="priceSearchInput" placeholder="Введите артикул или наименование..." autofocus>
+            <div class="search-btns">
+                <button class="btn b-indigo" id="btnPriceSearch">🔍 Найти</button>
+                <button class="btn b-slate" id="btnCancelPriceSearch">Отмена</button>
+            </div>
+            <div class="search-status" id="priceSearchStatus"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Окно результатов поиска -->
+<div class="modal-overlay" id="priceResultsModal">
+    <div class="modal price-results-modal" id="priceResultsDialog">
+        <div class="price-search-header" id="priceResultsDragHandle">
+            <h2>📋 Результаты поиска (<span id="resultsCount">0</span>)</h2>
+            <button class="icon-btn" id="btnClosePriceResults" style="width:28px;height:28px;font-size:14px;">✕</button>
+        </div>
+        <div class="price-results-body">
+            <div class="price-results-scroll" id="priceResultsScroll">
+                <table class="price-results-table" id="priceResultsTable">
+                    <thead id="priceResultsHead"></thead>
+                    <tbody id="priceResultsBody"></tbody>
+                </table>
+                <div class="price-results-empty" id="priceResultsEmpty">Ничего не найдено</div>
+            </div>
+            <div class="results-info" id="resultsInfo"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Окно выбора цены -->
+<div class="modal-overlay" id="priceSelectModal">
+    <div class="modal price-select-modal" id="priceSelectDialog">
+        <div class="price-search-header" id="priceSelectDragHandle">
+            <h2>💲 Выбор цены</h2>
+            <button class="icon-btn" id="btnClosePriceSelect" style="width:28px;height:28px;font-size:14px;">✕</button>
+        </div>
+        <div class="price-select-body" id="priceSelectBody">
+            <div class="selected-item-info" id="selectedItemInfo"></div>
+            <div class="price-select-label">Выберите тип цены:</div>
+            <div class="price-buttons-grid" id="priceButtonsGrid"></div>
+            <div class="price-select-or">— или —</div>
+            <button class="btn b-slate btn-full" id="btnManualCopy">📋 Скопировать ячейку вручную</button>
+            <div class="manual-copy-area" id="manualCopyArea" style="display:none;">
+                <div class="manual-copy-label">Кликните на нужную ячейку:</div>
+                <div class="manual-copy-scroll">
+                    <table class="price-results-table" id="manualCopyTable">
+                        <thead id="manualCopyHead"></thead>
+                        <tbody id="manualCopyBody"></tbody>
+                    </table>
+                </div>
+                <button class="btn b-slate btn-full" id="btnCancelManual">Отмена</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Окно просмотра прайса -->
+<div class="modal-overlay" id="priceViewModal">
+    <div class="modal price-view-modal" id="priceViewDialog">
+        <div class="price-search-header" id="priceViewDragHandle">
+            <h2>📋 Прайс-лист</h2>
+            <button class="icon-btn" id="btnClosePriceView" style="width:28px;height:28px;font-size:14px;">✕</button>
+        </div>
+        <div class="price-view-tabs" id="priceViewTabs"></div>
+        <div class="price-view-content" id="priceViewContent"></div>
+    </div>
+</div>
+
+<!-- Контекстное меню просмотра прайса -->
+<div class="ctx" id="priceViewCtxMenu">
+    <div class="ctx-item" data-action="transferToTable">📋 Перенести в таблицу</div>
+</div>
+
+<!-- Окно "Показать что нашлось" (листы без артикула/наименования) -->
+<div class="modal-overlay" id="priceFallbackModal">
+    <div class="modal" id="priceFallbackDialog">
+        <div class="price-search-header" id="priceFallbackDragHandle">
+            <h2>⚠ Нестандартный лист</h2>
+            <button class="icon-btn" id="btnClosePriceFallback" style="width:28px;height:28px;font-size:14px;">✕</button>
+        </div>
+        <div class="price-select-body">
+            <div id="fallbackInfo" style="margin-bottom:16px;color:var(--text2);font-size:13px;"></div>
+            <div class="price-results-scroll" style="max-height:350px;">
+                <table class="price-results-table" id="fallbackTable">
+                    <thead id="fallbackHead"></thead>
+                    <tbody id="fallbackBody"></tbody>
+                </table>
+            </div>
+            <div class="modal-btns" style="margin-top:16px;">
+                <button class="btn b-orange" id="btnUseFallbackRow">✅ Использовать выделенную строку</button>
+                <button class="btn b-slate" id="btnCloseFallback">Пропустить</button>
+            </div>
+        </div>
     </div>
 </div>
 
