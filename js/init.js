@@ -4,21 +4,24 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Строим интерфейс
+    // Шаг 1: Строим интерфейс
     buildWorkspaces();
     buildSidebarV2();
     
-    // Загружаем настройки и применяем
+    // Шаг 2: Загружаем настройки и применяем
     loadSettings().then(function(){
         applyAllSettings();
     });
     
-    // Остальное
-    buildShortcuts();
+    // Шаг 3: Биндим события (после того как сайдбар построен)
     bindAllEvents();
+    
+    // Шаг 4: Всё остальное
+    buildShortcuts();
     loadRates();
     addTable('USD');
     
+    // Глобальные обработчики
     document.addEventListener('keydown', handleGlobalHotkeys);
     document.addEventListener('paste', handleGlobalPaste);
 });
