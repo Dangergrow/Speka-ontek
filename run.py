@@ -1,10 +1,10 @@
-import os, sys, json, base64, threading, time, urllib.request, shutil, tempfile
+import os, sys, json, base64, threading, time, urllib.request, shutil, tempfile, subprocess
 import webview
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from tkinter import Tk, filedialog
 
 APP_NAME = "ONTEK — Таблица заказов"
-APP_VERSION = "4.5.0"
+APP_VERSION = "4.6.0"
 GITHUB_RAW = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main"
 
 def get_app_dir():
@@ -44,68 +44,93 @@ class Api:
     
     def save_settings(self, settings_json):
         try:
-            app_dir = get_app_dir()
-            settings_path = os.path.join(app_dir, 'settings.json')
+            settings_path = os.path.join(get_app_dir(), 'settings.json')
             with open(settings_path, 'w', encoding='utf-8') as f:
                 f.write(settings_json)
-            print(f"[OK] Настройки сохранены: {settings_path}")
             return json.dumps({"success": True})
         except Exception as e:
-            print(f"[ERROR] Ошибка сохранения: {e}")
             return json.dumps({"success": False, "message": str(e)})
     
     def load_settings(self):
         try:
-            app_dir = get_app_dir()
-            settings_path = os.path.join(app_dir, 'settings.json')
-            print(f"[INFO] Ищем настройки: {settings_path}")
+            settings_path = os.path.join(get_app_dir(), 'settings.json')
             if os.path.exists(settings_path):
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                print(f"[OK] Настройки загружены ({len(content)} байт)")
-                return content
-            print("[INFO] Файл настроек не найден, возвращаю пустой JSON")
+                if content and content.strip():
+                    return content
             return "{}"
-        except Exception as e:
-            print(f"[ERROR] Ошибка загрузки: {e}")
+        except:
             return "{}"
     
     def apply_update(self):
+        """Скачать ВСЕ файлы обновления и перезапустить программу"""
         try:
             app_dir = get_app_dir()
-            files = ['index.html','css/themes.css','css/style.css','js/app.js','js/init.js']
+            files = ['index.html', 'css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']
             updated = 0
+            
             for f in files:
                 url = f"{GITHUB_RAW}/{f}"
                 local_path = os.path.join(app_dir, f)
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                req = urllib.request.Request(url, headers={'User-Agent':'ONTEK-Updater/1.0','Accept':'text/plain'})
+                
+                req = urllib.request.Request(url, headers={
+                    'User-Agent': 'ONTEK-Updater/1.0',
+                    'Cache-Control': 'no-cache'
+                })
+                
                 try:
-                    with urllib.request.urlopen(req, timeout=15) as r:
-                        content = r.read()
-                        text = content.decode('utf-8', errors='ignore')
-                        if text.strip().startswith('<!DOCTYPE') or text.strip().startswith('<html'): continue
-                        if os.path.exists(local_path): os.remove(local_path)
-                        with open(local_path, 'wb') as out: out.write(content)
-                        updated += 1
-                except: continue
-            if updated > 0: return json.dumps({"success": True, "message": f"Обновлено: {updated} файлов"})
-            return json.dumps({"success": False, "message": "Не удалось скачать"})
+                    with urllib.request.urlopen(req, timeout=15) as response:
+                        content = response.read()
+                        if len(content) > 500:
+                            if os.path.exists(local_path):
+                                os.remove(local_path)
+                            with open(local_path, 'wb') as out:
+                                out.write(content)
+                            updated += 1
+                except Exception as e:
+                    print(f"Ошибка скачивания {f}: {e}")
+                    continue
+            
+            if updated > 0:
+                # Обновляем файл версии
+                exe_path = os.path.join(app_dir, 'ONTEK_Orders.exe')
+                # Запускаем новый экземпляр и закрываем текущий
+                if os.path.exists(exe_path):
+                    subprocess.Popen([exe_path], shell=True)
+                else:
+                    # Если запущены как скрипт
+                    subprocess.Popen([sys.executable] + sys.argv, shell=True)
+                os._exit(0)
+                return json.dumps({"success": True, "message": "Обновлено!"})
+            
+            return json.dumps({"success": False, "message": "Не удалось скачать обновления"})
+            
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
 
 def first_run_copy():
-    if not getattr(sys, 'frozen', False): return
+    """Копирует файлы из _MEIPASS в папку с EXE только при ПЕРВОМ запуске"""
+    if not getattr(sys, 'frozen', False):
+        return
+    
     app_dir = get_app_dir()
     base_dir = sys._MEIPASS
-    if os.path.exists(os.path.join(app_dir, 'index.html')): return
+    
+    # Если index.html уже есть — не копируем (сохраняем обновления)
+    if os.path.exists(os.path.join(app_dir, 'index.html')):
+        return
+    
     files = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']
     folders = ['css', 'js']
+    
     for f in files:
         src = os.path.join(base_dir, f); dst = os.path.join(app_dir, f)
         if os.path.exists(src):
             try: shutil.copy2(src, dst)
             except: pass
+    
     for folder in folders:
         src_folder = os.path.join(base_dir, folder); dst_folder = os.path.join(app_dir, folder)
         if os.path.exists(src_folder):
@@ -122,14 +147,22 @@ def start_server(port, serve_dir):
 
 def main():
     first_run_copy()
+    
+    # ВСЕГДА папка с EXE (там лежат обновлённые файлы)
     serve_dir = get_app_dir()
     port = 8765
+    
     threading.Thread(target=start_server, args=(port, serve_dir), daemon=True).start()
     time.sleep(0.5)
+    
     api = Api()
     window = webview.create_window(
-        title=APP_NAME, url=f'http://127.0.0.1:{port}/index.html',
-        js_api=api, maximized=True, resizable=True, min_size=(900, 600)
+        title=APP_NAME,
+        url=f'http://127.0.0.1:{port}/index.html',
+        js_api=api,
+        maximized=True,
+        resizable=True,
+        min_size=(900, 600)
     )
     api.set_window(window)
     webview.start(debug=False)
