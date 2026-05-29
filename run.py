@@ -45,26 +45,22 @@ class Api:
     def save_settings(self, settings_json):
         try:
             settings_path = os.path.join(get_app_dir(), 'settings.json')
-            with open(settings_path, 'w', encoding='utf-8') as f:
-                f.write(settings_json)
+            with open(settings_path, 'w', encoding='utf-8') as f: f.write(settings_json)
             return json.dumps({"success": True})
         except Exception as e:
-            return json.dumps({"success": False, "message": str(e)})
-    
+            return json.dumps({"success": False})
+
     def load_settings(self):
         try:
             settings_path = os.path.join(get_app_dir(), 'settings.json')
             if os.path.exists(settings_path):
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                if content and content.strip():
-                    return content
+                if content and content.strip(): return content
             return "{}"
-        except:
-            return "{}"
+        except: return "{}"
     
     def apply_update(self):
-        """Скачать ВСЕ файлы обновления и перезапустить программу"""
         try:
             app_dir = get_app_dir()
             files = ['index.html', 'css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']
@@ -75,81 +71,67 @@ class Api:
                 local_path = os.path.join(app_dir, f)
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 
-                req = urllib.request.Request(url, headers={
-                    'User-Agent': 'ONTEK-Updater/1.0',
-                    'Cache-Control': 'no-cache'
-                })
-                
+                req = urllib.request.Request(url, headers={'User-Agent':'ONTEK/1.0','Cache-Control':'no-cache'})
                 try:
-                    with urllib.request.urlopen(req, timeout=15) as response:
-                        content = response.read()
+                    with urllib.request.urlopen(req, timeout=15) as r:
+                        content = r.read()
                         if len(content) > 500:
-                            if os.path.exists(local_path):
-                                os.remove(local_path)
-                            with open(local_path, 'wb') as out:
-                                out.write(content)
+                            if os.path.exists(local_path): os.remove(local_path)
+                            with open(local_path, 'wb') as out: out.write(content)
                             updated += 1
-                except Exception as e:
-                    print(f"Ошибка скачивания {f}: {e}")
-                    continue
+                except: continue
             
             if updated > 0:
-                # Обновляем файл версии
+                # Создаём маркер что обновление было
+                with open(os.path.join(app_dir, '.updated'), 'w') as f: f.write('1')
                 exe_path = os.path.join(app_dir, 'ONTEK_Orders.exe')
-                # Запускаем новый экземпляр и закрываем текущий
                 if os.path.exists(exe_path):
                     subprocess.Popen([exe_path], shell=True)
                 else:
-                    # Если запущены как скрипт
                     subprocess.Popen([sys.executable] + sys.argv, shell=True)
                 os._exit(0)
-                return json.dumps({"success": True, "message": "Обновлено!"})
             
-            return json.dumps({"success": False, "message": "Не удалось скачать обновления"})
-            
+            return json.dumps({"success": False, "message": "Не удалось скачать"})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
-
-def first_run_copy():
-    """Копирует файлы из _MEIPASS в папку с EXE только при ПЕРВОМ запуске"""
-    if not getattr(sys, 'frozen', False):
-        return
-    
-    app_dir = get_app_dir()
-    base_dir = sys._MEIPASS
-    
-    # Если index.html уже есть — не копируем (сохраняем обновления)
-    if os.path.exists(os.path.join(app_dir, 'index.html')):
-        return
-    
-    files = ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']
-    folders = ['css', 'js']
-    
-    for f in files:
-        src = os.path.join(base_dir, f); dst = os.path.join(app_dir, f)
-        if os.path.exists(src):
-            try: shutil.copy2(src, dst)
-            except: pass
-    
-    for folder in folders:
-        src_folder = os.path.join(base_dir, folder); dst_folder = os.path.join(app_dir, folder)
-        if os.path.exists(src_folder):
-            os.makedirs(dst_folder, exist_ok=True)
-            for f in os.listdir(src_folder):
-                sf = os.path.join(src_folder, f); df = os.path.join(dst_folder, f)
-                if os.path.isfile(sf):
-                    try: shutil.copy2(sf, df)
-                    except: pass
 
 def start_server(port, serve_dir):
     os.chdir(serve_dir)
     HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler).serve_forever()
 
 def main():
-    first_run_copy()
+    app_dir = get_app_dir()
+    base_dir = sys._MEIPASS if getattr(sys, 'frozen', False) else app_dir
     
-    # ВСЕГДА папка с EXE (там лежат обновлённые файлы)
-    serve_dir = get_app_dir()
+    # Проверяем маркер обновления
+    updated_marker = os.path.join(app_dir, '.updated')
+    was_updated = os.path.exists(updated_marker)
+    
+    if getattr(sys, 'frozen', False):
+        # Копируем файлы из _MEIPASS только если НЕ было обновления
+        if not was_updated and not os.path.exists(os.path.join(app_dir, 'index.html')):
+            for f in ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']:
+                src = os.path.join(base_dir, f); dst = os.path.join(app_dir, f)
+                if os.path.exists(src):
+                    try: shutil.copy2(src, dst)
+                    except: pass
+            for folder in ['css', 'js']:
+                src_folder = os.path.join(base_dir, folder); dst_folder = os.path.join(app_dir, folder)
+                if os.path.exists(src_folder):
+                    os.makedirs(dst_folder, exist_ok=True)
+                    for f in os.listdir(src_folder):
+                        sf = os.path.join(src_folder, f); df = os.path.join(dst_folder, f)
+                        if os.path.isfile(sf):
+                            try: shutil.copy2(sf, df)
+                            except: pass
+        
+        # Удаляем маркер после копирования
+        if was_updated:
+            try: os.remove(updated_marker)
+            except: pass
+    
+    # ВСЕГДА папка с EXE
+    serve_dir = app_dir
     port = 8765
     
     threading.Thread(target=start_server, args=(port, serve_dir), daemon=True).start()
@@ -157,12 +139,8 @@ def main():
     
     api = Api()
     window = webview.create_window(
-        title=APP_NAME,
-        url=f'http://127.0.0.1:{port}/index.html',
-        js_api=api,
-        maximized=True,
-        resizable=True,
-        min_size=(900, 600)
+        title=APP_NAME, url=f'http://127.0.0.1:{port}/index.html',
+        js_api=api, maximized=True, resizable=True, min_size=(900, 600)
     )
     api.set_window(window)
     webview.start(debug=False)
