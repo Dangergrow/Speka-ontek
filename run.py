@@ -47,9 +47,8 @@ class Api:
             settings_path = os.path.join(get_app_dir(), 'settings.json')
             with open(settings_path, 'w', encoding='utf-8') as f: f.write(settings_json)
             return json.dumps({"success": True})
-        except Exception as e:
-            return json.dumps({"success": False})
-
+        except: return json.dumps({"success": False})
+    
     def load_settings(self):
         try:
             settings_path = os.path.join(get_app_dir(), 'settings.json')
@@ -65,12 +64,10 @@ class Api:
             app_dir = get_app_dir()
             files = ['index.html', 'css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']
             updated = 0
-            
             for f in files:
                 url = f"{GITHUB_RAW}/{f}"
                 local_path = os.path.join(app_dir, f)
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                
                 req = urllib.request.Request(url, headers={'User-Agent':'ONTEK/1.0','Cache-Control':'no-cache'})
                 try:
                     with urllib.request.urlopen(req, timeout=15) as r:
@@ -80,9 +77,7 @@ class Api:
                             with open(local_path, 'wb') as out: out.write(content)
                             updated += 1
                 except: continue
-            
             if updated > 0:
-                # Создаём маркер что обновление было
                 with open(os.path.join(app_dir, '.updated'), 'w') as f: f.write('1')
                 exe_path = os.path.join(app_dir, 'ONTEK_Orders.exe')
                 if os.path.exists(exe_path):
@@ -90,7 +85,6 @@ class Api:
                 else:
                     subprocess.Popen([sys.executable] + sys.argv, shell=True)
                 os._exit(0)
-            
             return json.dumps({"success": False, "message": "Не удалось скачать"})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
@@ -103,13 +97,12 @@ def main():
     app_dir = get_app_dir()
     base_dir = sys._MEIPASS if getattr(sys, 'frozen', False) else app_dir
     
-    # Проверяем маркер обновления
     updated_marker = os.path.join(app_dir, '.updated')
     was_updated = os.path.exists(updated_marker)
     
     if getattr(sys, 'frozen', False):
-        # Копируем файлы из _MEIPASS только если НЕ было обновления
-        if not was_updated and not os.path.exists(os.path.join(app_dir, 'index.html')):
+        index_exists = os.path.exists(os.path.join(app_dir, 'index.html'))
+        if not index_exists:
             for f in ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']:
                 src = os.path.join(base_dir, f); dst = os.path.join(app_dir, f)
                 if os.path.exists(src):
@@ -124,13 +117,10 @@ def main():
                         if os.path.isfile(sf):
                             try: shutil.copy2(sf, df)
                             except: pass
-        
-        # Удаляем маркер после копирования
         if was_updated:
             try: os.remove(updated_marker)
             except: pass
     
-    # ВСЕГДА папка с EXE
     serve_dir = app_dir
     port = 8765
     
