@@ -60,32 +60,48 @@ class Api:
         except: return "{}"
     
     def apply_update(self):
+        """Скачать обновления, перезаписать файлы, перезапустить"""
         try:
             app_dir = get_app_dir()
             files = ['index.html', 'css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']
             updated = 0
+            
             for f in files:
                 url = f"{GITHUB_RAW}/{f}"
                 local_path = os.path.join(app_dir, f)
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                
+                # Удаляем старый файл перед скачиванием
+                if os.path.exists(local_path):
+                    try: os.remove(local_path)
+                    except: pass
+                
                 req = urllib.request.Request(url, headers={'User-Agent':'ONTEK/1.0','Cache-Control':'no-cache'})
                 try:
                     with urllib.request.urlopen(req, timeout=15) as r:
                         content = r.read()
                         if len(content) > 500:
-                            if os.path.exists(local_path): os.remove(local_path)
-                            with open(local_path, 'wb') as out: out.write(content)
+                            with open(local_path, 'wb') as out:
+                                out.write(content)
                             updated += 1
-                except: continue
+                            print(f"[UPDATE] Обновлён: {f} ({len(content)} байт)")
+                except Exception as e:
+                    print(f"[UPDATE] Ошибка {f}: {e}")
+                    continue
+            
+            print(f"[UPDATE] Всего обновлено: {updated} файлов")
+            
             if updated > 0:
-                with open(os.path.join(app_dir, '.updated'), 'w') as f: f.write('1')
+                # Перезапуск программы
                 exe_path = os.path.join(app_dir, 'ONTEK_Orders.exe')
                 if os.path.exists(exe_path):
                     subprocess.Popen([exe_path], shell=True)
                 else:
                     subprocess.Popen([sys.executable] + sys.argv, shell=True)
                 os._exit(0)
-            return json.dumps({"success": False, "message": "Не удалось скачать"})
+                return json.dumps({"success": True})
+            
+            return json.dumps({"success": False, "message": "Не удалось скачать обновления"})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
 
@@ -95,14 +111,12 @@ def start_server(port, serve_dir):
 
 def main():
     app_dir = get_app_dir()
-    base_dir = sys._MEIPASS if getattr(sys, 'frozen', False) else app_dir
     
-    updated_marker = os.path.join(app_dir, '.updated')
-    was_updated = os.path.exists(updated_marker)
-    
+    # Если запущены из EXE и index.html нет в папке — копируем из _MEIPASS (первый запуск)
     if getattr(sys, 'frozen', False):
-        index_exists = os.path.exists(os.path.join(app_dir, 'index.html'))
-        if not index_exists:
+        index_path = os.path.join(app_dir, 'index.html')
+        if not os.path.exists(index_path):
+            base_dir = sys._MEIPASS
             for f in ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']:
                 src = os.path.join(base_dir, f); dst = os.path.join(app_dir, f)
                 if os.path.exists(src):
@@ -117,10 +131,8 @@ def main():
                         if os.path.isfile(sf):
                             try: shutil.copy2(sf, df)
                             except: pass
-        if was_updated:
-            try: os.remove(updated_marker)
-            except: pass
     
+    # Всегда используем папку с EXE
     serve_dir = app_dir
     port = 8765
     
@@ -129,8 +141,12 @@ def main():
     
     api = Api()
     window = webview.create_window(
-        title=APP_NAME, url=f'http://127.0.0.1:{port}/index.html',
-        js_api=api, maximized=True, resizable=True, min_size=(900, 600)
+        title=APP_NAME,
+        url=f'http://127.0.0.1:{port}/index.html',
+        js_api=api,
+        maximized=True,
+        resizable=True,
+        min_size=(900, 600)
     )
     api.set_window(window)
     webview.start(debug=False)
