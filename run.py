@@ -44,61 +44,45 @@ class Api:
     
     def save_settings(self, settings_json):
         try:
-            settings_path = os.path.join(get_app_dir(), 'settings.json')
-            with open(settings_path, 'w', encoding='utf-8') as f: f.write(settings_json)
+            with open(os.path.join(get_app_dir(), 'settings.json'), 'w', encoding='utf-8') as f: f.write(settings_json)
             return json.dumps({"success": True})
         except: return json.dumps({"success": False})
     
     def load_settings(self):
         try:
-            settings_path = os.path.join(get_app_dir(), 'settings.json')
-            if os.path.exists(settings_path):
-                with open(settings_path, 'r', encoding='utf-8') as f:
+            path = os.path.join(get_app_dir(), 'settings.json')
+            if os.path.exists(path):
+                with open(path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                if content and content.strip(): return content
+                return content if content.strip() else "{}"
             return "{}"
         except: return "{}"
     
     def apply_update(self):
         try:
             app_dir = get_app_dir()
-            # Загружаем index.html напрямую и проверяем версию
-            url = f"{GITHUB_RAW}/index.html?t={int(time.time())}"
-            req = urllib.request.Request(url, headers={'User-Agent':'ONTEK/1.0'})
+            files_updated = 0
             
-            with urllib.request.urlopen(req, timeout=15) as r:
-                content = r.read().decode('utf-8', errors='ignore')
-            
-            # Проверяем что контент содержит ONTEK (не страница GitHub)
-            if 'ONTEK' not in content[:500]:
-                return json.dumps({"success": False, "message": "Не удалось скачать обновление"})
-            
-            # Сохраняем index.html
-            with open(os.path.join(app_dir, 'index.html'), 'w', encoding='utf-8') as f:
-                f.write(content)
-            
-            # Скачиваем остальные файлы
-            files = ['css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']
-            for f in files:
+            for f in ['index.html', 'css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']:
+                url = f"{GITHUB_RAW}/{f}?v={APP_VERSION}"
+                local = os.path.join(app_dir, f)
+                os.makedirs(os.path.dirname(local), exist_ok=True)
+                
+                req = urllib.request.Request(url, headers={'User-Agent':'ONTEK-Updater/1.0'})
                 try:
-                    file_url = f"{GITHUB_RAW}/{f}?t={int(time.time())}"
-                    file_req = urllib.request.Request(file_url, headers={'User-Agent':'ONTEK/1.0'})
-                    with urllib.request.urlopen(file_req, timeout=15) as fr:
-                        file_content = fr.read()
-                        if len(file_content) > 200:
-                            local_path = os.path.join(app_dir, f)
-                            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                            with open(local_path, 'wb') as fout:
-                                fout.write(file_content)
+                    with urllib.request.urlopen(req, timeout=15) as r:
+                        data = r.read()
+                        if len(data) > 500:
+                            with open(local, 'wb') as out: out.write(data)
+                            files_updated += 1
                 except: continue
             
-            # Перезапуск
-            exe_path = os.path.join(app_dir, 'ONTEK_Orders.exe')
-            if os.path.exists(exe_path):
-                subprocess.Popen([exe_path], shell=True)
-            os._exit(0)
-            return json.dumps({"success": True})
-            
+            if files_updated >= 2:
+                exe = os.path.join(app_dir, 'ONTEK_Orders.exe')
+                if os.path.exists(exe): subprocess.Popen([exe], shell=True)
+                os._exit(0)
+                return json.dumps({"success": True})
+            return json.dumps({"success": False, "message": f"Обновлено только {files_updated} файлов"})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
 
@@ -109,40 +93,26 @@ def start_server(port, serve_dir):
 def main():
     app_dir = get_app_dir()
     
-    if getattr(sys, 'frozen', False):
-        index_path = os.path.join(app_dir, 'index.html')
-        if not os.path.exists(index_path):
-            base_dir = sys._MEIPASS
-            for f in ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']:
-                src = os.path.join(base_dir, f); dst = os.path.join(app_dir, f)
-                if os.path.exists(src):
-                    try: shutil.copy2(src, dst)
-                    except: pass
-            for folder in ['css', 'js']:
-                src_folder = os.path.join(base_dir, folder); dst_folder = os.path.join(app_dir, folder)
-                if os.path.exists(src_folder):
-                    os.makedirs(dst_folder, exist_ok=True)
-                    for f in os.listdir(src_folder):
-                        sf = os.path.join(src_folder, f); df = os.path.join(dst_folder, f)
-                        if os.path.isfile(sf):
-                            try: shutil.copy2(sf, df)
-                            except: pass
+    # Копируем из _MEIPASS только если index.html отсутствует
+    if getattr(sys, 'frozen', False) and not os.path.exists(os.path.join(app_dir, 'index.html')):
+        base = sys._MEIPASS
+        for f in ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']:
+            s, d = os.path.join(base, f), os.path.join(app_dir, f)
+            if os.path.exists(s): shutil.copy2(s, d)
+        for folder in ['css', 'js']:
+            sf, df = os.path.join(base, folder), os.path.join(app_dir, folder)
+            if os.path.exists(sf):
+                os.makedirs(df, exist_ok=True)
+                for f in os.listdir(sf):
+                    s, d = os.path.join(sf, f), os.path.join(df, f)
+                    if os.path.isfile(s): shutil.copy2(s, d)
     
-    serve_dir = app_dir
     port = 8765
-    
-    threading.Thread(target=start_server, args=(port, serve_dir), daemon=True).start()
+    threading.Thread(target=start_server, args=(port, app_dir), daemon=True).start()
     time.sleep(0.5)
     
     api = Api()
-    window = webview.create_window(
-        title=APP_NAME,
-        url=f'http://127.0.0.1:{port}/index.html',
-        js_api=api,
-        maximized=True,
-        resizable=True,
-        min_size=(900, 600)
-    )
+    window = webview.create_window(title=APP_NAME, url=f'http://127.0.0.1:{port}/index.html', js_api=api, maximized=True, resizable=True, min_size=(900,600))
     api.set_window(window)
     webview.start(debug=False)
 
