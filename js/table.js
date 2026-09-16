@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.1.0 — TABLE ====================
+// ==================== ONTEK v7.1.1 — TABLE ====================
 // Таблицы, ячейки, строки/колонки, разделители, рендер
 
 // ========== WORKSPACE ==========
@@ -422,24 +422,19 @@ function render(td) {
         tbody.appendChild(tr);
     });
 
-    // Total row — с суммой по каждой колонке
     if (tableSettings.showTotals && rows.length > 0) {
         const totTr = document.createElement('tr');
         totTr.className = 'row-total';
         let html = '';
         if (tableSettings.showRowNums) html += '<td class="row-num"></td>';
-
-        // Определяем позицию "Итого" — перед первой "Стоимость"
         const firstCostIdx = td.cols.findIndex(c => (c || '').toLowerCase().startsWith('стоимость'));
         const labelIdx = firstCostIdx > 0 ? firstCostIdx - 1 : td.cols.length - 2;
-
         td.cols.forEach((col, i) => {
             if (hidden.has(i)) return;
             const cn = (col || '').toLowerCase();
             const isCostCol = cn.startsWith('стоимость');
             const isQtyCol = cn.includes('ко-во') || cn.includes('количество');
             const isPriceCol = cn.startsWith('цена');
-
             if (isCostCol) {
                 const cur = getColCurrency(td, i) || td.currency;
                 html += `<td style="padding:0"><div class="cell total" style="padding:var(--cell-padding) 12px;font-weight:700">${sumCol(td, i).toFixed(2)} ${cur}</div></td>`;
@@ -475,7 +470,6 @@ function updCalcRow(td, ri, skipRecalc) {
             }
         }
     }
-    // Обновляем все числовые ячейки в этой строке
     td.cols.forEach((col, ci2) => {
         const cn = (col || '').toLowerCase();
         if (cn.startsWith('стоимость') || cn.startsWith('цена') || cn.includes('ко-во') || cn.includes('количество')) {
@@ -483,7 +477,6 @@ function updCalcRow(td, ri, skipRecalc) {
             if (cell && document.activeElement !== cell) cell.textContent = td.rows[ri][ci2] ?? '';
         }
     });
-    // Обновляем итоговую строку
     const totTr = td.el.querySelector('tbody tr.row-total');
     if (totTr) {
         const cells = totTr.querySelectorAll('.cell.total');
@@ -759,6 +752,25 @@ function addSectionRow(td, atIdx) {
         if (cell) { cell.focus(); const range = document.createRange(); range.selectNodeContents(cell); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
     }, 50);
     saveSession();
+}
+
+// ========== ADD COLUMN WITH CURRENCY (новое) ==========
+function addColWithCurrency(td, cur) {
+    if (!td) { toast('Выберите таблицу', 'warning'); return; }
+    const defaultName = `Цена, ${cur} с НДС`;
+    openPrompt('Название новой колонки:', defaultName, (name) => {
+        if (!name.trim()) return;
+        const newName = name.trim();
+        const newIdx = td.cols.length;
+        td.cols.push(newName);
+        td.rows.forEach(r => r.push(''));
+        if (!td.colCurrencies) td.colCurrencies = {};
+        td.colCurrencies[newIdx] = cur;
+        recalcAll(td);
+        render(td);
+        saveSession();
+        toast(`Колонка "${newName}" добавлена (${cur})`, 'success');
+    });
 }
 
 // ========== SORT / AUTOFIT ==========
