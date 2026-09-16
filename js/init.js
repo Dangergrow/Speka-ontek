@@ -1,27 +1,23 @@
-document.addEventListener('DOMContentLoaded', function() {
-    if(typeof ExcelJS==='undefined'||typeof XLSX==='undefined'){
-        document.body.innerHTML='<h1>Ошибка загрузки библиотек</h1>';
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ExcelJS === 'undefined' || typeof XLSX === 'undefined') {
+        document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif"><h1>Ошибка загрузки библиотек</h1><p>Проверьте наличие exceljs.min.js и xlsx.full.min.js</p></div>';
         return;
     }
-    
-    // Шаг 1: Строим интерфейс
+
     buildWorkspaces();
     buildSidebarV2();
-    
-    // Шаг 2: Загружаем настройки и применяем
-    loadSettings().then(function(){
+
+    loadSettings().then(() => {
         applyAllSettings();
     });
-    
-    // Шаг 3: Биндим события (после того как сайдбар построен)
+
     bindAllEvents();
-    
-    // Шаг 4: Всё остальное
-    buildShortcuts();
     loadRates();
     addTable('USD');
-    
-    // Глобальные обработчики
-    document.addEventListener('keydown', handleGlobalHotkeys);
-    document.addEventListener('paste', handleGlobalPaste);
+
+    setStatus('Готово');
+
+    setTimeout(() => {
+        toast('ONTEK v5.0 готов к работе', 'info', 2000);
+    }, 500);
 });
