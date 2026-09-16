@@ -1,7 +1,6 @@
-// ==================== ONTEK v7.0.2 — UI ====================
-// Сайдбар, тулбар, контекстное меню, модалки, поиск, темы, шаблоны
+// ==================== ONTEK v7.1.0 — UI ====================
+// Сайдбар, тулбар, контекстное меню (многоуровневое), модалки, поиск, темы
 
-// ========== SVG для подменю ==========
 const CTX_ICONS = {
     insert: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
     format: '<svg viewBox="0 0 24 24"><path d="M4 20l4-14h2l4 14"/><path d="M6 14h6"/><path d="M17 9v11"/><path d="M14 12h6"/></svg>',
@@ -33,7 +32,12 @@ const CTX_ICONS = {
     strike: '<svg viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12"/><path d="M6 8a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4"/><path d="M6 16a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4"/></svg>',
     painter: '<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="6" rx="1"/><path d="M12 9v5"/><path d="M9 21h6"/><path d="M12 14v7"/></svg>',
     clear: '<svg viewBox="0 0 24 24"><path d="M9 4h10l-3 16H6z"/><line x1="3" y1="20" x2="21" y2="20"/></svg>',
-    color: '<svg viewBox="0 0 24 24"><path d="M9 11l3-3 7 7-3 3z"/><path d="M5 19h4v-4H5z"/></svg>'
+    color: '<svg viewBox="0 0 24 24"><path d="M9 11l3-3 7 7-3 3z"/><path d="M5 19h4v-4H5z"/></svg>',
+    usd: '<svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 6a4 4 0 0 0-4-2h-2a4 4 0 0 0 0 8h2a4 4 0 0 1 0 8h-2a4 4 0 0 1-4-2"/></svg>',
+    eur: '<svg viewBox="0 0 24 24"><path d="M18 6a7 7 0 1 0 0 12"/><line x1="4" y1="10" x2="13" y2="10"/><line x1="4" y1="14" x2="13" y2="14"/></svg>',
+    rub: '<svg viewBox="0 0 24 24"><path d="M8 4v16"/><path d="M8 4h5a4 4 0 0 1 0 8H8"/><path d="M6 16h10"/><path d="M6 20h10"/></svg>',
+    gold: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="8" ry="4"/><path d="M4 16v-6a8 4 0 0 1 16 0v6"/></svg>',
+    btc: '<svg viewBox="0 0 24 24"><path d="M9 6h4a3 3 0 0 1 0 6H9z"/><path d="M9 12h5a3 3 0 0 1 0 6H9z"/><line x1="11" y1="3" x2="11" y2="6"/><line x1="13" y1="3" x2="13" y2="6"/><line x1="11" y1="18" x2="11" y2="21"/><line x1="13" y1="18" x2="13" y2="21"/></svg>'
 };
 
 // ========== SIDEBAR ==========
@@ -45,7 +49,7 @@ function buildSidebarV2() {
             { id: 'btnAddDivider', icon: ICONS.divider, label: 'Разделитель', hk: null }
         ]},
         { t: 'Действия', buttons: [
-            { id: 'btnConvert', icon: ICONS.convert, label: 'Конвертировать', hk: 'convert' },
+            { id: 'btnConvert', icon: ICONS.convert, label: 'Конвертировать всё', hk: 'convert' },
             { id: 'btnPaste',   icon: ICONS.paste,   label: 'Вставить',       hk: 'paste' },
             { id: 'btnDup',     icon: ICONS.copy,    label: 'Дублировать',    hk: 'dup' },
             { id: 'btnRecalc',  icon: ICONS.refresh, label: 'Пересчёт',       hk: 'recalc' },
@@ -83,10 +87,8 @@ function buildSidebarV2() {
 
 // ========== WORKSPACE TABS ==========
 function buildWorkspaces() {
-    const tabs = Q('#workspaceTabs');
-    const container = Q('#workspaceContainer');
-    tabs.innerHTML = '';
-    container.innerHTML = '';
+    const tabs = Q('#workspaceTabs'), container = Q('#workspaceContainer');
+    tabs.innerHTML = ''; container.innerHTML = '';
     for (let i = 1; i <= 5; i++) {
         tabs.innerHTML += `<button class="workspace-tab ${i === activeWorkspace ? 'active' : ''}" data-ws="${i}">Окно ${i}</button>`;
         container.innerHTML += `<div class="workspace-panel ${i === activeWorkspace ? 'active' : ''}" data-ws="${i}"><div class="tables-area" id="workspaceArea_${i}"></div></div>`;
@@ -95,39 +97,26 @@ function buildWorkspaces() {
     container.querySelectorAll('.tables-area').forEach(area => {
         area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
         area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
-        area.addEventListener('drop', e => {
-            e.preventDefault();
-            area.classList.remove('drag-over');
-            const f = e.dataTransfer.files[0];
-            if (f) loadFile(f);
-        });
+        area.addEventListener('drop', e => { e.preventDefault(); area.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
     });
     upEmpty();
 }
 
-// ========== CONTEXT MENU (многоуровневое, с уровнями) ==========
-let openSubmenus = []; // [{ el, level, parentEl }]
+// ========== CONTEXT MENU (многоуровневое) ==========
+let openSubmenus = [];
 
 function closeSubmenusFromLevel(level) {
     const keep = [];
     openSubmenus.forEach(s => {
-        if (s.level < level) {
-            keep.push(s);
-        } else {
-            s.el.remove();
-            if (s.parentEl) s.parentEl.classList.remove('open');
-        }
+        if (s.level < level) keep.push(s);
+        else { s.el.remove(); if (s.parentEl) s.parentEl.classList.remove('open'); }
     });
     openSubmenus = keep;
 }
-
 function hideCtx() {
     const cm = Q('#ctxMenu');
     if (cm) { cm.style.display = 'none'; cm.innerHTML = ''; }
-    openSubmenus.forEach(s => {
-        s.el.remove();
-        if (s.parentEl) s.parentEl.classList.remove('open');
-    });
+    openSubmenus.forEach(s => { s.el.remove(); if (s.parentEl) s.parentEl.classList.remove('open'); });
     openSubmenus = [];
 }
 
@@ -135,33 +124,28 @@ function buildCtxHTML(ctx) {
     const isCell = ctx && ctx.ri != null && ctx.ci != null;
     const isHeader = ctx && ctx.ci != null && ctx.ri == null;
     const items = [];
-
     items.push(`<div class="ctx-item" data-action="addRowAbove"><span class="ctx-icon">${CTX_ICONS.rowUp}</span> Строку выше</div>`);
     items.push(`<div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">${CTX_ICONS.rowDown}</span> Строку ниже</div>`);
     items.push(`<div class="ctx-item" data-action="addSection"><span class="ctx-icon">${CTX_ICONS.section}</span> Строка-заголовок</div>`);
     items.push(`<div class="ctx-item" data-action="dupRow"><span class="ctx-icon">${CTX_ICONS.dup}</span> Дублировать строку</div>`);
     items.push(`<div class="ctx-item danger" data-action="delRow"><span class="ctx-icon">${CTX_ICONS.del}</span> Удалить строку</div>`);
     items.push(`<div class="ctx-div"></div>`);
-
     items.push(`<div class="ctx-item has-sub" data-sub="insert"><span class="ctx-icon">${CTX_ICONS.insert}</span> Вставить</div>`);
     items.push(`<div class="ctx-item has-sub" data-sub="format"><span class="ctx-icon">${CTX_ICONS.format}</span> Формат</div>`);
     items.push(`<div class="ctx-item has-sub" data-sub="align"><span class="ctx-icon">${CTX_ICONS.align}</span> Выравнивание</div>`);
     items.push(`<div class="ctx-item has-sub" data-sub="cells"><span class="ctx-icon">${CTX_ICONS.cells}</span> Ячейки</div>`);
-    if (isHeader || isCell) {
-        items.push(`<div class="ctx-item has-sub" data-sub="col"><span class="ctx-icon">${CTX_ICONS.col}</span> Колонка</div>`);
-    }
-    if (isHeader) {
-        items.push(`<div class="ctx-item has-sub" data-sub="sort"><span class="ctx-icon">${CTX_ICONS.sort}</span> Сортировка</div>`);
-    }
+    if (isHeader || isCell) items.push(`<div class="ctx-item has-sub" data-sub="col"><span class="ctx-icon">${CTX_ICONS.col}</span> Колонка</div>`);
+    if (isHeader) items.push(`<div class="ctx-item has-sub" data-sub="sort"><span class="ctx-icon">${CTX_ICONS.sort}</span> Сортировка</div>`);
     items.push(`<div class="ctx-div"></div>`);
-
-    items.push(`<div class="ctx-item" data-action="copyCells"><span class="ctx-icon">${CTX_ICONS.copy}</span> Копировать <span class="ctx-shortcut">Ctrl+C</span></div>`);
+    if (isCell && ctx.ri != null) {
+        items.push(`<div class="ctx-item" data-action="copyRowFmt"><span class="ctx-icon">${CTX_ICONS.copy}</span> Копировать строку (с цветами)</div>`);
+    }
+    items.push(`<div class="ctx-item" data-action="copyFmt"><span class="ctx-icon">${CTX_ICONS.copy}</span> Копировать выделенное <span class="ctx-shortcut">Ctrl+C</span></div>`);
+    items.push(`<div class="ctx-item" data-action="copyTableFmt"><span class="ctx-icon">${CTX_ICONS.table}</span> Копировать таблицу</div>`);
     items.push(`<div class="ctx-item" data-action="paste"><span class="ctx-icon">${CTX_ICONS.paste}</span> Вставить <span class="ctx-shortcut">Ctrl+V</span></div>`);
     items.push(`<div class="ctx-div"></div>`);
-
     items.push(`<div class="ctx-item" data-action="dupTable"><span class="ctx-icon">${CTX_ICONS.table}</span> Дублировать таблицу</div>`);
     items.push(`<div class="ctx-item danger" data-action="delTable"><span class="ctx-icon">${CTX_ICONS.trash}</span> Удалить таблицу</div>`);
-
     return items.join('');
 }
 
@@ -176,8 +160,7 @@ function buildSubmenuHTML(subName, ctx) {
                 <div class="ctx-item" data-action="addColAfter"><span class="ctx-icon">${CTX_ICONS.col}</span> Колонку после</div>
                 <div class="ctx-div"></div>
                 <div class="ctx-item" data-action="addRowAbove"><span class="ctx-icon">${CTX_ICONS.rowUp}</span> Строку выше</div>
-                <div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">${CTX_ICONS.rowDown}</span> Строку ниже</div>
-            `;
+                <div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">${CTX_ICONS.rowDown}</span> Строку ниже</div>`;
         case 'format':
             return `
                 <div class="ctx-item" data-action="bold"><span class="ctx-icon">${CTX_ICONS.bold}</span> Жирный <span class="ctx-shortcut">Ctrl+B</span></div>
@@ -189,24 +172,22 @@ function buildSubmenuHTML(subName, ctx) {
                 <div class="ctx-item" data-action="clearFormat"><span class="ctx-icon">${CTX_ICONS.clear}</span> Очистить формат</div>
                 <div class="ctx-div"></div>
                 <div class="ctx-item has-sub" data-sub="textColor"><span class="ctx-icon">${CTX_ICONS.color}</span> Цвет текста</div>
-                <div class="ctx-item has-sub" data-sub="bgColor"><span class="ctx-icon">${CTX_ICONS.color}</span> Цвет фона</div>
-            `;
+                <div class="ctx-item has-sub" data-sub="bgColor"><span class="ctx-icon">${CTX_ICONS.color}</span> Цвет фона</div>`;
         case 'align':
             return `
                 <div class="ctx-item" data-action="alignLeft"><span class="ctx-icon">${CTX_ICONS.align}</span> По левому краю</div>
                 <div class="ctx-item" data-action="alignCenter"><span class="ctx-icon">${CTX_ICONS.align}</span> По центру</div>
-                <div class="ctx-item" data-action="alignRight"><span class="ctx-icon">${CTX_ICONS.align}</span> По правому краю</div>
-            `;
+                <div class="ctx-item" data-action="alignRight"><span class="ctx-icon">${CTX_ICONS.align}</span> По правому краю</div>`;
         case 'cells':
             return `
                 <div class="ctx-item" data-action="mergeCells"><span class="ctx-icon">${CTX_ICONS.merge}</span> Объединить ячейки</div>
                 <div class="ctx-item" data-action="unmergeCells"><span class="ctx-icon">${CTX_ICONS.unmerge}</span> Разъединить ячейки</div>
                 <div class="ctx-div"></div>
-                <div class="ctx-item" data-action="addNote"><span class="ctx-icon">${CTX_ICONS.note}</span> Заметка к ячейке</div>
-                <div class="ctx-item" data-action="setCurrency"><span class="ctx-icon">${CTX_ICONS.currency}</span> Валюта колонки…</div>
-            `;
+                <div class="ctx-item" data-action="addNote"><span class="ctx-icon">${CTX_ICONS.note}</span> Заметка к ячейке</div>`;
         case 'col':
             return `
+                <div class="ctx-item has-sub" data-sub="colCurrency"><span class="ctx-icon">${CTX_ICONS.currency}</span> Валюта колонки</div>
+                <div class="ctx-div"></div>
                 <div class="ctx-item" data-action="renameCol"><span class="ctx-icon">${CTX_ICONS.rename}</span> Переименовать</div>
                 <div class="ctx-item" data-action="dupCol"><span class="ctx-icon">${CTX_ICONS.dup}</span> Дублировать</div>
                 <div class="ctx-div"></div>
@@ -216,13 +197,21 @@ function buildSubmenuHTML(subName, ctx) {
                 <div class="ctx-item" data-action="hideCol"><span class="ctx-icon">${CTX_ICONS.eye}</span> Скрыть колонку</div>
                 <div class="ctx-item" data-action="showAllCols"><span class="ctx-icon">${CTX_ICONS.eye}</span> Показать все</div>
                 <div class="ctx-item" data-action="autoFitCol"><span class="ctx-icon">${CTX_ICONS.autofit}</span> Автоширина</div>
-                <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">${CTX_ICONS.del}</span> Удалить колонку</div>
-            `;
+                <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">${CTX_ICONS.del}</span> Удалить колонку</div>`;
+        case 'colCurrency':
+            return `
+                <div class="ctx-item" data-action="colCurUSD"><span class="ctx-icon">${CTX_ICONS.usd}</span> Конвертировать в USD</div>
+                <div class="ctx-item" data-action="colCurEUR"><span class="ctx-icon">${CTX_ICONS.eur}</span> Конвертировать в EUR</div>
+                <div class="ctx-item" data-action="colCurRUB"><span class="ctx-icon">${CTX_ICONS.rub}</span> Конвертировать в RUB</div>
+                <div class="ctx-item" data-action="colCurXAU"><span class="ctx-icon">${CTX_ICONS.gold}</span> Конвертировать в XAU (золото)</div>
+                <div class="ctx-item" data-action="colCurBTC"><span class="ctx-icon">${CTX_ICONS.btc}</span> Конвертировать в BTC</div>
+                <div class="ctx-div"></div>
+                <div class="ctx-item" data-action="colCurSet"><span class="ctx-icon">${CTX_ICONS.currency}</span> Только пометить (без конвертации)…</div>
+                <div class="ctx-item" data-action="colCurClear"><span class="ctx-icon">${CTX_ICONS.clear}</span> Убрать метку валюты</div>`;
         case 'sort':
             return `
                 <div class="ctx-item" data-action="sortAsc"><span class="ctx-icon">${CTX_ICONS.sort}</span> По возрастанию (A→Я)</div>
-                <div class="ctx-item" data-action="sortDesc"><span class="ctx-icon">${CTX_ICONS.sort}</span> По убыванию (Я→A)</div>
-            `;
+                <div class="ctx-item" data-action="sortDesc"><span class="ctx-icon">${CTX_ICONS.sort}</span> По убыванию (Я→A)</div>`;
         case 'textColor':
         case 'bgColor':
             return `<div class="ctx-palette" data-palette="${subName}"></div>`;
@@ -232,44 +221,30 @@ function buildSubmenuHTML(subName, ctx) {
 
 function positionSubmenu(sub, parentItem) {
     sub.style.visibility = 'hidden';
-    sub.style.left = '0px';
-    sub.style.top = '0px';
+    sub.style.left = '0px'; sub.style.top = '0px';
     const sRect = sub.getBoundingClientRect();
     const pRect = parentItem.getBoundingClientRect();
     const pad = 8;
     let left = pRect.right + 4;
     let top = pRect.top;
-    if (left + sRect.width > window.innerWidth - pad) {
-        left = pRect.left - sRect.width - 4;
-    }
-    if (top + sRect.height > window.innerHeight - pad) {
-        top = window.innerHeight - sRect.height - pad;
-    }
+    if (left + sRect.width > window.innerWidth - pad) left = pRect.left - sRect.width - 4;
+    if (top + sRect.height > window.innerHeight - pad) top = window.innerHeight - sRect.height - pad;
     if (top < pad) top = pad;
     if (left < pad) left = pad;
-    sub.style.left = left + 'px';
-    sub.style.top = top + 'px';
+    sub.style.left = left + 'px'; sub.style.top = top + 'px';
     sub.style.visibility = 'visible';
 }
 
 function attachSubmenuEvents(sub, ctx, level) {
-    // Внутри подменю: наведение на has-sub → открыть следующий уровень
     sub.querySelectorAll('.ctx-item.has-sub').forEach(item => {
-        item.addEventListener('mouseenter', () => {
-            const sn = item.dataset.sub;
-            openSubmenuFor(item, sn, ctx, level + 1);
-        });
+        item.addEventListener('mouseenter', () => { openSubmenuFor(item, item.dataset.sub, ctx, level + 1); });
     });
-    // Наведение на обычный пункт — закрываем более глубокие уровни
     sub.querySelectorAll('.ctx-item:not(.has-sub)').forEach(item => {
-        item.addEventListener('mouseenter', () => {
-            closeSubmenusFromLevel(level + 1);
-        });
+        item.addEventListener('mouseenter', () => { closeSubmenusFromLevel(level + 1); });
     });
 }
 
 function openSubmenuFor(parentItem, subName, ctx, level) {
-    // Закрываем только уровни >= level
     closeSubmenusFromLevel(level);
     parentItem.classList.add('open');
     const html = buildSubmenuHTML(subName, ctx);
@@ -283,11 +258,9 @@ function openSubmenuFor(parentItem, subName, ctx, level) {
 
     if (subName === 'textColor' || subName === 'bgColor') {
         const pal = sub.querySelector('.ctx-palette');
-        pal.innerHTML = COLOR_PALETTE.map(c =>
-            c === null
-                ? `<div class="color-swatch none" data-color=""></div>`
-                : `<div class="color-swatch" style="background:${c}" data-color="${c}"></div>`
-        ).join('');
+        pal.innerHTML = COLOR_PALETTE.map(c => c === null
+            ? `<div class="color-swatch none" data-color=""></div>`
+            : `<div class="color-swatch" style="background:${c}" data-color="${c}"></div>`).join('');
     }
 
     positionSubmenu(sub, parentItem);
@@ -302,9 +275,7 @@ function showCtx(x, y) {
     cm.innerHTML = buildCtxHTML(ctx);
     cm.style.display = 'block';
     cm.style.visibility = 'hidden';
-    cm.style.left = '0px';
-    cm.style.top = '0px';
-
+    cm.style.left = '0px'; cm.style.top = '0px';
     const rect = cm.getBoundingClientRect();
     const w = rect.width, h = rect.height;
     const pad = 8;
@@ -313,21 +284,15 @@ function showCtx(x, y) {
     if (left + w > window.innerWidth - pad) left = window.innerWidth - w - pad;
     if (top < pad) top = pad;
     if (left < pad) left = pad;
-    cm.style.left = left + 'px';
-    cm.style.top = top + 'px';
+    cm.style.left = left + 'px'; cm.style.top = top + 'px';
     cm.style.visibility = 'visible';
 
     cm.onclick = handleCtxClick;
-
     cm.querySelectorAll('.ctx-item.has-sub').forEach(item => {
-        item.addEventListener('mouseenter', () => {
-            openSubmenuFor(item, item.dataset.sub, ctx, 1);
-        });
+        item.addEventListener('mouseenter', () => { openSubmenuFor(item, item.dataset.sub, ctx, 1); });
     });
     cm.querySelectorAll('.ctx-item:not(.has-sub)').forEach(item => {
-        item.addEventListener('mouseenter', () => {
-            closeSubmenusFromLevel(1);
-        });
+        item.addEventListener('mouseenter', () => { closeSubmenusFromLevel(1); });
     });
 }
 
@@ -339,10 +304,8 @@ function handleCtxClick(e) {
         const pal = swatch.closest('.ctx-palette');
         const isText = pal.dataset.palette === 'textColor';
         const color = swatch.dataset.color || null;
-        if (isText) setCellColor('color', color);
-        else setCellColor('bg', color);
-        hideCtx();
-        return;
+        if (isText) setCellColor('color', color); else setCellColor('bg', color);
+        hideCtx(); return;
     }
     if (!item) return;
     if (item.classList.contains('has-sub')) return;
@@ -388,25 +351,29 @@ function execCtxAction(action, td, ctx) {
             const existing = (td.notes && td.notes[key]) || '';
             openPrompt('Заметка к ячейке:', existing, (v) => {
                 if (!td.notes) td.notes = {};
-                if (v.trim()) td.notes[key] = v.trim();
-                else delete td.notes[key];
-                render(td);
-                saveSession();
+                if (v.trim()) td.notes[key] = v.trim(); else delete td.notes[key];
+                render(td); saveSession();
             });
             break;
         }
 
-        case 'setCurrency': {
+        // === Currency per column ===
+        case 'colCurUSD': if (td && ctx.ci != null) convertColumn(td, ctx.ci, 'USD'); break;
+        case 'colCurEUR': if (td && ctx.ci != null) convertColumn(td, ctx.ci, 'EUR'); break;
+        case 'colCurRUB': if (td && ctx.ci != null) convertColumn(td, ctx.ci, 'RUB'); break;
+        case 'colCurXAU': if (td && ctx.ci != null) convertColumn(td, ctx.ci, 'XAU'); break;
+        case 'colCurBTC': if (td && ctx.ci != null) convertColumn(td, ctx.ci, 'BTC'); break;
+        case 'colCurSet': {
             if (!td || ctx.ci == null) break;
             const cur = getColCurrency(td, ctx.ci);
-            const options = 'USD, EUR, RUB, XAU, BTC, OIL (или пусто — убрать)';
-            openPrompt(`Валюта колонки "${td.cols[ctx.ci]}" (${options}):`, cur || '', (v) => {
+            openPrompt('Метка валюты (USD, EUR, RUB, XAU, BTC, OIL):', cur || '', (v) => {
                 const val = String(v).trim().toUpperCase();
-                if (!val || val === '—' || val === 'NONE') setColCurrency(td, ctx.ci, null);
+                if (!val) setColCurrency(td, ctx.ci, null);
                 else setColCurrency(td, ctx.ci, val);
             });
             break;
         }
+        case 'colCurClear': if (td && ctx.ci != null) setColCurrency(td, ctx.ci, null); break;
 
         case 'renameCol': if (td && ctx.ci != null) renameCol(td, ctx.ci); break;
         case 'addColBefore': if (td && ctx.ci != null) insCol(td, ctx.ci); break;
@@ -421,45 +388,45 @@ function execCtxAction(action, td, ctx) {
         case 'sortDesc': if (td && ctx.ci != null) sortByColumn(td, ctx.ci, 'desc'); break;
 
         case 'markup':
-            openPrompt('Наценка в %:', '10', (v) => {
-                const p = parseFloat(String(v).replace(',', '.'));
-                if (!isNaN(p) && p !== 0) applyMarkupToSelection(p);
-            });
+            openPrompt('Наценка в %:', '10', (v) => { const p = parseFloat(String(v).replace(',', '.')); if (!isNaN(p) && p !== 0) applyMarkupToSelection(p); });
             break;
         case 'discount':
-            openPrompt('Скидка в %:', '5', (v) => {
-                const p = parseFloat(String(v).replace(',', '.'));
-                if (!isNaN(p) && p !== 0) applyDiscountToSelection(p);
-            });
+            openPrompt('Скидка в %:', '5', (v) => { const p = parseFloat(String(v).replace(',', '.')); if (!isNaN(p) && p !== 0) applyDiscountToSelection(p); });
             break;
 
-        case 'copyCells': copySelectedCells(); break;
+        // === Copy with formatting ===
+        case 'copyRowFmt': if (td && ctx.ri != null) copyRowWithFormat(td, ctx.ri); break;
+        case 'copyFmt': {
+            if (!td) break;
+            const sel = selectedRows[td.id];
+            if (cellSel.tid === td.id && cellSel.r1 >= 0) copyCellsWithFormat(td);
+            else if (sel && sel.size) copySelectedRowsWithFormat(td);
+            else copyTableWithFormat(td);
+            break;
+        }
+        case 'copyTableFmt': if (td) copyTableWithFormat(td); break;
         case 'paste': paste(); break;
+
         case 'dupTable': if (td) dupTable(td); break;
         case 'delTable':
             if (td) {
-                if (getTables(activeWorkspace).length <= 1) { toast('Нужна хотя бы одна таблица', 'warning'); break; }
-                openConfirm('Удалить таблицу?', 'Без возможности восстановления.', () => {
+                if (getTables(activeWorkspace).length <= 1) { toast('Нужна хотя бы одна', 'warning'); break; }
+                openConfirm('Удалить таблицу?', 'Без восстановления.', () => {
                     const ws = workspaces[activeWorkspace];
-                    const idx = ws.indexOf(td);
-                    if (idx >= 0) ws.splice(idx, 1);
+                    const idx = ws.indexOf(td); if (idx >= 0) ws.splice(idx, 1);
                     if (actId === td.id) actId = null;
                     renderWorkspace(activeWorkspace);
-                    toast('Удалена', 'info');
-                    saveSession();
+                    toast('Удалена', 'info'); saveSession();
                 });
             }
             break;
     }
 }
 
-// Закрытие при клике вне
 document.addEventListener('click', e => {
     const cm = Q('#ctxMenu');
     if (!cm) return;
-    if (!cm.contains(e.target) && !openSubmenus.some(s => s.el.contains(e.target))) {
-        hideCtx();
-    }
+    if (!cm.contains(e.target) && !openSubmenus.some(s => s.el.contains(e.target))) hideCtx();
 });
 
 // ========== PROMPT / CONFIRM ==========
@@ -473,7 +440,6 @@ function openPrompt(title, defaultValue, onOk) {
     window._promptOk = () => { modal.classList.remove('show'); if (onOk) onOk(input.value); };
     window._promptCancel = () => modal.classList.remove('show');
 }
-
 function openConfirm(title, message, onOk) {
     const modal = Q('#confirmModal');
     Q('#confirmTitle').textContent = title;
@@ -484,11 +450,7 @@ function openConfirm(title, message, onOk) {
 }
 
 // ========== SEARCH ==========
-function openSearch() {
-    const bar = Q('#searchBar');
-    bar.classList.add('show');
-    setTimeout(() => Q('#searchInput').focus(), 100);
-}
+function openSearch() { const bar = Q('#searchBar'); bar.classList.add('show'); setTimeout(() => Q('#searchInput').focus(), 100); }
 function closeSearch() {
     Q('#searchBar').classList.remove('show');
     lastSearch = { query: '', matches: [], idx: 0 };
@@ -501,11 +463,7 @@ function doSearch() {
     document.querySelectorAll('.search-hit, .search-active').forEach(el => el.classList.remove('search-hit', 'search-active'));
     if (!query) { lastSearch = { query: '', matches: [], idx: 0 }; Q('#searchCount').textContent = '0/0'; return; }
     const matches = [];
-    td.rows.forEach((row, ri) => {
-        row.forEach((v, ci2) => {
-            if (String(v ?? '').toLowerCase().includes(query.toLowerCase())) matches.push({ ri, ci: ci2 });
-        });
-    });
+    td.rows.forEach((row, ri) => { row.forEach((v, ci2) => { if (String(v ?? '').toLowerCase().includes(query.toLowerCase())) matches.push({ ri, ci: ci2 }); }); });
     lastSearch = { query, matches, idx: 0 };
     Q('#searchCount').textContent = matches.length ? `1/${matches.length}` : '0/0';
     if (matches.length) highlightMatch(td, 0);
@@ -515,33 +473,15 @@ function highlightMatch(td, i) {
     const m = lastSearch.matches[i]; if (!m) return;
     const tr = td.el.querySelector(`tbody tr[data-ri="${m.ri}"]`); if (!tr) return;
     const cell = tr.querySelector(`.cell[data-c="${m.ci}"]`);
-    if (cell) {
-        cell.parentElement.classList.add('search-hit');
-        tr.classList.add('search-active');
-        cell.focus();
-        cell.parentElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
+    if (cell) { cell.parentElement.classList.add('search-hit'); tr.classList.add('search-active'); cell.focus(); cell.parentElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
     Q('#searchCount').textContent = `${i + 1}/${lastSearch.matches.length}`;
 }
-function searchNext() {
-    if (!lastSearch.matches.length) return;
-    lastSearch.idx = (lastSearch.idx + 1) % lastSearch.matches.length;
-    highlightMatch(active(), lastSearch.idx);
-}
-function searchPrev() {
-    if (!lastSearch.matches.length) return;
-    lastSearch.idx = (lastSearch.idx - 1 + lastSearch.matches.length) % lastSearch.matches.length;
-    highlightMatch(active(), lastSearch.idx);
-}
+function searchNext() { if (!lastSearch.matches.length) return; lastSearch.idx = (lastSearch.idx + 1) % lastSearch.matches.length; highlightMatch(active(), lastSearch.idx); }
+function searchPrev() { if (!lastSearch.matches.length) return; lastSearch.idx = (lastSearch.idx - 1 + lastSearch.matches.length) % lastSearch.matches.length; highlightMatch(active(), lastSearch.idx); }
 
-// ========== FIND & REPLACE ==========
+// ========== FR ==========
 let frMatches = [], frIdx = 0;
-function openFR() {
-    Q('#frModal').classList.add('show');
-    Q('#frInfo').textContent = '';
-    frMatches = []; frIdx = 0;
-    setTimeout(() => Q('#frFind').focus(), 100);
-}
+function openFR() { Q('#frModal').classList.add('show'); Q('#frInfo').textContent = ''; frMatches = []; frIdx = 0; setTimeout(() => Q('#frFind').focus(), 100); }
 function closeFR() { Q('#frModal').classList.remove('show'); }
 function frDoSearch() {
     const td = active(); if (!td) return;
@@ -573,11 +513,7 @@ function frHighlight(i) {
     const m = frMatches[i];
     const tr = td.el.querySelector(`tbody tr[data-ri="${m.ri}"]`); if (!tr) return;
     const cell = tr.querySelector(`.cell[data-c="${m.ci}"]`);
-    if (cell) {
-        cell.parentElement.classList.add('search-hit');
-        cell.focus();
-        cell.parentElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
+    if (cell) { cell.parentElement.classList.add('search-hit'); cell.focus(); cell.parentElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
     Q('#frInfo').textContent = `Найдено: ${frMatches.length} (${i + 1}/${frMatches.length})`;
 }
 function frFindNext() { if (!frMatches.length) return; frIdx = (frIdx + 1) % frMatches.length; frHighlight(frIdx); }
@@ -587,13 +523,9 @@ function frReplaceOne() {
     const q = Q('#frFind').value, r = Q('#frReplace').value;
     const caseSens = Q('#frCase').checked;
     const s = String(td.rows[m.ri][m.ci] ?? '');
-    const newS = caseSens
-        ? s.replace(q, r)
-        : s.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), r);
+    const newS = caseSens ? s.replace(q, r) : s.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), r);
     td.rows[m.ri][m.ci] = newS;
-    render(td);
-    frDoSearch();
-    saveSession();
+    render(td); frDoSearch(); saveSession();
 }
 function frReplaceAll() {
     const td = active(); if (!td) return;
@@ -603,9 +535,7 @@ function frReplaceAll() {
     let count = 0;
     td.rows.forEach((row, ri) => row.forEach((v, ci2) => {
         const s = String(v ?? ''); if (!s) return;
-        const newS = caseSens
-            ? s.split(q).join(r)
-            : s.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), r);
+        const newS = caseSens ? s.split(q).join(r) : s.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), r);
         if (newS !== s) { td.rows[ri][ci2] = newS; count++; }
     }));
     if (count) { render(td); toast(`Заменено: ${count}`, 'success'); saveSession(); }
@@ -614,33 +544,18 @@ function frReplaceAll() {
 }
 
 // ========== TEMPLATES ==========
-function loadTemplates() {
-    try {
-        const raw = localStorage.getItem('ontek_templates');
-        if (raw) templates = JSON.parse(raw);
-    } catch (e) {}
-}
+function loadTemplates() { try { const raw = localStorage.getItem('ontek_templates'); if (raw) templates = JSON.parse(raw); } catch (e) {} }
 function saveTemplates() { localStorage.setItem('ontek_templates', JSON.stringify(templates)); }
 function openTemplates() { Q('#tplModal').classList.add('show'); renderTemplates(); }
 function closeTemplates() { Q('#tplModal').classList.remove('show'); }
 function renderTemplates() {
     const el = Q('#tplList');
-    if (!templates.length) {
-        el.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px 0;font-size:13px">Нет сохранённых шаблонов</div>';
-        return;
-    }
+    if (!templates.length) { el.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px 0;font-size:13px">Нет сохранённых шаблонов</div>'; return; }
     el.innerHTML = templates.map((t, i) => `
         <div class="tpl-item">
-            <div>
-                <div class="tpl-item-name">${escapeHtml(t.name)}</div>
-                <div class="tpl-item-cols">${escapeHtml(t.cols.join(', '))}</div>
-            </div>
-            <div class="tpl-item-btns">
-                <button class="tpl-item-btn" data-idx="${i}" data-act="apply">Применить</button>
-                <button class="tpl-item-btn danger" data-idx="${i}" data-act="del">Удалить</button>
-            </div>
-        </div>
-    `).join('');
+            <div><div class="tpl-item-name">${escapeHtml(t.name)}</div><div class="tpl-item-cols">${escapeHtml(t.cols.join(', '))}</div></div>
+            <div class="tpl-item-btns"><button class="tpl-item-btn" data-idx="${i}" data-act="apply">Применить</button><button class="tpl-item-btn danger" data-idx="${i}" data-act="del">Удалить</button></div>
+        </div>`).join('');
     el.querySelectorAll('button').forEach(b => {
         b.onclick = () => {
             const idx = +b.dataset.idx;
@@ -652,20 +567,11 @@ function renderTemplates() {
 function applyTemplate(tpl) {
     const td = active(); if (!td) { toast('Выберите таблицу', 'warning'); return; }
     td.cols = [...tpl.cols];
-    td.rows = td.rows.map(r => {
-        const nr = [...r];
-        while (nr.length < td.cols.length) nr.push('');
-        return nr.slice(0, td.cols.length);
-    });
+    td.rows = td.rows.map(r => { const nr = [...r]; while (nr.length < td.cols.length) nr.push(''); return nr.slice(0, td.cols.length); });
     if (td.rows.length === 0) td.rows.push(Array(td.cols.length).fill(''));
-    td.merges = [];
-    td.styles = {};
-    td.rowTypes = {};
-    td.formulas = {};
-    render(td);
-    closeTemplates();
-    toast('Шаблон применён: ' + tpl.name, 'success');
-    saveSession();
+    td.merges = []; td.styles = {}; td.rowTypes = {}; td.formulas = {}; td.colCurrencies = {};
+    render(td); closeTemplates();
+    toast('Шаблон применён: ' + tpl.name, 'success'); saveSession();
 }
 
 // ========== THEMES ==========
@@ -676,8 +582,7 @@ function renderThemeOptions(containerId) {
             <div class="theme-preview" style="background:${t.gradient}">${t.letter}</div>
             <div class="theme-name">${t.name}</div>
             <div class="theme-desc">${t.desc}</div>
-        </div>
-    `).join('');
+        </div>`).join('');
     c.querySelectorAll('.theme-card').forEach(cd => cd.onclick = () => setColorTheme(cd.dataset.theme));
 }
 function renderExportThemes(containerId) {
@@ -686,16 +591,14 @@ function renderExportThemes(containerId) {
         <div class="export-theme ${k === exportTheme ? 'active' : ''}" data-theme="${k}">
             <div class="export-theme-preview" style="background:${t.preview}">${t.name[0]}</div>
             <div class="export-theme-name">${t.name}</div>
-        </div>
-    `).join('');
+        </div>`).join('');
     c.querySelectorAll('.export-theme').forEach(el => el.onclick = () => setExportTheme(el.dataset.theme));
 }
 function toggleSection(id) {
     const t = document.querySelector(`[data-toggle="${id}"]`);
     const b = document.getElementById(id);
     if (!t || !b) return;
-    t.classList.toggle('open');
-    b.classList.toggle('open');
+    t.classList.toggle('open'); b.classList.toggle('open');
 }
 
 // ========== HOTKEYS LIST ==========
@@ -703,39 +606,25 @@ function renderHotkeyList() {
     const c = Q('#hotkeyList'); if (!c) return;
     c.innerHTML = Object.keys(DEFAULT_HOTKEYS).map(k => {
         const key = hotkeys[k] || '';
-        return `<div class="hotkey-row">
-            <span class="hotkey-label">${escapeHtml(KEY_LABELS[k] || k)}</span>
-            <span class="hotkey-key" data-hk="${k}">${key ? 'Shift+' + hkDisplay(key) : '—'}</span>
-        </div>`;
+        return `<div class="hotkey-row"><span class="hotkey-label">${escapeHtml(KEY_LABELS[k] || k)}</span><span class="hotkey-key" data-hk="${k}">${key ? 'Shift+' + hkDisplay(key) : '—'}</span></div>`;
     }).join('');
     c.querySelectorAll('.hotkey-key').forEach(el => el.onclick = () => startRecording(el));
 }
 function startRecording(el) {
     if (recordingKey) recordingKey.classList.remove('recording');
-    recordingKey = el;
-    recordingHk = el.dataset.hk;
-    el.classList.add('recording');
-    el.textContent = '...';
+    recordingKey = el; recordingHk = el.dataset.hk;
+    el.classList.add('recording'); el.textContent = '...';
     const handler = e => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         let key = e.key.toUpperCase();
         if (key === 'DELETE' || key === 'DEL') key = 'DELETE';
         if (key === 'CONTROL' || key === 'SHIFT' || key === 'ALT') return;
-        const conflict = (() => {
-            for (const [k, v] of Object.entries(hotkeys)) {
-                if (k !== recordingHk && v === key) return k;
-            }
-            return null;
-        })();
+        const conflict = (() => { for (const [k, v] of Object.entries(hotkeys)) { if (k !== recordingHk && v === key) return k; } return null; })();
         if (conflict) {
             if (!confirm(`Клавиша Shift+${hkDisplay(key)} уже на «${KEY_LABELS[conflict]}». Переназначить?`)) {
                 el.textContent = hotkeys[recordingHk] ? 'Shift+' + hkDisplay(hotkeys[recordingHk]) : '—';
-                el.classList.remove('recording');
-                recordingKey = null;
-                recordingHk = null;
-                document.removeEventListener('keydown', handler);
-                return;
+                el.classList.remove('recording'); recordingKey = null; recordingHk = null;
+                document.removeEventListener('keydown', handler); return;
             }
             hotkeys[conflict] = '';
         }
@@ -743,11 +632,8 @@ function startRecording(el) {
         el.textContent = 'Shift+' + hkDisplay(key);
         el.classList.remove('recording');
         const label = KEY_LABELS[recordingHk];
-        recordingKey = null;
-        recordingHk = null;
-        saveNow();
-        updateAllHKDisplays();
-        renderHotkeyList();
+        recordingKey = null; recordingHk = null;
+        saveNow(); updateAllHKDisplays(); renderHotkeyList();
         document.removeEventListener('keydown', handler);
         toast(`«${label}» → Shift+${hkDisplay(key)}`, 'success');
     };
@@ -779,16 +665,10 @@ function handleToolbarCmd(cmd) {
             else toast('Кликните на объединённую ячейку', 'warning');
             break;
         case 'markup':
-            openPrompt('Наценка в %:', '10', (v) => {
-                const p = parseFloat(String(v).replace(',', '.'));
-                if (!isNaN(p) && p !== 0) applyMarkupToSelection(p);
-            });
+            openPrompt('Наценка в %:', '10', (v) => { const p = parseFloat(String(v).replace(',', '.')); if (!isNaN(p) && p !== 0) applyMarkupToSelection(p); });
             break;
         case 'discount':
-            openPrompt('Скидка в %:', '5', (v) => {
-                const p = parseFloat(String(v).replace(',', '.'));
-                if (!isNaN(p) && p !== 0) applyDiscountToSelection(p);
-            });
+            openPrompt('Скидка в %:', '5', (v) => { const p = parseFloat(String(v).replace(',', '.')); if (!isNaN(p) && p !== 0) applyDiscountToSelection(p); });
             break;
         case 'clearFormat': clearFormat(); break;
         case 'autofit': if (td && cellSel.r1 >= 0) autoFitColumn(td, cellSel.c1); else toast('Выделите ячейку', 'warning'); break;
