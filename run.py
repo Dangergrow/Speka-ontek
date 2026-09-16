@@ -4,7 +4,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from tkinter import Tk, filedialog
 
 APP_NAME = "ONTEK — Таблица заказов"
-APP_VERSION = "7.0.0"
+APP_VERSION = "7.1.0"
 GITHUB_RAW = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main"
 
 def get_app_dir():
