@@ -1,34 +1,28 @@
-// ==================== ONTEK v7.0.0 — TABLE ====================
+// ==================== ONTEK v7.1.0 — TABLE ====================
 // Таблицы, ячейки, строки/колонки, разделители, рендер
 
 // ========== WORKSPACE ==========
 function getTables(wsIdx) {
     return (workspaces[wsIdx] || []).filter(x => x.type === 'table');
 }
-
 function active() {
     const tables = getTables(activeWorkspace);
     if (actId === null && tables.length) actId = tables[0].id;
     return tables.find(t => t.id === actId) || null;
 }
-
 function setAct(id) {
     actId = id;
     document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', +c.dataset.tid === actId));
     updateStatusBar();
 }
-
 function getArea() { return Q('#workspaceArea_' + activeWorkspace); }
-
 function upEmpty() {
     const a = getArea(); if (!a) return;
     const e = a.querySelector('.empty-state');
     const hasItems = (workspaces[activeWorkspace] || []).length > 0;
     if (!hasItems && !e) {
         a.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">Нет таблиц</div><div class="empty-state-desc">Создайте новую — <span class="empty-state-kbd">Shift</span>+<span class="empty-state-kbd">1</span> RUB или <span class="empty-state-kbd">Shift</span>+<span class="empty-state-kbd">2</span> USD</div></div>`;
-    } else if (hasItems && e) {
-        e.remove();
-    }
+    } else if (hasItems && e) e.remove();
 }
 
 // ========== TABLE CRUD ==========
@@ -50,7 +44,6 @@ function addTable(cur = 'RUB') {
     toast(`Таблица ${cur} создана`, 'success');
     saveSession();
 }
-
 function dupTable(src) {
     if (!src) src = active();
     if (!src) { toast('Выберите таблицу', 'warning'); return; }
@@ -94,11 +87,13 @@ function buildCardHeader(td) {
             </div>
         </div>
         <div class="card-hdr-right">
-            <button class="card-btn cur-btn" title="Конвертировать валюту">${td.currency === 'USD' ? '💵 USD' : '💰 RUB'}</button>
+            <button class="card-btn copy-btn" title="Копировать таблицу с форматированием">📋</button>
+            <button class="card-btn cur-btn" title="Конвертировать всю таблицу">${td.currency === 'USD' ? '💵 USD' : '💰 RUB'}</button>
             <button class="card-btn icon-only dup-btn" title="Дублировать">⎘</button>
             <button class="card-btn icon-only danger del-btn" title="Удалить">🗑</button>
         </div>
     `;
+    hdr.querySelector('.copy-btn').onclick = e => { e.stopPropagation(); copyTableWithFormat(td); };
     hdr.querySelector('.cur-btn').onclick = e => { e.stopPropagation(); convertCurrency(td); };
     hdr.querySelector('.dup-btn').onclick = e => { e.stopPropagation(); dupTable(td); };
     hdr.querySelector('.del-btn').onclick = e => {
@@ -119,16 +114,12 @@ function buildCardHeader(td) {
 
 function buildCardDOM(td) {
     const card = document.createElement('div');
-    card.className = 'card';
-    card.dataset.tid = td.id;
+    card.className = 'card'; card.dataset.tid = td.id;
     card.addEventListener('click', e => {
-        if (!e.target.closest('button') && !e.target.closest('.cell') && !e.target.closest('.resize-handle') && !e.target.closest('.row-num')) {
-            setAct(td.id);
-        }
+        if (!e.target.closest('button') && !e.target.closest('.cell') && !e.target.closest('.resize-handle') && !e.target.closest('.row-num')) setAct(td.id);
     });
     card.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         const thEl = e.target.closest('thead th:not(.row-num):not(.actions-col)');
         const trEl = e.target.closest('tbody tr');
         let ri = null, ci2 = null;
@@ -147,14 +138,10 @@ function buildCardDOM(td) {
         showCtx(e.clientX, e.clientY);
     });
     const hdr = buildCardHeader(td);
-    const wrap = document.createElement('div');
-    wrap.className = 'table-wrap';
-    const tbl = document.createElement('table');
-    tbl.className = 'data-table';
+    const wrap = document.createElement('div'); wrap.className = 'table-wrap';
+    const tbl = document.createElement('table'); tbl.className = 'data-table';
     tbl.innerHTML = '<thead></thead><tbody></tbody>';
-    wrap.appendChild(tbl);
-    card.appendChild(hdr);
-    card.appendChild(wrap);
+    wrap.appendChild(tbl); card.appendChild(hdr); card.appendChild(wrap);
     td.el = tbl;
     return card;
 }
@@ -209,18 +196,13 @@ function clearCellSelection() {
 }
 function selectCell(td, ri, ci2, shift) {
     if (shift && cellSel.tid === td.id && cellSel.anchorR >= 0) {
-        cellSel.r1 = cellSel.anchorR;
-        cellSel.c1 = cellSel.anchorC;
-        cellSel.r2 = ri;
-        cellSel.c2 = ci2;
+        cellSel.r1 = cellSel.anchorR; cellSel.c1 = cellSel.anchorC;
+        cellSel.r2 = ri; cellSel.c2 = ci2;
     } else {
         cellSel.tid = td.id;
-        cellSel.anchorR = ri;
-        cellSel.anchorC = ci2;
-        cellSel.r1 = ri;
-        cellSel.c1 = ci2;
-        cellSel.r2 = ri;
-        cellSel.c2 = ci2;
+        cellSel.anchorR = ri; cellSel.anchorC = ci2;
+        cellSel.r1 = ri; cellSel.c1 = ci2;
+        cellSel.r2 = ri; cellSel.c2 = ci2;
     }
     updateCellSelectionUI(td);
     updateStatusBar();
@@ -247,7 +229,6 @@ function render(td) {
     const sort = sortState[td.id];
     const hidden = hiddenCols[td.id] || new Set();
 
-    // THEAD
     let theadHtml = '<tr>';
     if (tableSettings.showRowNums) theadHtml += '<th class="row-num">№</th>';
     td.cols.forEach((col, i) => {
@@ -271,7 +252,6 @@ function render(td) {
         handle.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); startResize(td, +handle.dataset.col, e, handle); });
     });
 
-    // TBODY
     tbody.innerHTML = '';
     const rows = td.rows;
 
@@ -282,7 +262,6 @@ function render(td) {
         if (isSection) tr.classList.add('section-row');
         if (selectedRows[td.id]?.has(ri) && !isSection) tr.classList.add('selected');
 
-        // Section row
         if (isSection) {
             const tdEl = document.createElement('td');
             const hiddenCount = [...hidden].filter(h => h >= 0 && h < td.cols.length).length;
@@ -292,17 +271,14 @@ function render(td) {
             const cell = document.createElement('div');
             cell.className = 'cell section-cell';
             cell.contentEditable = 'true';
-            cell.dataset.r = ri;
-            cell.dataset.c = '0';
+            cell.dataset.r = ri; cell.dataset.c = '0';
             cell.textContent = row[0] ?? '';
             cell.addEventListener('focus', () => { cell.dataset.old = cell.innerText; setAct(td.id); });
             cell.addEventListener('input', () => { let v = cell.innerText; if (v.endsWith('\n')) v = v.slice(0, -1); td.rows[ri][0] = v; });
             cell.addEventListener('blur', () => {
                 let v = cell.innerText; if (v.endsWith('\n')) v = v.slice(0, -1);
                 td.rows[ri][0] = v;
-                if (cell.dataset.old !== undefined && cell.dataset.old !== v) {
-                    hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: 0, old: cell.dataset.old, val: v } });
-                }
+                if (cell.dataset.old !== undefined && cell.dataset.old !== v) hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: 0, old: cell.dataset.old, val: v } });
             });
             cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); document.execCommand('insertLineBreak'); return; }
@@ -322,7 +298,6 @@ function render(td) {
             return;
         }
 
-        // Row number
         if (tableSettings.showRowNums) {
             const numTd = document.createElement('td');
             numTd.className = 'row-num';
@@ -346,7 +321,6 @@ function render(td) {
             tr.appendChild(numTd);
         }
 
-        // Data cells
         row.forEach((v, colIdx) => {
             if (isMergeCovered(td, ri, colIdx)) return;
             if (hidden.has(colIdx)) return;
@@ -358,8 +332,7 @@ function render(td) {
             const mergeAt = findMergeContaining(td, ri, colIdx);
             cell.className = 'cell';
             cell.contentEditable = isTotal ? 'false' : 'true';
-            cell.dataset.r = ri;
-            cell.dataset.c = colIdx;
+            cell.dataset.r = ri; cell.dataset.c = colIdx;
             if (isNum) cell.classList.add('num');
             if (isTotal) cell.classList.add('total');
             if (tableSettings.wrapText) cell.classList.add('wrap');
@@ -380,67 +353,34 @@ function render(td) {
             if (note) cell.classList.add('has-note');
             cell.textContent = v ?? '';
 
-            cell.addEventListener('focus', () => {
-                cell.dataset.old = cell.innerText;
-                setAct(td.id);
-                activeTbCell = { r: ri, c: colIdx };
-                updateTbFromCell(td, ri, colIdx);
-            });
-            cell.addEventListener('input', () => {
-                let val = cell.innerText;
-                if (val.endsWith('\n')) val = val.slice(0, -1);
-                td.rows[ri][colIdx] = val;
-                if (isNum && !isTotal && !isFormula(val)) updCalcRow(td, ri, true);
-            });
+            cell.addEventListener('focus', () => { cell.dataset.old = cell.innerText; setAct(td.id); activeTbCell = { r: ri, c: colIdx }; updateTbFromCell(td, ri, colIdx); });
+            cell.addEventListener('input', () => { let val = cell.innerText; if (val.endsWith('\n')) val = val.slice(0, -1); td.rows[ri][colIdx] = val; if (isNum && !isTotal && !isFormula(val)) updCalcRow(td, ri, true); });
             cell.addEventListener('blur', () => {
-                let val = cell.innerText;
-                if (val.endsWith('\n')) val = val.slice(0, -1);
+                let val = cell.innerText; if (val.endsWith('\n')) val = val.slice(0, -1);
                 if (isFormula(val)) {
-                    // Сохраняем формулу
                     if (!td.formulas) td.formulas = {};
                     td.formulas[formulaKey] = val;
                     const result = evalFormula(td, val);
-                    if (result !== null) {
-                        td.rows[ri][colIdx] = result;
-                        cell.textContent = result;
-                    } else {
-                        cell.textContent = val;
-                    }
+                    if (result !== null) { td.rows[ri][colIdx] = result; cell.textContent = result; }
+                    else cell.textContent = val;
                     cell.classList.add('has-formula');
                 } else {
                     if (td.formulas) delete td.formulas[formulaKey];
                     cell.classList.remove('has-formula');
                     if (isNum && !isTotal) {
                         const n = pn(val);
-                        if (!isNaN(n)) {
-                            val = n.toFixed(2);
-                            td.rows[ri][colIdx] = val;
-                            cell.textContent = val;
-                        }
+                        if (!isNaN(n)) { val = n.toFixed(2); td.rows[ri][colIdx] = val; cell.textContent = val; }
                         updCalcRow(td, ri, false);
-                    } else {
-                        td.rows[ri][colIdx] = val;
-                    }
+                    } else td.rows[ri][colIdx] = val;
                 }
-                if (cell.dataset.old !== undefined && cell.dataset.old !== val) {
-                    hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: colIdx, old: cell.dataset.old, val: val } });
-                }
+                if (cell.dataset.old !== undefined && cell.dataset.old !== val) hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: colIdx, old: cell.dataset.old, val: val } });
             });
-            cell.addEventListener('dblclick', () => {
-                // Показать формулу для редактирования
-                if (td.formulas && td.formulas[formulaKey]) {
-                    cell.textContent = td.formulas[formulaKey];
-                }
-            });
+            cell.addEventListener('dblclick', () => { if (td.formulas && td.formulas[formulaKey]) cell.textContent = td.formulas[formulaKey]; });
             cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); document.execCommand('insertLineBreak'); return; }
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (ri === rows.length - 1) addRowEnd(td); moveFocus(td, ri, colIdx, 0, 1); return; }
                 if (e.key === 'Tab') { e.preventDefault(); moveFocus(td, ri, colIdx, e.shiftKey ? -1 : 1); return; }
-                if (e.key === 'Escape') {
-                    if (paintBuffer) { stopFormatPainter(); toast('Формат отменён', 'info'); }
-                    else cell.blur();
-                    return;
-                }
+                if (e.key === 'Escape') { if (paintBuffer) { stopFormatPainter(); toast('Формат отменён', 'info'); } else cell.blur(); return; }
                 if (e.ctrlKey && !e.shiftKey && !e.altKey) {
                     const k = e.key.toLowerCase();
                     if (k === 'b') { e.preventDefault(); toggleStyle('bold'); return; }
@@ -452,62 +392,27 @@ function render(td) {
                 e.preventDefault();
                 const text = (e.clipboardData || window.clipboardData).getData('text/plain');
                 if (!text) return;
-                if (text.includes('\t') || text.split('\n').length > 1) {
-                    const parsed = parseClipboard(text);
-                    if (parsed.length > 1 || (parsed[0] && parsed[0].length > 1)) { pasteAt(td, ri, colIdx, parsed); return; }
-                }
+                if (text.includes('\t') || text.split('\n').length > 1) { const parsed = parseClipboard(text); if (parsed.length > 1 || (parsed[0] && parsed[0].length > 1)) { pasteAt(td, ri, colIdx, parsed); return; } }
                 document.execCommand('insertText', false, text);
             });
             cell.addEventListener('mousedown', e => {
                 if (e.button !== 0) return;
-                if (paintBuffer) {
-                    e.preventDefault();
-                    applyFormatToCell(td, ri, colIdx);
-                    stopFormatPainter();
-                    toast('Формат применён', 'success');
-                    return;
-                }
+                if (paintBuffer) { e.preventDefault(); applyFormatToCell(td, ri, colIdx); stopFormatPainter(); toast('Формат применён', 'success'); return; }
                 if (e.shiftKey) { e.preventDefault(); selectCell(td, ri, colIdx, true); return; }
-                cellSel.tid = td.id;
-                cellSel.anchorR = ri;
-                cellSel.anchorC = colIdx;
-                cellSel.r1 = ri;
-                cellSel.c1 = colIdx;
-                cellSel.r2 = ri;
-                cellSel.c2 = colIdx;
-                cellSel.dragging = true;
-                updateCellSelectionUI(td);
-                updateStatusBar();
+                cellSel.tid = td.id; cellSel.anchorR = ri; cellSel.anchorC = colIdx;
+                cellSel.r1 = ri; cellSel.c1 = colIdx; cellSel.r2 = ri; cellSel.c2 = colIdx; cellSel.dragging = true;
+                updateCellSelectionUI(td); updateStatusBar();
             });
             cell.addEventListener('mouseenter', () => {
-                if (cellSel.dragging && cellSel.tid === td.id) {
-                    cellSel.r2 = ri;
-                    cellSel.c2 = colIdx;
-                    updateCellSelectionUI(td);
-                    updateStatusBar();
-                }
-                if (paintBuffer) cell.classList.add('paint-hover');
-                else cell.classList.remove('paint-hover');
+                if (cellSel.dragging && cellSel.tid === td.id) { cellSel.r2 = ri; cellSel.c2 = colIdx; updateCellSelectionUI(td); updateStatusBar(); }
+                if (paintBuffer) cell.classList.add('paint-hover'); else cell.classList.remove('paint-hover');
                 const note = td.notes && td.notes[formulaKey];
-                if (note) {
-                    const popup = Q('#notePopup');
-                    const rect = cell.getBoundingClientRect();
-                    popup.textContent = note;
-                    popup.style.left = Math.min(rect.left, window.innerWidth - 340) + 'px';
-                    popup.style.top = (rect.bottom + 6) + 'px';
-                    popup.classList.add('show');
-                }
+                if (note) { const popup = Q('#notePopup'); const rect = cell.getBoundingClientRect(); popup.textContent = note; popup.style.left = Math.min(rect.left, window.innerWidth - 340) + 'px'; popup.style.top = (rect.bottom + 6) + 'px'; popup.classList.add('show'); }
             });
-            cell.addEventListener('mouseleave', () => {
-                const popup = Q('#notePopup');
-                if (popup) popup.classList.remove('show');
-                cell.classList.remove('paint-hover');
-            });
+            cell.addEventListener('mouseleave', () => { const popup = Q('#notePopup'); if (popup) popup.classList.remove('show'); cell.classList.remove('paint-hover'); });
             tdEl.appendChild(cell);
             tr.appendChild(tdEl);
         });
-
-        // Row actions
         const at = document.createElement('td');
         at.className = 'actions-col';
         at.innerHTML = '<div class="row-actions"><button class="row-action-btn add" title="Добавить строку ниже">+</button><button class="row-action-btn del" title="Удалить строку">✕</button></div>';
@@ -517,20 +422,33 @@ function render(td) {
         tbody.appendChild(tr);
     });
 
-    // Total row
+    // Total row — с суммой по каждой колонке
     if (tableSettings.showTotals && rows.length > 0) {
         const totTr = document.createElement('tr');
         totTr.className = 'row-total';
-        const ti = ci(td.cols, 'Стоимость');
         let html = '';
         if (tableSettings.showRowNums) html += '<td class="row-num"></td>';
-        td.cols.forEach((_, i) => {
+
+        // Определяем позицию "Итого" — перед первой "Стоимость"
+        const firstCostIdx = td.cols.findIndex(c => (c || '').toLowerCase().startsWith('стоимость'));
+        const labelIdx = firstCostIdx > 0 ? firstCostIdx - 1 : td.cols.length - 2;
+
+        td.cols.forEach((col, i) => {
             if (hidden.has(i)) return;
-            if (i === (ti >= 0 ? ti - 1 : td.cols.length - 2)) {
+            const cn = (col || '').toLowerCase();
+            const isCostCol = cn.startsWith('стоимость');
+            const isQtyCol = cn.includes('ко-во') || cn.includes('количество');
+            const isPriceCol = cn.startsWith('цена');
+
+            if (isCostCol) {
+                const cur = getColCurrency(td, i) || td.currency;
+                html += `<td style="padding:0"><div class="cell total" style="padding:var(--cell-padding) 12px;font-weight:700">${sumCol(td, i).toFixed(2)} ${cur}</div></td>`;
+            } else if (isQtyCol) {
+                html += `<td style="padding:0"><div class="cell total" style="padding:var(--cell-padding) 12px">${sumCol(td, i).toFixed(2)}</div></td>`;
+            } else if (isPriceCol) {
+                html += `<td style="padding:10px 12px;color:var(--text-tertiary);text-align:right">—</td>`;
+            } else if (i === labelIdx) {
                 html += '<td style="text-align:right;padding:10px 12px;font-weight:700">Итого</td>';
-            } else if (i === ti) {
-                const cur = getColCurrency(td, ti) || td.currency;
-                html += `<td style="padding:0"><div class="cell total" style="padding:var(--cell-padding) 12px">${sumT(td).toFixed(2)} ${cur}</div></td>`;
             } else {
                 html += '<td></td>';
             }
@@ -547,7 +465,6 @@ function render(td) {
 function updCalcRow(td, ri, skipRecalc) {
     if (!skipRecalc) {
         calc(td.rows[ri], td.cols, td);
-        // Пересчитать формулы в строке
         if (td.formulas) {
             for (const [key, formula] of Object.entries(td.formulas)) {
                 const [r, c] = key.split(':').map(Number);
@@ -558,16 +475,30 @@ function updCalcRow(td, ri, skipRecalc) {
             }
         }
     }
-    const ti = ci(td.cols, 'Стоимость');
-    if (ti < 0) return;
-    const cell = td.el.querySelector(`.cell[data-r="${ri}"][data-c="${ti}"]`);
-    if (cell) cell.textContent = td.rows[ri][ti] ?? '';
+    // Обновляем все числовые ячейки в этой строке
+    td.cols.forEach((col, ci2) => {
+        const cn = (col || '').toLowerCase();
+        if (cn.startsWith('стоимость') || cn.startsWith('цена') || cn.includes('ко-во') || cn.includes('количество')) {
+            const cell = td.el.querySelector(`.cell[data-r="${ri}"][data-c="${ci2}"]`);
+            if (cell && document.activeElement !== cell) cell.textContent = td.rows[ri][ci2] ?? '';
+        }
+    });
+    // Обновляем итоговую строку
     const totTr = td.el.querySelector('tbody tr.row-total');
     if (totTr) {
-        const ti2 = ti;
-        const cur = getColCurrency(td, ti2) || td.currency;
-        const totalCell = totTr.querySelector('.cell.total');
-        if (totalCell) totalCell.textContent = `${sumT(td).toFixed(2)} ${cur}`;
+        const cells = totTr.querySelectorAll('.cell.total');
+        let idx = 0;
+        td.cols.forEach((col, i) => {
+            const cn = (col || '').toLowerCase();
+            if (cn.startsWith('стоимость')) {
+                const cur = getColCurrency(td, i) || td.currency;
+                if (cells[idx]) cells[idx].textContent = `${sumCol(td, i).toFixed(2)} ${cur}`;
+                idx++;
+            } else if (cn.includes('ко-во') || cn.includes('количество')) {
+                if (cells[idx]) cells[idx].textContent = sumCol(td, i).toFixed(2);
+                idx++;
+            }
+        });
     }
     updateCardStats(td);
 }
@@ -592,8 +523,7 @@ function moveFocus(td, ri, ci2, dc, dr = 0) {
         range.selectNodeContents(cell);
         range.collapse(false);
         const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        sel.removeAllRanges(); sel.addRange(range);
     }
 }
 
@@ -618,7 +548,6 @@ function toggleStyle(prop) {
     forEachSelectedCell(td, (r, c) => setCellStyle(td, r, c, { [prop]: newVal }));
     render(td);
 }
-
 function setAlign(align) {
     const td = active(); if (!td) return;
     if (cellSel.r1 < 0 && activeTbCell) selectCell(td, activeTbCell.r, activeTbCell.c, false);
@@ -626,15 +555,12 @@ function setAlign(align) {
     forEachSelectedCell(td, (r, c) => setCellStyle(td, r, c, { align }));
     render(td);
 }
-
 function clearFormat() {
     const td = active(); if (!td) return;
     if (cellSel.r1 < 0) { toast('Выделите ячейку', 'warning'); return; }
     forEachSelectedCell(td, (r, c) => { if (td.styles) delete td.styles[r + ':' + c]; });
-    render(td);
-    toast('Формат очищен', 'info');
+    render(td); toast('Формат очищен', 'info');
 }
-
 function setCellColor(prop, value) {
     const td = active(); if (!td) return;
     if (cellSel.r1 < 0 && activeTbCell) selectCell(td, activeTbCell.r, activeTbCell.c, false);
@@ -695,10 +621,8 @@ function applyMarkupToSelection(percent) {
         if (!isNaN(v)) { td.rows[r][c] = (v * (1 + percent / 100)).toFixed(2); changed++; }
     });
     if (changed === 0) { toast('Нет числовых значений в колонке Цена', 'warning'); return; }
-    recalcAll(td);
-    render(td);
-    saveSession();
-    toast(`Наценка ${percent}% → изменено ${changed} ячеек`, 'success');
+    recalcAll(td); render(td); saveSession();
+    toast(`Наценка ${percent}% → ${changed} ячеек`, 'success');
 }
 function applyDiscountToSelection(percent) {
     const td = active(); if (!td) { toast('Выберите таблицу', 'warning'); return; }
@@ -711,17 +635,14 @@ function applyDiscountToSelection(percent) {
         const v = pn(td.rows[r][c]);
         if (!isNaN(v)) { td.rows[r][c] = (v * (1 - percent / 100)).toFixed(2); changed++; }
     });
-    if (changed === 0) { toast('Нет числовых значений в колонке Цена', 'warning'); return; }
-    recalcAll(td);
-    render(td);
-    saveSession();
-    toast(`Скидка ${percent}% → изменено ${changed} ячеек`, 'success');
+    if (changed === 0) { toast('Нет числовых значений', 'warning'); return; }
+    recalcAll(td); render(td); saveSession();
+    toast(`Скидка ${percent}% → ${changed} ячеек`, 'success');
 }
 
 // ========== ROW / COL OPERATIONS ==========
 function insRowBelow(td, idx) { insRow(td, idx + 1); }
 function insRowAbove(td, idx) { insRow(td, idx); }
-
 function insRow(td, idx) {
     td.rows.splice(idx, 0, Array(td.cols.length).fill(''));
     calc(td.rows[idx], td.cols, td);
@@ -730,11 +651,8 @@ function insRow(td, idx) {
     if (td.rowTypes) { const nt = {}; for (const [k, v] of Object.entries(td.rowTypes)) { const n = +k; nt[n >= idx ? n + 1 : n] = v; } td.rowTypes = nt; }
     if (td.notes) { const nn = {}; for (const [k, v] of Object.entries(td.notes)) { const [r, c] = k.split(':').map(Number); nn[(r >= idx ? r + 1 : r) + ':' + c] = v; } td.notes = nn; }
     if (td.formulas) { const nf = {}; for (const [k, v] of Object.entries(td.formulas)) { const [r, c] = k.split(':').map(Number); nf[(r >= idx ? r + 1 : r) + ':' + c] = v; } td.formulas = nf; }
-    recalcAll(td);
-    render(td);
-    saveSession();
+    recalcAll(td); render(td); saveSession();
 }
-
 function delRow(td, idx) {
     if (td.rows.length <= 1) { toast('Нельзя удалить последнюю строку', 'warning'); return; }
     hist.push({ a: 'delRow', tid: td.id, d: { i: idx, r: [...td.rows[idx]] } });
@@ -744,27 +662,16 @@ function delRow(td, idx) {
     if (td.rowTypes) { const nt = {}; for (const [k, v] of Object.entries(td.rowTypes)) { const n = +k; if (n === idx) continue; nt[n > idx ? n - 1 : n] = v; } td.rowTypes = nt; }
     if (td.notes) { const nn = {}; for (const [k, v] of Object.entries(td.notes)) { const [r, c] = k.split(':').map(Number); if (r === idx) continue; nn[(r > idx ? r - 1 : r) + ':' + c] = v; } td.notes = nn; }
     if (td.formulas) { const nf = {}; for (const [k, v] of Object.entries(td.formulas)) { const [r, c] = k.split(':').map(Number); if (r === idx) continue; nf[(r > idx ? r - 1 : r) + ':' + c] = v; } td.formulas = nf; }
-    recalcAll(td);
-    render(td);
-    saveSession();
+    recalcAll(td); render(td); saveSession();
 }
-
 function addRowEnd(td) {
     td.rows.push(Array(td.cols.length).fill(''));
     calc(td.rows[td.rows.length - 1], td.cols, td);
     render(td);
-    setTimeout(() => {
-        const cell = td.el.querySelector(`.cell[data-r="${td.rows.length - 1}"][data-c="0"]`);
-        if (cell) cell.focus();
-    }, 50);
+    setTimeout(() => { const cell = td.el.querySelector(`.cell[data-r="${td.rows.length - 1}"][data-c="0"]`); if (cell) cell.focus(); }, 50);
     saveSession();
 }
-
-function delRowEnd(td) {
-    if (td.rows.length <= 1) { toast('Нельзя удалить последнюю строку', 'warning'); return; }
-    delRow(td, td.rows.length - 1);
-}
-
+function delRowEnd(td) { if (td.rows.length <= 1) { toast('Нельзя удалить последнюю', 'warning'); return; } delRow(td, td.rows.length - 1); }
 function insCol(td, idx) {
     openPrompt('Название новой колонки:', '', (name) => {
         if (!name.trim()) return;
@@ -773,24 +680,20 @@ function insCol(td, idx) {
         if (td.merges) td.merges = td.merges.map(m => ({ ...m, c1: m.c1 >= idx ? m.c1 + 1 : m.c1, c2: m.c2 >= idx ? m.c2 + 1 : m.c2 }));
         if (td.styles) { const ns = {}; for (const [k, v] of Object.entries(td.styles)) { const [r, c] = k.split(':').map(Number); ns[r + ':' + (c >= idx ? c + 1 : c)] = v; } td.styles = ns; }
         if (td.formulas) { const nf = {}; for (const [k, v] of Object.entries(td.formulas)) { const [r, c] = k.split(':').map(Number); nf[r + ':' + (c >= idx ? c + 1 : c)] = v; } td.formulas = nf; }
-        render(td);
-        saveSession();
+        if (td.colCurrencies) { const nc = {}; for (const [k, v] of Object.entries(td.colCurrencies)) { const n = +k; nc[n >= idx ? n + 1 : n] = v; } td.colCurrencies = nc; }
+        render(td); saveSession();
     });
 }
-
 function delCol(td, idx) {
     if (td.cols.length <= 2) { toast('Минимум 2 колонки', 'warning'); return; }
     hist.push({ a: 'delCol', tid: td.id, d: { i: idx, n: td.cols[idx], c: td.rows.map(r => r[idx]) } });
-    td.cols.splice(idx, 1);
-    td.rows.forEach(r => r.splice(idx, 1));
+    td.cols.splice(idx, 1); td.rows.forEach(r => r.splice(idx, 1));
     if (td.merges) td.merges = td.merges.filter(m => !(m.c1 === idx && m.c2 === idx)).map(m => ({ ...m, c1: m.c1 > idx ? m.c1 - 1 : m.c1, c2: m.c2 > idx ? m.c2 - 1 : m.c2 })).filter(m => m.c1 <= m.c2);
     if (td.styles) { const ns = {}; for (const [k, v] of Object.entries(td.styles)) { const [r, c] = k.split(':').map(Number); if (c === idx) continue; ns[r + ':' + (c > idx ? c - 1 : c)] = v; } td.styles = ns; }
     if (td.formulas) { const nf = {}; for (const [k, v] of Object.entries(td.formulas)) { const [r, c] = k.split(':').map(Number); if (c === idx) continue; nf[r + ':' + (c > idx ? c - 1 : c)] = v; } td.formulas = nf; }
     if (td.colCurrencies) { const nc = {}; for (const [k, v] of Object.entries(td.colCurrencies)) { const n = +k; if (n === idx) continue; nc[n > idx ? n - 1 : n] = v; } td.colCurrencies = nc; }
-    render(td);
-    saveSession();
+    recalcAll(td); render(td); saveSession();
 }
-
 function renameCol(td, idx) {
     openPrompt('Новое название:', td.cols[idx], (name) => {
         if (!name.trim() || name.trim() === td.cols[idx]) return;
@@ -798,48 +701,29 @@ function renameCol(td, idx) {
         const w = colWidths[oldName];
         td.cols[idx] = name.trim();
         if (w) { delete colWidths[oldName]; colWidths[name.trim()] = w; }
-        render(td);
-        saveSession();
+        render(td); saveSession();
     });
 }
-
 function dupCol(td, idx) {
     const name = td.cols[idx] + ' (копия)';
     td.cols.splice(idx + 1, 0, name);
     td.rows.forEach(r => r.splice(idx + 1, 0, r[idx]));
     if (td.merges) td.merges = td.merges.map(m => ({ ...m, c1: m.c1 > idx ? m.c1 + 1 : m.c1, c2: m.c2 > idx ? m.c2 + 1 : m.c2 }));
     if (td.colCurrencies) { const nc = {}; for (const [k, v] of Object.entries(td.colCurrencies)) { const n = +k; nc[n > idx ? n + 1 : n] = v; } td.colCurrencies = nc; }
-    render(td);
-    toast('Колонка дублирована', 'info');
-    saveSession();
+    render(td); toast('Колонка дублирована', 'info'); saveSession();
 }
-
 function addColEnd(td) {
     openPrompt('Название новой колонки:', '', (name) => {
         if (!name.trim()) return;
-        td.cols.push(name.trim());
-        td.rows.forEach(r => r.push(''));
-        render(td);
-        saveSession();
+        td.cols.push(name.trim()); td.rows.forEach(r => r.push(''));
+        render(td); saveSession();
     });
 }
-
-function delColEnd(td) {
-    if (td.cols.length <= 2) { toast('Минимум 2 колонки', 'warning'); return; }
-    delCol(td, td.cols.length - 1);
-}
-
+function delColEnd(td) { if (td.cols.length <= 2) { toast('Минимум 2 колонки', 'warning'); return; } delCol(td, td.cols.length - 1); }
 function dupRow(td, idx) {
     const copy = [...td.rows[idx]];
     td.rows.splice(idx + 1, 0, copy);
-    if (td.styles) {
-        const ns = {};
-        for (const [k, v] of Object.entries(td.styles)) {
-            const [r, c] = k.split(':').map(Number);
-            if (r === idx) ns[(idx + 1) + ':' + c] = { ...v };
-        }
-        Object.assign(td.styles, ns);
-    }
+    if (td.styles) { const ns = {}; for (const [k, v] of Object.entries(td.styles)) { const [r, c] = k.split(':').map(Number); if (r === idx) ns[(idx + 1) + ':' + c] = { ...v }; } Object.assign(td.styles, ns); }
     if (td.rowTypes && td.rowTypes[idx]) td.rowTypes[idx + 1] = td.rowTypes[idx];
     if (td.merges) td.merges = td.merges.map(m => ({ ...m, r1: m.r1 > idx ? m.r1 + 1 : m.r1, r2: m.r2 > idx ? m.r2 + 1 : m.r2 }));
     if (td.formulas) {
@@ -852,11 +736,8 @@ function dupRow(td, idx) {
         }
         td.formulas = nf;
     }
-    render(td);
-    toast('Строка дублирована', 'info');
-    saveSession();
+    render(td); toast('Строка дублирована', 'info'); saveSession();
 }
-
 function addSectionRow(td, atIdx) {
     if (!td) { toast('Выберите таблицу', 'warning'); return; }
     const idx = (atIdx !== undefined && atIdx !== null) ? atIdx : td.rows.length;
@@ -865,10 +746,7 @@ function addSectionRow(td, atIdx) {
     td.rows.splice(idx, 0, newRow);
     if (!td.rowTypes) td.rowTypes = {};
     const newTypes = {};
-    for (const [k, v] of Object.entries(td.rowTypes)) {
-        const n = +k;
-        newTypes[n >= idx ? n + 1 : n] = v;
-    }
+    for (const [k, v] of Object.entries(td.rowTypes)) { const n = +k; newTypes[n >= idx ? n + 1 : n] = v; }
     newTypes[idx] = 'section';
     td.rowTypes = newTypes;
     if (td.merges) td.merges = td.merges.map(m => ({ ...m, r1: m.r1 >= idx ? m.r1 + 1 : m.r1, r2: m.r2 >= idx ? m.r2 + 1 : m.r2 }));
@@ -878,14 +756,7 @@ function addSectionRow(td, atIdx) {
     toast('Строка-заголовок добавлена', 'success');
     setTimeout(() => {
         const cell = td.el.querySelector(`.cell[data-r="${idx}"][data-c="0"]`);
-        if (cell) {
-            cell.focus();
-            const range = document.createRange();
-            range.selectNodeContents(cell);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
+        if (cell) { cell.focus(); const range = document.createRange(); range.selectNodeContents(cell); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
     }, 50);
     saveSession();
 }
@@ -894,10 +765,7 @@ function addSectionRow(td, atIdx) {
 function sortByColumn(td, col, forceDir) {
     const st = sortState[td.id] || { col: -1, dir: 'asc' };
     let dir = forceDir || 'asc';
-    if (!forceDir) {
-        if (st.col === col && st.dir === 'asc') dir = 'desc';
-        else if (st.col === col && st.dir === 'desc') dir = 'asc';
-    }
+    if (!forceDir) { if (st.col === col && st.dir === 'asc') dir = 'desc'; else if (st.col === col && st.dir === 'desc') dir = 'asc'; }
     sortState[td.id] = { col, dir };
     const sectionIdx = new Set(Object.entries(td.rowTypes || {}).filter(([k, v]) => v === 'section').map(([k]) => +k));
     const dataRows = [];
@@ -906,70 +774,40 @@ function sortByColumn(td, col, forceDir) {
         let av = a.r[col] ?? '', bv = b.r[col] ?? '';
         const an = pn(av), bn = pn(bv);
         if (!isNaN(an) && !isNaN(bn)) return dir === 'asc' ? an - bn : bn - an;
-        av = String(av).toLowerCase();
-        bv = String(bv).toLowerCase();
+        av = String(av).toLowerCase(); bv = String(bv).toLowerCase();
         if (av < bv) return dir === 'asc' ? -1 : 1;
         if (av > bv) return dir === 'asc' ? 1 : -1;
         return 0;
     });
     td.rows = dataRows.map(x => x.r);
     if (td.merges && td.merges.length) { td.merges = []; toast('Объединения сброшены', 'info'); }
-    render(td);
-    saveSession();
+    render(td); saveSession();
 }
-
 function autoFitColumn(td, col) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
     ctx.font = tableSettings.fontSize + 'px ' + tableSettings.fontFamily;
     let maxW = 100;
     maxW = Math.max(maxW, ctx.measureText(formatHeader(td.cols[col], td.currency)).width + 60);
-    td.rows.forEach(r => {
-        const w = ctx.measureText(String(r[col] ?? '')).width + 40;
-        if (w > maxW) maxW = w;
-    });
+    td.rows.forEach(r => { const w = ctx.measureText(String(r[col] ?? '')).width + 40; if (w > maxW) maxW = w; });
     maxW = Math.min(maxW, 600);
     colWidths[td.cols[col]] = maxW;
-    saveNow();
-    render(td);
-    toast('Ширина подогнана', 'success');
+    saveNow(); render(td); toast('Ширина подогнана', 'success');
 }
-
 function startResize(td, col, e, handle) {
-    document.body.classList.add('resizing');
-    handle.classList.add('active');
-    const th = handle.closest('th');
-    const startX = e.clientX;
-    const startW = th.offsetWidth;
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;cursor:col-resize';
-    document.body.appendChild(overlay);
+    document.body.classList.add('resizing'); handle.classList.add('active');
+    const th = handle.closest('th'), startX = e.clientX, startW = th.offsetWidth;
+    const overlay = document.createElement('div'); overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;cursor:col-resize'; document.body.appendChild(overlay);
     const onMove = ev => {
         const w = Math.max(60, startW + (ev.clientX - startX));
         colWidths[td.cols[col]] = w;
-        th.style.width = w + 'px';
-        th.style.minWidth = w + 'px';
-        th.style.maxWidth = w + 'px';
+        th.style.width = w + 'px'; th.style.minWidth = w + 'px'; th.style.maxWidth = w + 'px';
         td.el.querySelectorAll('tbody tr').forEach(row => {
             const cell = row.querySelector(`.cell[data-c="${col}"]`);
-            if (cell) {
-                const p = cell.parentElement;
-                p.style.width = w + 'px';
-                p.style.minWidth = w + 'px';
-                p.style.maxWidth = w + 'px';
-            }
+            if (cell) { const p = cell.parentElement; p.style.width = w + 'px'; p.style.minWidth = w + 'px'; p.style.maxWidth = w + 'px'; }
         });
     };
-    const onUp = () => {
-        document.body.classList.remove('resizing');
-        handle.classList.remove('active');
-        overlay.remove();
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-        saveNow();
-    };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    const onUp = () => { document.body.classList.remove('resizing'); handle.classList.remove('active'); overlay.remove(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); saveNow(); };
+    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
 }
 
 // ========== UNDO ==========
@@ -979,22 +817,9 @@ function undo() {
     const td = getTables(activeWorkspace).find(t => t.id === l.tid);
     if (!td) { toast('Таблица не найдена', 'error'); return; }
     switch (l.a) {
-        case 'editCell':
-            td.rows[l.d.ri][l.d.ci] = l.d.old;
-            render(td);
-            toast('Ввод отменён', 'info');
-            break;
-        case 'delRow':
-        case 'delRowEnd':
-            td.rows.splice(l.d.i, 0, l.d.r);
-            render(td);
-            toast('Строка возвращена', 'info');
-            break;
-        case 'paste':
-            td.rows.splice(l.d.si, l.d.count);
-            render(td);
-            toast('Вставка отменена', 'info');
-            break;
+        case 'editCell': td.rows[l.d.ri][l.d.ci] = l.d.old; render(td); toast('Отменено', 'info'); break;
+        case 'delRow': case 'delRowEnd': td.rows.splice(l.d.i, 0, l.d.r); render(td); toast('Строка возвращена', 'info'); break;
+        case 'paste': td.rows.splice(l.d.si, l.d.count); render(td); toast('Удалено', 'info'); break;
     }
 }
 
@@ -1007,22 +832,14 @@ function parseClipboard(text) {
         return [line];
     }).filter(r => r.some(c => String(c).trim()));
 }
-
 function paste() {
     const td = active(); if (!td) { toast('Выберите таблицу', 'warning'); return; }
     navigator.clipboard.readText().then(text => {
         const p = parseClipboard(text);
         if (!p.length) { toast('Нет данных', 'warning'); return; }
         insertRowsIntoTable(td, p);
-    }).catch(() => {
-        openPrompt('Вставьте данные:', '', (val) => {
-            if (!val) return;
-            const p = parseClipboard(val);
-            if (p.length) insertRowsIntoTable(td, p);
-        });
-    });
+    }).catch(() => { openPrompt('Вставьте данные:', '', (val) => { if (!val) return; const p = parseClipboard(val); if (p.length) insertRowsIntoTable(td, p); }); });
 }
-
 function insertRowsIntoTable(td, parsedRows) {
     if (!td || !parsedRows.length) return;
     let startIdx = (td.rows.length === 1 && isEmptyRow(td.rows[0])) ? 0 : td.rows.length;
@@ -1031,23 +848,16 @@ function insertRowsIntoTable(td, parsedRows) {
         for (let i = 0; i < td.cols.length; i++) {
             let v = r[i] ?? '';
             const cn = td.cols[i].toLowerCase();
-            if (isNumericCol(cn)) {
-                const n = pn(v);
-                if (!isNaN(n) && v !== '') v = n.toFixed(2);
-            }
+            if (isNumericCol(cn)) { const n = pn(v); if (!isNaN(n) && v !== '') v = n.toFixed(2); }
             nr[i] = v;
         }
-        if (startIdx === 0 && pi === 0) td.rows[0] = nr;
-        else td.rows.push(nr);
+        if (startIdx === 0 && pi === 0) td.rows[0] = nr; else td.rows.push(nr);
         calc(nr, td.cols, td);
     });
     hist.push({ a: 'paste', tid: td.id, d: { si: startIdx, count: parsedRows.length } });
-    recalcAll(td);
-    render(td);
-    toast(`Вставлено ${parsedRows.length} строк`, 'success');
-    saveSession();
+    recalcAll(td); render(td);
+    toast(`Вставлено ${parsedRows.length} строк`, 'success'); saveSession();
 }
-
 function pasteAt(td, ri, ci2, parsed) {
     for (let r = 0; r < parsed.length; r++) {
         const targetR = ri + r;
@@ -1057,18 +867,13 @@ function pasteAt(td, ri, ci2, parsed) {
             if (targetC >= td.cols.length) break;
             let v = parsed[r][c] ?? '';
             const cn = td.cols[targetC].toLowerCase();
-            if (isNumericCol(cn)) {
-                const n = pn(v);
-                if (!isNaN(n) && v !== '') v = n.toFixed(2);
-            }
+            if (isNumericCol(cn)) { const n = pn(v); if (!isNaN(n) && v !== '') v = n.toFixed(2); }
             td.rows[targetR][targetC] = v;
         }
         calc(td.rows[targetR], td.cols, td);
     }
-    recalcAll(td);
-    render(td);
-    toast(`Вставлено ${parsed.length}×${parsed[0].length}`, 'success');
-    saveSession();
+    recalcAll(td); render(td);
+    toast(`Вставлено ${parsed.length}×${parsed[0].length}`, 'success'); saveSession();
 }
 
 // ========== DIVIDERS ==========
@@ -1079,24 +884,16 @@ function renderWorkspace(wsNum) {
     const items = workspaces[wsNum] || [];
     if (!items.length) { upEmpty(); updateStatusBar(); return; }
     items.forEach(item => {
-        if (item.type === 'divider') {
-            area.appendChild(buildDividerDOM(item));
-        } else {
-            const card = buildCardDOM(item);
-            area.appendChild(card);
-            item.card = card;
-            render(item);
-        }
+        if (item.type === 'divider') area.appendChild(buildDividerDOM(item));
+        else { const card = buildCardDOM(item); area.appendChild(card); item.card = card; render(item); }
     });
     upEmpty();
     updateStatusBar();
     updateCellSelectionUI(active());
 }
-
 function buildDividerDOM(item) {
     const el = document.createElement('div');
-    el.className = 'divider';
-    el.dataset.divid = item.id;
+    el.className = 'divider'; el.dataset.divid = item.id;
     el.innerHTML = `
         <div class="divider-icon">§</div>
         <div class="divider-title" contenteditable="true" data-divid="${item.id}">${escapeHtml(item.title || 'Новый раздел')}</div>
@@ -1105,24 +902,16 @@ function buildDividerDOM(item) {
             <button class="divider-btn" data-divid="${item.id}" data-act="down" title="Вниз">↓</button>
             <button class="divider-btn" data-divid="${item.id}" data-act="dup" title="Дублировать">⎘</button>
             <button class="divider-btn danger" data-divid="${item.id}" data-act="del" title="Удалить">✕</button>
-        </div>
-    `;
+        </div>`;
     const titleEl = el.querySelector('.divider-title');
-    titleEl.addEventListener('blur', () => {
-        item.title = titleEl.innerText.trim() || 'Новый раздел';
-        titleEl.innerText = item.title;
-        saveSession();
-    });
-    titleEl.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); titleEl.blur(); }
-    });
+    titleEl.addEventListener('blur', () => { item.title = titleEl.innerText.trim() || 'Новый раздел'; titleEl.innerText = item.title; saveSession(); });
+    titleEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); titleEl.blur(); } });
     el.querySelectorAll('.divider-btn').forEach(btn => {
         btn.onclick = e => {
             e.stopPropagation();
             const act = btn.dataset.act;
             const ws = workspaces[activeWorkspace];
-            const idx = ws.indexOf(item);
-            if (idx < 0) return;
+            const idx = ws.indexOf(item); if (idx < 0) return;
             if (act === 'del') { ws.splice(idx, 1); renderWorkspace(activeWorkspace); toast('Разделитель удалён', 'info'); }
             if (act === 'up' && idx > 0) { ws.splice(idx, 1); ws.splice(idx - 1, 0, item); renderWorkspace(activeWorkspace); }
             if (act === 'down' && idx < ws.length - 1) { ws.splice(idx, 1); ws.splice(idx + 1, 0, item); renderWorkspace(activeWorkspace); }
@@ -1132,7 +921,6 @@ function buildDividerDOM(item) {
     });
     return el;
 }
-
 function addDivider(options) {
     options = options || {};
     const ws = workspaces[activeWorkspace];
@@ -1141,29 +929,15 @@ function addDivider(options) {
     idC++;
     const div = { type: 'divider', id: idC, title: options.title || 'Новый раздел' };
     let insertAt = ws.length;
-    if (position === 'before' && refTd) {
-        const idx = ws.indexOf(refTd);
-        if (idx >= 0) insertAt = idx;
-    } else if (position === 'after' && refTd) {
-        const idx = ws.indexOf(refTd);
-        if (idx >= 0) insertAt = idx + 1;
-    } else if (position === 'auto' && refTd) {
-        const idx = ws.indexOf(refTd);
-        if (idx >= 0) insertAt = idx + 1;
-    }
+    if (position === 'before' && refTd) { const idx = ws.indexOf(refTd); if (idx >= 0) insertAt = idx; }
+    else if (position === 'after' && refTd) { const idx = ws.indexOf(refTd); if (idx >= 0) insertAt = idx + 1; }
+    else if (position === 'auto' && refTd) { const idx = ws.indexOf(refTd); if (idx >= 0) insertAt = idx + 1; }
     ws.splice(insertAt, 0, div);
     renderWorkspace(activeWorkspace);
     toast('Разделитель добавлен', 'success');
     setTimeout(() => {
         const el = Q(`.divider[data-divid="${div.id}"] .divider-title`);
-        if (el) {
-            el.focus();
-            const range = document.createRange();
-            range.selectNodeContents(el);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
+        if (el) { el.focus(); const range = document.createRange(); range.selectNodeContents(el); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
     }, 60);
     saveSession();
 }
