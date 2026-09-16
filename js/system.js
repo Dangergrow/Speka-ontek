@@ -1,25 +1,16 @@
-// ==================== ONTEK v7.0.0 — SYSTEM ====================
+// ==================== ONTEK v7.1.0 — SYSTEM ====================
 // Сохранение, загрузка, сессии, хоткеи, экспорт
 
-// ========== SETTINGS PERSISTENCE ==========
 function saveNow() {
     const s = { theme, color: colorTheme, hotkeys, activeWorkspace, tableSettings, notifySettings, colWidths, exportTheme };
     const json = JSON.stringify(s);
     localStorage.setItem('ontek_settings', json);
-    if (window.pywebview && window.pywebview.api) {
-        window.pywebview.api.save_settings(json).catch(() => {});
-    }
+    if (window.pywebview && window.pywebview.api) window.pywebview.api.save_settings(json).catch(() => {});
 }
-
 async function loadSettings() {
-    for (let i = 0; i < 30; i++) {
-        if (window.pywebview && window.pywebview.api) break;
-        await new Promise(r => setTimeout(r, 100));
-    }
+    for (let i = 0; i < 30; i++) { if (window.pywebview && window.pywebview.api) break; await new Promise(r => setTimeout(r, 100)); }
     let raw = null;
-    if (window.pywebview && window.pywebview.api) {
-        try { raw = await window.pywebview.api.load_settings(); } catch (e) {}
-    }
+    if (window.pywebview && window.pywebview.api) { try { raw = await window.pywebview.api.load_settings(); } catch (e) {} }
     if (!raw || raw === '{}') raw = localStorage.getItem('ontek_settings');
     if (raw && raw !== '{}') {
         try {
@@ -35,7 +26,6 @@ async function loadSettings() {
         } catch (e) {}
     }
 }
-
 function saveSession() {
     try {
         const state = { activeWorkspace, workspaces: {} };
@@ -43,24 +33,15 @@ function saveSession() {
             state.workspaces[k] = (workspaces[k] || []).map(item => {
                 if (item.type === 'divider') return { type: 'divider', id: item.id, title: item.title };
                 return {
-                    type: 'table',
-                    id: item.id,
-                    cols: item.cols,
-                    rows: item.rows,
-                    currency: item.currency,
-                    merges: item.merges || [],
-                    styles: item.styles || {},
-                    rowTypes: item.rowTypes || {},
-                    notes: item.notes || {},
-                    formulas: item.formulas || {},
-                    colCurrencies: item.colCurrencies || {}
+                    type: 'table', id: item.id, cols: item.cols, rows: item.rows, currency: item.currency,
+                    merges: item.merges || [], styles: item.styles || {}, rowTypes: item.rowTypes || {},
+                    notes: item.notes || {}, formulas: item.formulas || {}, colCurrencies: item.colCurrencies || {}
                 };
             });
         }
         localStorage.setItem('ontek_session', JSON.stringify(state));
     } catch (e) {}
 }
-
 function loadSession() {
     try {
         const raw = localStorage.getItem('ontek_session');
@@ -79,14 +60,12 @@ function loadSession() {
     } catch (e) { return false; }
 }
 
-// ========== APPLY SETTINGS ==========
 function updateAllHKDisplays() {
     document.querySelectorAll('.s-hotkey[data-hk]').forEach(el => {
         const k = el.dataset.hk;
         if (hotkeys[k]) el.textContent = 'Shift+' + hkDisplay(hotkeys[k]);
     });
 }
-
 function applyTableSettings() {
     const root = document.documentElement;
     root.style.setProperty('--font-size-table', tableSettings.fontSize + 'px');
@@ -101,7 +80,6 @@ function applyTableSettings() {
     Object.keys(workspaces).forEach(ws => { getTables(+ws).forEach(td => render(td)); });
     saveNow();
 }
-
 function resetTableSettings() {
     tableSettings = {
         rowHeight: 38, fontSize: 13,
@@ -114,20 +92,17 @@ function resetTableSettings() {
     applyAllSettings();
     toast('Настройки сброшены', 'success');
 }
-
 function applyAllSettings() {
     document.body.classList.toggle('dark', theme === 'dark');
     document.body.className = document.body.className.replace(/theme-\w+/g, '');
     document.body.classList.add('theme-' + colorTheme);
-    const ti = Q('#themeIcon');
-    if (ti) ti.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
+    const ti = Q('#themeIcon'); if (ti) ti.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
     document.querySelectorAll('.workspace-tab').forEach(t => t.classList.toggle('active', +t.dataset.ws === activeWorkspace));
     document.querySelectorAll('.workspace-panel').forEach(p => p.classList.toggle('active', +p.dataset.ws === activeWorkspace));
     document.querySelectorAll('.theme-card').forEach(c => c.classList.toggle('active', c.dataset.theme === colorTheme));
     document.querySelectorAll('.export-theme').forEach(c => c.classList.toggle('active', c.dataset.theme === exportTheme));
     updateAllHKDisplays();
     updateToastPosition();
-
     const set = (id, v) => { const el = Q('#' + id); if (el) el.value = v; };
     const setC = (id, v) => { const el = Q('#' + id); if (el) el.checked = v; };
     set('setRowHeight', tableSettings.rowHeight);
@@ -150,27 +125,19 @@ function applyAllSettings() {
     if (Q('#valToastDur')) Q('#valToastDur').textContent = (notifySettings.duration / 1000).toFixed(1) + ' s';
     applyTableSettings();
 }
-
 function switchWorkspace(ws) {
-    activeWorkspace = ws;
-    actId = null;
-    clearCellSelection();
-    applyAllSettings();
-    saveNow();
-    updateStatusBar();
-    renderWorkspace(ws);
+    activeWorkspace = ws; actId = null; clearCellSelection();
+    applyAllSettings(); saveNow(); updateStatusBar(); renderWorkspace(ws);
 }
-
 function toggleTheme() { theme = theme === 'light' ? 'dark' : 'light'; applyAllSettings(); saveNow(); }
 function setColorTheme(t) { colorTheme = t; applyAllSettings(); saveNow(); }
 function setExportTheme(t) {
     exportTheme = t;
     document.querySelectorAll('.export-theme').forEach(c => c.classList.toggle('active', c.dataset.theme === t));
-    saveNow();
-    toast('Тема экспорта: ' + EXPORT_THEMES[t].name, 'success');
+    saveNow(); toast('Тема экспорта: ' + EXPORT_THEMES[t].name, 'success');
 }
 
-// ========== STATUS BAR (мультивалютный) ==========
+// ========== STATUS BAR ==========
 function updateStatusBar() {
     const td = active();
     const center = Q('#statusCenter');
@@ -179,29 +146,19 @@ function updateStatusBar() {
     const rows = td.rows.length;
     const totals = getTotalsByCurrency(td);
     let html = `<span class="status-stat">Строк: <b>${rows}</b></span>`;
-    // Итоги по валютам
-    const currencyParts = Object.entries(totals);
-    if (currencyParts.length) {
-        const totalsHtml = currencyParts.map(([cur, val]) =>
-            `<span class="status-stat currency-total">${val.toFixed(2)} ${cur}</span>`
-        ).join(' ');
+    const curParts = Object.entries(totals);
+    if (curParts.length) {
+        const totalsHtml = curParts.map(([cur, val]) => `<span class="status-stat currency-total">${val.toFixed(2)} ${cur}</span>`).join(' ');
         html += `<span class="status-stat">Итого: </span>${totalsHtml}`;
     }
-
-    // Автосумма выделения
     if (cellSel.tid === td.id && cellSel.r1 >= 0) {
         const r1 = Math.min(cellSel.r1, cellSel.r2), r2 = Math.max(cellSel.r1, cellSel.r2);
         const c1 = Math.min(cellSel.c1, cellSel.c2), c2 = Math.max(cellSel.c1, cellSel.c2);
         let sum = 0, count = 0, nums = 0, minV = Infinity, maxV = -Infinity;
         for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
-            const v = td.rows[r]?.[c];
-            count++;
+            const v = td.rows[r]?.[c]; count++;
             const n = pn(v);
-            if (!isNaN(n)) {
-                sum += n; nums++;
-                if (n < minV) minV = n;
-                if (n > maxV) maxV = n;
-            }
+            if (!isNaN(n)) { sum += n; nums++; if (n < minV) minV = n; if (n > maxV) maxV = n; }
         }
         html += `<span class="status-stat">Выделено: <b>${r2 - r1 + 1}×${c2 - c1 + 1}</b></span>`;
         if (nums > 0) {
@@ -209,9 +166,7 @@ function updateStatusBar() {
             html += `<span class="status-stat">Сред: <b>${(sum / nums).toFixed(2)}</b></span>`;
             html += `<span class="status-stat">Мин: <b>${minV.toFixed(2)}</b></span>`;
             html += `<span class="status-stat">Макс: <b>${maxV.toFixed(2)}</b></span>`;
-        } else {
-            html += `<span class="status-stat">Ячеек: <b>${count}</b></span>`;
-        }
+        } else html += `<span class="status-stat">Ячеек: <b>${count}</b></span>`;
     }
     center.innerHTML = html;
 }
@@ -219,30 +174,13 @@ function updateStatusBar() {
 // ========== COPY ==========
 function copySelectedCells() {
     const td = active(); if (!td) return;
-    if (cellSel.tid === td.id && cellSel.r1 >= 0) {
-        const r1 = Math.min(cellSel.r1, cellSel.r2), r2 = Math.max(cellSel.r1, cellSel.r2);
-        const c1 = Math.min(cellSel.c1, cellSel.c2), c2 = Math.max(cellSel.c1, cellSel.c2);
-        const lines = [];
-        for (let r = r1; r <= r2; r++) {
-            const row = [];
-            for (let c = c1; c <= c2; c++) row.push(td.rows[r][c] ?? '');
-            lines.push(row.join('\t'));
-        }
-        navigator.clipboard.writeText(lines.join('\n'))
-            .then(() => toast(`Скопировано ${r2 - r1 + 1}×${c2 - c1 + 1}`, 'success'))
-            .catch(() => toast('Ошибка', 'error'));
-        return;
-    }
     const sel = selectedRows[td.id];
-    if (!sel || !sel.size) { toast('Выделите ячейки или строки', 'warning'); return; }
-    const indices = [...sel].sort((a, b) => a - b);
-    const lines = indices.map(i => td.rows[i].join('\t'));
-    navigator.clipboard.writeText(lines.join('\n'))
-        .then(() => toast(`Скопировано ${indices.length} строк`, 'success'))
-        .catch(() => toast('Ошибка', 'error'));
+    if (cellSel.tid === td.id && cellSel.r1 >= 0) { copyCellsWithFormat(td); return; }
+    if (sel && sel.size) { copySelectedRowsWithFormat(td); return; }
+    copyTableWithFormat(td);
 }
 
-// ========== SAVE XLSX ==========
+// ========== SAVE XLSX (мультивалютный) ==========
 function save() {
     const tables = getTables(activeWorkspace);
     if (!tables.length) { toast('Нет таблиц', 'warning'); return; }
@@ -258,7 +196,6 @@ function save() {
         const pi = ci(td.cols, 'Цена'); if (pi >= 0) sheet.getColumn(pi + 1).width = 22;
         const ti = ci(td.cols, 'Стоимость'); if (ti >= 0) sheet.getColumn(ti + 1).width = 22;
     });
-
     const items = workspaces[activeWorkspace] || [];
     items.forEach(item => {
         if (item.type === 'divider') {
@@ -268,15 +205,12 @@ function save() {
             cell.font = { bold: true, size: 14, color: { argb: palette.headerText }, name: 'Calibri' };
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: palette.header } };
             cell.alignment = { horizontal: 'center', vertical: 'middle' };
-            sheet.getRow(cr).height = 32;
-            cr += 2;
-            return;
+            sheet.getRow(cr).height = 32; cr += 2; return;
         }
         const td = item;
         if (!td.rows.length) return;
         const tc = td.cols.length;
         const qi = getQi(td.cols), pi = ci(td.cols, 'Цена'), ti = ci(td.cols, 'Стоимость'), ni = ci(td.cols, 'Наименование');
-
         // Header
         const hr = sheet.getRow(cr);
         td.cols.forEach((col, i) => {
@@ -288,10 +222,8 @@ function save() {
             cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
             cell.border = { top: { style: 'thin', color: { argb: palette.borderDark } }, bottom: { style: 'thin', color: { argb: palette.borderDark } }, left: { style: 'thin', color: { argb: palette.borderDark } }, right: { style: 'thin', color: { argb: palette.borderDark } } };
         });
-        hr.height = 28;
-        cr++;
+        hr.height = 28; cr++;
         const fdr = cr;
-
         // Data rows
         for (let r = 0; r < td.rows.length; r++) {
             const isSection = td.rowTypes && td.rowTypes[r] === 'section';
@@ -302,24 +234,33 @@ function save() {
                 cell.font = { bold: true, size: 12, color: { argb: palette.sectionText }, name: 'Calibri' };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: palette.section } };
                 cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-                for (let c = 1; c <= tc; c++) {
-                    const cc = sheet.getCell(cr, c);
-                    cc.border = { top: { style: 'thin', color: { argb: palette.border } }, bottom: { style: 'thin', color: { argb: palette.border } }, left: { style: 'thin', color: { argb: palette.border } }, right: { style: 'thin', color: { argb: palette.border } } };
-                }
-                sheet.getRow(cr).height = 24;
-                cr++;
-                continue;
+                for (let c = 1; c <= tc; c++) { const cc = sheet.getCell(cr, c); cc.border = { top: { style: 'thin', color: { argb: palette.border } }, bottom: { style: 'thin', color: { argb: palette.border } }, left: { style: 'thin', color: { argb: palette.border } }, right: { style: 'thin', color: { argb: palette.border } } }; }
+                sheet.getRow(cr).height = 24; cr++; continue;
             }
             const row = sheet.getRow(cr);
             const bg = r % 2 === 0 ? palette.rowOdd : palette.rowEven;
             for (let c = 0; c < tc; c++) {
                 const cell = row.getCell(c + 1);
-                if (c === ti) cell.value = { formula: `${cA(cr, qi + 1)}*${cA(cr, pi + 1)}`, result: pn(td.rows[r][c]) || 0 };
-                else if (c === qi || c === pi) {
+                const cn = (td.cols[c] || '').toLowerCase();
+                if (cn.startsWith('стоимость')) {
+                    // Формула: Ко-во * Цена (соответствующая)
+                    const priceIdxs = []; td.cols.forEach((cc, j) => { if ((cc || '').toLowerCase().startsWith('цена')) priceIdxs.push(j); });
+                    const costIdxs = []; td.cols.forEach((cc, j) => { if ((cc || '').toLowerCase().startsWith('стоимость')) costIdxs.push(j); });
+                    const k = costIdxs.indexOf(c);
+                    const pIdx = priceIdxs[k] != null ? priceIdxs[k] : pi;
+                    if (qi >= 0 && pIdx >= 0) {
+                        cell.value = { formula: `${cA(cr, qi + 1)}*${cA(cr, pIdx + 1)}`, result: pn(td.rows[r][c]) || 0 };
+                    } else {
+                        cell.value = pn(td.rows[r][c]) || 0;
+                    }
+                    cell.numFmt = '#,##0.00';
+                } else if (cn.startsWith('цена') || cn.includes('ко-во') || cn.includes('количество')) {
                     const v = pn(td.rows[r][c]);
                     cell.value = isNaN(v) ? td.rows[r][c] : v;
-                } else cell.value = td.rows[r][c] ?? '';
-                if (c === ti || c === qi || c === pi) cell.numFmt = '#,##0.00';
+                    cell.numFmt = '#,##0.00';
+                } else {
+                    cell.value = td.rows[r][c] ?? '';
+                }
                 cell.font = { size: 11, color: { argb: 'FF1E293B' }, name: 'Calibri' };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
                 cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
@@ -335,52 +276,45 @@ function save() {
                 if (st.fontFamily) cell.font = { ...cell.font, name: st.fontFamily.split(',')[0].replace(/['"]/g, '').trim() };
                 if (st.align) cell.alignment = { ...cell.alignment, horizontal: st.align };
                 if (c === ni && !st.align) cell.alignment = { ...cell.alignment, horizontal: 'left' };
-                if ((c === qi || c === pi || c === ti) && !st.align) cell.alignment = { ...cell.alignment, horizontal: 'right' };
+                if ((cn.startsWith('цена') || cn.includes('ко-во') || cn.startsWith('стоимость')) && !st.align) cell.alignment = { ...cell.alignment, horizontal: 'right' };
             }
             cr++;
         }
-
-        // Merges
-        if (td.merges) td.merges.forEach(m => {
-            try { sheet.mergeCells(fdr + m.r1, m.c1 + 1, fdr + m.r2, m.c2 + 1); } catch (e) {}
-        });
-
-        // Total
+        if (td.merges) td.merges.forEach(m => { try { sheet.mergeCells(fdr + m.r1, m.c1 + 1, fdr + m.r2, m.c2 + 1); } catch (e) {} });
+        // Total row
         const ldr = cr - 1;
         const tr = sheet.getRow(cr);
+        // Ищем позицию "Итого"
+        const firstCostIdx2 = td.cols.findIndex(c => (c || '').toLowerCase().startsWith('стоимость'));
+        const labelIdx = firstCostIdx2 > 0 ? firstCostIdx2 - 1 : tc - 2;
         for (let c = 0; c < tc; c++) {
             const cell = tr.getCell(c + 1);
-            if (c === (ti >= 0 ? ti - 1 : tc - 2)) cell.value = 'Итого';
-            else if (c === ti) {
-                const cur = getColCurrency(td, ti) || td.currency;
-                cell.value = { formula: `SUM(${cA(fdr, ti + 1)}:${cA(ldr, ti + 1)})`, result: sumT(td) };
+            const cn = (td.cols[c] || '').toLowerCase();
+            if (cn.startsWith('стоимость')) {
+                cell.value = { formula: `SUM(${cA(fdr, c + 1)}:${cA(ldr, c + 1)})`, result: sumCol(td, c) };
+                cell.numFmt = '#,##0.00';
+            } else if (cn.includes('ко-во') || cn.includes('количество')) {
+                cell.value = { formula: `SUM(${cA(fdr, c + 1)}:${cA(ldr, c + 1)})`, result: sumCol(td, c) };
+                cell.numFmt = '#,##0.00';
+            } else if (c === labelIdx) {
+                cell.value = 'Итого';
             }
-            if (c === ti) cell.numFmt = '#,##0.00';
             cell.font = { bold: true, size: 12, name: 'Calibri' };
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: palette.total } };
             cell.alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
             cell.border = { top: { style: 'medium', color: { argb: palette.borderDark } }, bottom: { style: 'medium', color: { argb: palette.borderDark } }, left: { style: 'thin', color: { argb: palette.border } }, right: { style: 'thin', color: { argb: palette.border } } };
         }
-        tr.height = 28;
-        cr += 2;
+        tr.height = 28; cr += 2;
     });
-
     wb.xlsx.writeBuffer().then(buf => {
         const fn = `Заказы_ONTEK_${new Date().toISOString().slice(0, 10)}.xlsx`;
         if (window.pywebview && window.pywebview.api) {
             const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-            window.pywebview.api.save_file(b64, fn).then(r => {
-                const j = JSON.parse(r);
-                if (j.success) toast('Файл сохранён', 'success');
-                else toast('Отменено', 'info');
-            });
+            window.pywebview.api.save_file(b64, fn).then(r => { const j = JSON.parse(r); if (j.success) toast('Файл сохранён', 'success'); else toast('Отменено', 'info'); });
         } else {
             const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = fn;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = fn;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
             toast('Файл сохранён', 'success');
         }
     }).catch(() => toast('Ошибка сохранения', 'error'));
@@ -393,22 +327,12 @@ function exportCSV() {
     const lines = [];
     const items = workspaces[activeWorkspace] || [];
     items.forEach(item => {
-        if (item.type === 'divider') {
-            lines.push('"' + String(item.title).replace(/"/g, '""') + '"');
-            lines.push('');
-            return;
-        }
+        if (item.type === 'divider') { lines.push('"' + String(item.title).replace(/"/g, '""') + '"'); lines.push(''); return; }
         const td = item;
         lines.push(td.cols.map(c => formatHeader(c, td.currency)).join(';'));
         td.rows.forEach((row, ri) => {
-            if (td.rowTypes && td.rowTypes[ri] === 'section') {
-                lines.push('"' + String(row[0] ?? '').replace(/"/g, '""') + '"');
-                return;
-            }
-            lines.push(row.map(v => {
-                const s = String(v ?? '');
-                return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-            }).join(';'));
+            if (td.rowTypes && td.rowTypes[ri] === 'section') { lines.push('"' + String(row[0] ?? '').replace(/"/g, '""') + '"'); return; }
+            lines.push(row.map(v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';'));
         });
         lines.push('');
     });
@@ -417,21 +341,11 @@ function exportCSV() {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     if (window.pywebview && window.pywebview.api) {
         const reader = new FileReader();
-        reader.onload = () => {
-            const b64 = reader.result.split(',')[1];
-            window.pywebview.api.save_file(b64, fn).then(r => {
-                const j = JSON.parse(r);
-                if (j.success) toast('CSV сохранён', 'success');
-                else toast('Отменено', 'info');
-            });
-        };
+        reader.onload = () => { const b64 = reader.result.split(',')[1]; window.pywebview.api.save_file(b64, fn).then(r => { const j = JSON.parse(r); if (j.success) toast('CSV сохранён', 'success'); else toast('Отменено', 'info'); }); };
         reader.readAsDataURL(blob);
     } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = fn;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = fn;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         toast('CSV сохранён', 'success');
     }
 }
@@ -455,27 +369,32 @@ function printView() {
     </style></head><body>`;
     const items = workspaces[activeWorkspace] || [];
     items.forEach(item => {
-        if (item.type === 'divider') {
-            html += `<div class="divider">${escapeHtml(item.title)}</div>`;
-            return;
-        }
+        if (item.type === 'divider') { html += `<div class="divider">${escapeHtml(item.title)}</div>`; return; }
         const td = item;
         html += `<h1>Таблица ${td.currency}</h1><table><thead><tr>`;
-        td.cols.forEach(c => html += `<th>${escapeHtml(formatHeader(c, td.currency))}</th>`);
+        td.cols.forEach((c, i) => {
+            const cur = getColCurrency(td, i);
+            html += `<th>${escapeHtml(formatHeader(c, td.currency))}${cur ? ' (' + cur + ')' : ''}</th>`;
+        });
         html += '</tr></thead><tbody>';
         td.rows.forEach((row, ri) => {
-            if (td.rowTypes && td.rowTypes[ri] === 'section') {
-                html += `<tr><td colspan="${td.cols.length}" class="section">${escapeHtml(row[0])}</td></tr>`;
-                return;
-            }
+            if (td.rowTypes && td.rowTypes[ri] === 'section') { html += `<tr><td colspan="${td.cols.length}" class="section">${escapeHtml(row[0])}</td></tr>`; return; }
             html += '<tr>';
             row.forEach(v => html += `<td>${escapeHtml(v)}</td>`);
             html += '</tr>';
         });
         if (tableSettings.showTotals) {
-            const ti = ci(td.cols, 'Стоимость');
-            const cur = ti >= 0 ? (getColCurrency(td, ti) || td.currency) : td.currency;
-            html += `<tr class="total"><td colspan="${td.cols.length - 1}" style="text-align:right">Итого</td><td style="text-align:right">${sumT(td).toFixed(2)} ${cur}</td></tr>`;
+            const firstCost = td.cols.findIndex(c => (c || '').toLowerCase().startsWith('стоимость'));
+            const labelIdx = firstCost > 0 ? firstCost - 1 : td.cols.length - 2;
+            html += '<tr class="total">';
+            td.cols.forEach((_, c) => {
+                const cn = (td.cols[c] || '').toLowerCase();
+                if (cn.startsWith('стоимость') || cn.includes('ко-во') || cn.includes('количество')) {
+                    html += `<td style="text-align:right">${escapeHtml(formatColTotal(td, c))}</td>`;
+                } else if (c === labelIdx) html += '<td style="text-align:right">Итого</td>';
+                else html += '<td></td>';
+            });
+            html += '</tr>';
         }
         html += '</tbody></table>';
     });
@@ -501,68 +420,46 @@ function loadFile(file) {
                         else if ((ch === ';' || ch === ',') && !inQ) { parts.push(cur); cur = ''; }
                         else cur += ch;
                     }
-                    parts.push(cur);
-                    return parts;
+                    parts.push(cur); return parts;
                 });
                 processCSV(rows);
             } else {
                 const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                 processWB(wb);
             }
-        } catch (er) {
-            toast('Ошибка чтения файла', 'error');
-            if (!getTables(activeWorkspace).length) addTable('USD');
-        }
+        } catch (er) { toast('Ошибка чтения файла', 'error'); if (!getTables(activeWorkspace).length) addTable('USD'); }
     };
     reader.readAsArrayBuffer(file);
 }
-
 async function loadViaDialog() {
     if (window.pywebview && window.pywebview.api) {
         const r = JSON.parse(await window.pywebview.api.load_file());
         if (r.success) {
-            const bs = atob(r.data);
-            const bytes = new Uint8Array(bs.length);
+            const bs = atob(r.data); const bytes = new Uint8Array(bs.length);
             for (let i = 0; i < bs.length; i++) bytes[i] = bs.charCodeAt(i);
             processWB(XLSX.read(bytes, { type: 'array' }));
         }
-    } else {
-        Q('#fileInput').click();
-    }
+    } else Q('#fileInput').click();
 }
-
 function processCSV(rows) {
     if (!rows.length) return;
-    const ws = workspaces[activeWorkspace];
-    ws.length = 0; idC = 0; actId = null;
+    const ws = workspaces[activeWorkspace]; ws.length = 0; idC = 0; actId = null;
     let cols = null, dataRows = [];
     for (const row of rows) {
         const lower = row.map(c => c.toLowerCase());
-        if (!cols && lower.some(c => c.includes('артикул') || c.includes('наименование'))) {
-            cols = row.filter(h => h.trim());
-        } else if (cols) {
-            if (row.every(c => !c.trim())) continue;
-            dataRows.push(row);
-        }
+        if (!cols && lower.some(c => c.includes('артикул') || c.includes('наименование'))) cols = row.filter(h => h.trim());
+        else if (cols) { if (row.every(c => !c.trim())) continue; dataRows.push(row); }
     }
     if (!cols) { cols = [...DEFAULT_COLS]; dataRows = rows; }
     idC++;
-    ws.push({
-        type: 'table', id: idC, cols, rows: dataRows, currency: 'RUB',
-        el: null, card: null, merges: [], styles: {}, rowTypes: {}, notes: {}, formulas: {}, colCurrencies: {}
-    });
-    renderWorkspace(activeWorkspace);
-    setAct(idC);
-    toast('CSV загружен', 'success');
-    saveSession();
+    ws.push({ type: 'table', id: idC, cols, rows: dataRows, currency: 'RUB', el: null, card: null, merges: [], styles: {}, rowTypes: {}, notes: {}, formulas: {}, colCurrencies: {} });
+    renderWorkspace(activeWorkspace); setAct(idC);
+    toast('CSV загружен', 'success'); saveSession();
 }
-
 function processWB(wb) {
     setStatus('Загрузка файла...', 'busy');
-    const ws = workspaces[activeWorkspace];
-    ws.length = 0; idC = 0; actId = null;
+    const ws = workspaces[activeWorkspace]; ws.length = 0; idC = 0; actId = null;
     sortState = {}; selectedRows = {}; clearCellSelection();
-
     wb.SheetNames.forEach(sheetName => {
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '' });
         if (!raw.length) return;
@@ -570,20 +467,10 @@ function processWB(wb) {
         for (let i = 0; i < raw.length; i++) {
             const row = raw[i];
             const empty = !row || row.every(c => String(c ?? '').trim() === '');
-            if (empty) {
-                ec++;
-                if (ec >= 2 && cur && cur.rows.length) { fin(cur); cur = null; }
-                continue;
-            }
+            if (empty) { ec++; if (ec >= 2 && cur && cur.rows.length) { fin(cur); cur = null; } continue; }
             ec = 0;
-            if (row.some(c => String(c || '').trim().toLowerCase().startsWith('итого'))) {
-                if (cur && cur.rows.length) { fin(cur); cur = null; }
-                continue;
-            }
-            const isHeader = row.some(c => {
-                const s = String(c || '').toLowerCase();
-                return s.includes('артикул') || s.includes('наименование');
-            });
+            if (row.some(c => String(c || '').trim().toLowerCase().startsWith('итого'))) { if (cur && cur.rows.length) { fin(cur); cur = null; } continue; }
+            const isHeader = row.some(c => { const s = String(c || '').toLowerCase(); return s.includes('артикул') || s.includes('наименование'); });
             if (isHeader) {
                 if (cur && cur.rows.length) fin(cur);
                 skipCols = 0;
@@ -602,10 +489,7 @@ function processWB(wb) {
             for (let ci2 = 0; ci2 < cur.cols.length; ci2++) {
                 let v = String(dr[ci2] ?? '').trim();
                 const cn = (cur.cols[ci2] || '').toLowerCase();
-                if (isNumericCol(cn)) {
-                    const num = pn(v);
-                    if (!isNaN(num) && v !== '') v = parseFloat(num.toFixed(2));
-                }
+                if (isNumericCol(cn)) { const num = pn(v); if (!isNaN(num) && v !== '') v = parseFloat(num.toFixed(2)); }
                 nr.push(v);
             }
             cur.rows.push(nr);
@@ -615,50 +499,25 @@ function processWB(wb) {
             if (!c.cols.length) c.cols = [...DEFAULT_COLS];
             if (!c.rows.length) c.rows = [Array(c.cols.length).fill('')];
             idC++;
-            ws.push({
-                type: 'table', id: idC, cols: c.cols, rows: c.rows, currency: c.currency,
-                el: null, card: null, merges: [], styles: {}, rowTypes: {}, notes: {}, formulas: {}, colCurrencies: {}
-            });
+            ws.push({ type: 'table', id: idC, cols: c.cols, rows: c.rows, currency: c.currency, el: null, card: null, merges: [], styles: {}, rowTypes: {}, notes: {}, formulas: {}, colCurrencies: {} });
         }
     });
-
     renderWorkspace(activeWorkspace);
-    if (!ws.length) {
-        addTable('USD');
-        setStatus('Файл пуст', 'warning');
-    } else {
-        setAct(getTables(activeWorkspace)[0].id);
-        updateStatusBar();
-        setStatus(`Загружено: ${getTables(activeWorkspace).length} табл.`, 'ok');
-        toast(`Загружено ${getTables(activeWorkspace).length} таблиц`, 'success');
-    }
+    if (!ws.length) { addTable('USD'); setStatus('Файл пуст', 'warning'); }
+    else { setAct(getTables(activeWorkspace)[0].id); updateStatusBar(); setStatus(`Загружено: ${getTables(activeWorkspace).length} табл.`, 'ok'); toast(`Загружено ${getTables(activeWorkspace).length} таблиц`, 'success'); }
     saveSession();
 }
 
 // ========== GLOBAL HOTKEYS ==========
 function handleGlobalHotkeys(e) {
     const inCell = e.target.closest('.cell[contenteditable="true"]');
-
-    // Ctrl+;
-    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === ';') {
-        e.preventDefault();
-        const s = new Date().toLocaleDateString('ru-RU');
-        document.execCommand('insertText', false, s);
-        return;
-    }
-
+    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === ';') { e.preventDefault(); const s = new Date().toLocaleDateString('ru-RU'); document.execCommand('insertText', false, s); return; }
     if (e.key === 'Escape') {
         if (paintBuffer) { stopFormatPainter(); toast('Формат отменён', 'info'); return; }
-        hideCtx();
-        closeSearch();
-        closeFR();
-        clearCellSelection();
-        return;
+        hideCtx(); closeSearch(); closeFR(); clearCellSelection(); return;
     }
-
     if (e.key === 'F3') { e.preventDefault(); if (lastSearch.matches.length) searchNext(); return; }
 
-    // Ctrl shortcuts
     if (e.ctrlKey && !e.shiftKey && !e.altKey) {
         const k = e.key.toLowerCase();
         if (inCell && (k === 'b' || k === 'i' || k === 'u')) return;
@@ -680,26 +539,18 @@ function handleGlobalHotkeys(e) {
             }
         }
     }
-
-    // Ctrl+Shift shortcuts
     if (e.ctrlKey && e.shiftKey && !e.altKey) {
         const k = e.key.toUpperCase();
         if (k === 'S' && !inCell) { e.preventDefault(); addSectionRow(active()); return; }
         if (k === 'D' && !inCell) { e.preventDefault(); addDivider({ position: 'auto' }); return; }
-        if (k === 'M' && !inCell) {
-            e.preventDefault();
-            const td = active();
-            if (td && cellSel.r1 >= 0) mergeRect(td, cellSel.r1, cellSel.c1, cellSel.r2, cellSel.c2);
-            return;
-        }
+        if (k === 'M' && !inCell) { e.preventDefault(); const td = active(); if (td && cellSel.r1 >= 0) mergeRect(td, cellSel.r1, cellSel.c1, cellSel.r2, cellSel.c2); return; }
         if (k === 'E' && !inCell) { e.preventDefault(); exportCSV(); return; }
         if (k === 'P' && !inCell) { e.preventDefault(); printView(); return; }
         if (k === 'F' && !inCell) { e.preventDefault(); startFormatPainter(); return; }
+        if (k === 'C' && !inCell) { e.preventDefault(); const td = active(); if (td) copyTableWithFormat(td); return; }
         if ((k === '!' || k === '1') && !inCell) { e.preventDefault(); addTable('RUB'); return; }
         if ((k === '@' || k === '2') && !inCell) { e.preventDefault(); addTable('USD'); return; }
     }
-
-    // Shift shortcuts
     if (e.shiftKey && !e.ctrlKey && !e.altKey && !inCell && !recordingKey) {
         let key = e.key.toUpperCase();
         if (e.code === 'Digit1') key = '1';
@@ -709,53 +560,24 @@ function handleGlobalHotkeys(e) {
         if (e.code === 'Numpad2') key = '2';
         if (e.code === 'NumpadDecimal') key = 'DELETE';
         if (RU_KEYS[key]) key = RU_KEYS[key];
-
         const actions = {
             addRow: () => { const t = active(); if (t) addRowEnd(t); },
             delRow: () => { const t = active(); if (t) delRowEnd(t); },
             addCol: () => { const t = active(); if (t) addColEnd(t); },
             delCol: () => { const t = active(); if (t) delColEnd(t); },
-            recalc: () => {
-                getTables(activeWorkspace).forEach(td => {
-                    td.rows.forEach(r => calc(r, td.cols, td));
-                    recalcFormulas(td);
-                    render(td);
-                });
-                toast('Пересчитано', 'success');
-            },
+            recalc: () => { getTables(activeWorkspace).forEach(td => { recalcAll(td); render(td); }); toast('Пересчитано', 'success'); },
             paste: () => paste(),
             load: () => loadViaDialog(),
             newRUB: () => addTable('RUB'),
             newUSD: () => addTable('USD'),
             dup: () => dupTable(),
-            clear: () => {
-                if (!getTables(activeWorkspace).length) return;
-                openConfirm('Очистить?', 'Все таблицы и разделители удалятся.', () => {
-                    workspaces[activeWorkspace] = [];
-                    idC = 0;
-                    actId = null;
-                    renderWorkspace(activeWorkspace);
-                    toast('Очищено', 'info');
-                    saveSession();
-                });
-            },
+            clear: () => { if (!getTables(activeWorkspace).length) return; openConfirm('Очистить?', 'Все таблицы и разделители удалятся.', () => { workspaces[activeWorkspace] = []; idC = 0; actId = null; renderWorkspace(activeWorkspace); toast('Очищено', 'info'); saveSession(); }); },
             undo: () => undo(),
             save: () => save(),
             convert: () => { const t = active(); if (t) convertCurrency(t); }
         };
-        for (const [k, v] of Object.entries(hotkeys)) {
-            if (key === v && actions[k]) { e.preventDefault(); actions[k](); return; }
-        }
+        for (const [k, v] of Object.entries(hotkeys)) { if (key === v && actions[k]) { e.preventDefault(); actions[k](); return; } }
     }
 }
-
-function handleGlobalPaste(e) {
-    if (e.target.closest('.cell[contenteditable="true"]')) return;
-    e.preventDefault();
-    paste();
-}
-
-// Mouse up — сброс drag
-document.addEventListener('mouseup', () => {
-    if (cellSel.dragging) cellSel.dragging = false;
-});
+function handleGlobalPaste(e) { if (e.target.closest('.cell[contenteditable="true"]')) return; e.preventDefault(); paste(); }
+document.addEventListener('mouseup', () => { if (cellSel.dragging) cellSel.dragging = false; });
