@@ -12,19 +12,20 @@ let activeWorkspace = 1;
 let usdRate = 0;
 let eurRate = 0;
 let sortState = {};
-let colWidths = {};
-let selectedRows = {};
+let colWidths = {};      // { colName: px }
+let selectedRows = {};   // { tid: Set(rowIdx) }
 let lastSearch = { query: '', matches: [], idx: 0 };
 let lastSelectedRow = null;
+let cellData = {};       // для contenteditable: { tid: { ri: { ci: string } } }
 
-// Глобальные настройки таблицы
 let tableSettings = {
     rowHeight: 38,
     fontSize: 13,
     wrapText: false,
     showRowNums: true,
     showTotals: true,
-    compact: false
+    compact: false,
+    showBorders: true
 };
 
 const workspaces = {};
@@ -33,7 +34,6 @@ for (let i = 1; i <= 5; i++) workspaces[i] = [];
 const Q = s => document.querySelector(s);
 const QA = s => document.querySelectorAll(s);
 
-// ==================== SVG ICONS ====================
 const ICONS = {
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
     minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
@@ -53,7 +53,8 @@ const ICONS = {
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.9" y1="4.9" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.1" y2="19.1"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="6.3" y1="17.7" x2="4.9" y2="19.1"/><line x1="19.1" y1="4.9" x2="17.7" y2="6.3"/></svg>',
     palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2a10 10 0 1 0 0 20c1 0 2-.8 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4a2 2 0 0 1 2-2h2.5A4.5 4.5 0 0 0 22 11c0-5-4.5-9-10-9z"/></svg>',
-    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    merge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>'
 };
 
 const RU_KEYS = { 'Ф':'A','А':'A','В':'D','Д':'D','С':'C','Ц':'C','Ч':'X','Х':'X','К':'R','Р':'R','М':'V','Ж':'V','Щ':'O','О':'O','Г':'U','У':'U','Ы':'S','Я':'Z','Ь':'DELETE','Т':'DELETE','1':'1','2':'2','3':'3','4':'4','5':'5' };
@@ -224,29 +225,44 @@ function isEmptyRow(row) {
 // ==================== TABLE SETTINGS ====================
 function applyTableSettings() {
     const root = document.documentElement;
-    root.style.setProperty('--font-size-table', tableSettings.fontSize + 'px');
-    root.style.setProperty('--row-height', tableSettings.rowHeight + 'px');
+    let rowH = tableSettings.rowHeight;
+    let fontS = tableSettings.fontSize;
+    if (tableSettings.compact) {
+        rowH = Math.max(24, rowH - 10);
+        fontS = Math.max(10, fontS - 1);
+    }
+    root.style.setProperty('--font-size-table', fontS + 'px');
+    root.style.setProperty('--row-height', rowH + 'px');
     root.style.setProperty('--wrap-text', tableSettings.wrapText ? 'pre-wrap' : 'nowrap');
     document.body.classList.toggle('compact-mode', tableSettings.compact);
+    document.body.classList.toggle('no-borders', !tableSettings.showBorders);
 
-    // Рендерим все таблицы заново с новыми настройками
+    // Обновить все карточки
     Object.keys(workspaces).forEach(ws => {
         workspaces[ws].forEach(td => render(td));
     });
 
-    // Сохраняем
     saveNow();
+}
+
+function resetTableSettings() {
+    tableSettings = {
+        rowHeight: 38,
+        fontSize: 13,
+        wrapText: false,
+        showRowNums: true,
+        showTotals: true,
+        compact: false,
+        showBorders: true
+    };
+    colWidths = {};
+    applyAllSettings();
+    toast('Настройки таблицы сброшены', 'success');
 }
 
 // ==================== SETTINGS ====================
 function saveNow() {
-    const s = {
-        theme,
-        color: colorTheme,
-        hotkeys,
-        activeWorkspace,
-        tableSettings
-    };
+    const s = { theme, color: colorTheme, hotkeys, activeWorkspace, tableSettings, colWidths };
     const json = JSON.stringify(s);
     localStorage.setItem('ontek_settings', json);
     if (window.pywebview && window.pywebview.api) {
@@ -269,6 +285,7 @@ async function loadSettings() {
                 if (s.hotkeys) hotkeys = s.hotkeys;
                 if (s.activeWorkspace) activeWorkspace = s.activeWorkspace;
                 if (s.tableSettings) tableSettings = { ...tableSettings, ...s.tableSettings };
+                if (s.colWidths) colWidths = s.colWidths;
                 return;
             }
         } catch (e) {}
@@ -281,6 +298,7 @@ async function loadSettings() {
             if (s.hotkeys) hotkeys = s.hotkeys;
             if (s.activeWorkspace) activeWorkspace = s.activeWorkspace;
             if (s.tableSettings) tableSettings = { ...tableSettings, ...s.tableSettings };
+            if (s.colWidths) colWidths = s.colWidths;
         }
     } catch (e) {}
 }
@@ -303,7 +321,6 @@ function applyAllSettings() {
     document.querySelectorAll('.theme-card').forEach(c => c.classList.toggle('active', c.dataset.theme === colorTheme));
     updateAllHKDisplays();
 
-    // Синхронизация настроек
     const rh = Q('#setRowHeight'), rhv = Q('#valRowHeight');
     if (rh) rh.value = tableSettings.rowHeight;
     if (rhv) rhv.textContent = tableSettings.rowHeight + ' px';
@@ -314,6 +331,7 @@ function applyAllSettings() {
     const sn = Q('#setShowRowNums'); if (sn) sn.checked = tableSettings.showRowNums;
     const st = Q('#setShowTotals'); if (st) st.checked = tableSettings.showTotals;
     const cm = Q('#setCompact'); if (cm) cm.checked = tableSettings.compact;
+    const sb = Q('#setShowBorders'); if (sb) sb.checked = tableSettings.showBorders;
 
     applyTableSettings();
 }
@@ -355,6 +373,14 @@ function convertCurrency(td) {
     }
     td.currency = newCur;
     td.rows.forEach(r => calc(r, td.cols));
+    // Пересобираем header карточки, чтобы badge обновился
+    if (td.card) {
+        const oldHdr = td.card.querySelector('.card-hdr');
+        if (oldHdr) {
+            const newHdr = buildCardHeader(td);
+            oldHdr.replaceWith(newHdr);
+        }
+    }
     render(td);
     saveNow();
     toast(`${oldCur} → ${newCur} (курс ${usdRate.toFixed(2)} ₽)`, 'success');
@@ -434,7 +460,6 @@ function buildSidebarV2() {
         </div>
     `).join('');
 
-    // Иконки в топбаре
     const tc = Q('#btnColorTheme');
     if (tc) tc.innerHTML = ICONS.palette;
     const ts = Q('#btnSettings');
@@ -464,6 +489,47 @@ function buildWorkspaces() {
 }
 
 // ==================== CARDS ====================
+function buildCardHeader(td) {
+    const hdr = document.createElement('div');
+    hdr.className = 'card-hdr';
+    hdr.innerHTML = `
+        <div class="card-hdr-left">
+            <div class="card-title">
+                <span>📋</span>
+                <span>Таблица ${td.currency}</span>
+                <span class="card-badge ${td.currency === 'USD' ? 'usd' : 'rub'}">${td.currency}</span>
+                <span class="card-badge active-badge">●</span>
+            </div>
+            <div class="card-stats">
+                <span class="card-stat">Строк: <b class="stat-rows">${td.rows.length}</b></span>
+                <span class="card-stat">Итого: <b class="stat-total">${sumT(td).toFixed(2)}</b></span>
+            </div>
+        </div>
+        <div class="card-hdr-right">
+            <button class="card-btn cur-btn" title="Конвертировать валюту">${td.currency === 'USD' ? '💵 USD' : '💰 RUB'}</button>
+            <button class="card-btn icon-only dup-btn" title="Дублировать">⎘</button>
+            <button class="card-btn icon-only danger del-btn" title="Удалить">🗑</button>
+        </div>
+    `;
+
+    hdr.querySelector('.cur-btn').onclick = e => { e.stopPropagation(); convertCurrency(td); };
+    hdr.querySelector('.dup-btn').onclick = e => { e.stopPropagation(); dupTable(td); };
+    hdr.querySelector('.del-btn').onclick = e => {
+        e.stopPropagation();
+        const ws = workspaces[activeWorkspace];
+        if (ws.length <= 1) { toast('Нужна хотя бы одна таблица', 'warning'); return; }
+        openConfirm('Удалить таблицу?', 'Таблица будет удалена без возможности восстановления.', () => {
+            td.card.remove();
+            ws.splice(ws.indexOf(td), 1);
+            if (actId === td.id) actId = ws.length ? ws[0].id : null;
+            upEmpty();
+            updateStatusBar();
+            toast('Таблица удалена', 'info');
+        });
+    };
+    return hdr;
+}
+
 function addTable(cur = 'RUB') {
     const ws = workspaces[activeWorkspace];
     upEmpty();
@@ -475,7 +541,7 @@ function addTable(cur = 'RUB') {
         currency: cur,
         el: null,
         card: null,
-        merges: []   // [{ col, rowStart, rowEnd }]
+        merges: []
     };
     ws.push(td);
     const area = getArea();
@@ -519,7 +585,7 @@ function buildCardDOM(td) {
     card.dataset.tid = td.id;
 
     card.addEventListener('click', e => {
-        if (!e.target.closest('button') && !e.target.closest('input') && !e.target.closest('.resize-handle')) {
+        if (!e.target.closest('button') && !e.target.closest('.cell') && !e.target.closest('.resize-handle') && !e.target.closest('.row-num')) {
             setAct(td.id);
         }
     });
@@ -537,11 +603,9 @@ function buildCardDOM(td) {
         }
         if (trEl && !trEl.classList.contains('row-total')) {
             ri = +trEl.dataset.ri;
-            const tdEl = e.target.closest('td:not(.row-num):not(.actions-col)');
-            if (tdEl) {
-                const tds = [...trEl.querySelectorAll('td:not(.row-num):not(.actions-col)')];
-                ci = tds.indexOf(tdEl);
-                if (ci >= td.cols.length) ci = null;
+            const cellEl = e.target.closest('.cell');
+            if (cellEl) {
+                ci = +cellEl.dataset.ci;
             }
         }
         window._ctxD = { tid: td.id, ri, ci };
@@ -549,43 +613,7 @@ function buildCardDOM(td) {
         showCtx(e.clientX, e.clientY);
     });
 
-    const hdr = document.createElement('div');
-    hdr.className = 'card-hdr';
-    hdr.innerHTML = `
-        <div class="card-hdr-left">
-            <div class="card-title">
-                <span>📋</span>
-                <span>Таблица ${td.currency}</span>
-                <span class="card-badge ${td.currency === 'USD' ? 'usd' : 'rub'}">${td.currency}</span>
-                <span class="card-badge active-badge">●</span>
-            </div>
-            <div class="card-stats">
-                <span class="card-stat">Строк: <b class="stat-rows">${td.rows.length}</b></span>
-                <span class="card-stat">Итого: <b class="stat-total">${sumT(td).toFixed(2)}</b></span>
-            </div>
-        </div>
-        <div class="card-hdr-right">
-            <button class="card-btn cur-btn" title="Конвертировать валюту">${td.currency === 'USD' ? '💵 USD' : '💰 RUB'}</button>
-            <button class="card-btn icon-only dup-btn" title="Дублировать">⎘</button>
-            <button class="card-btn icon-only danger del-btn" title="Удалить">🗑</button>
-        </div>
-    `;
-
-    hdr.querySelector('.cur-btn').onclick = e => { e.stopPropagation(); convertCurrency(td); };
-    hdr.querySelector('.dup-btn').onclick = e => { e.stopPropagation(); dupTable(td); };
-    hdr.querySelector('.del-btn').onclick = e => {
-        e.stopPropagation();
-        const ws = workspaces[activeWorkspace];
-        if (ws.length <= 1) { toast('Нужна хотя бы одна таблица', 'warning'); return; }
-        openConfirm('Удалить таблицу?', 'Таблица будет удалена без возможности восстановления.', () => {
-            card.remove();
-            ws.splice(ws.indexOf(td), 1);
-            if (actId === td.id) actId = ws.length ? ws[0].id : null;
-            upEmpty();
-            updateStatusBar();
-            toast('Таблица удалена', 'info');
-        });
-    };
+    const hdr = buildCardHeader(td);
 
     const wrap = document.createElement('div');
     wrap.className = 'table-wrap';
@@ -609,16 +637,10 @@ function updateCardStats(td) {
     updateStatusBar();
 }
 
-// ==================== MERGE LOGIC ====================
+// ==================== MERGE ====================
 function getMergeAt(td, ri, ci) {
     if (!td.merges) return null;
     return td.merges.find(m => m.col === ci && ri >= m.rowStart && ri <= m.rowEnd);
-}
-
-function getMergeStart(td, ri, ci) {
-    const m = getMergeAt(td, ri, ci);
-    if (m && m.rowStart === ri) return m;
-    return null;
 }
 
 function isMergeHidden(td, ri, ci) {
@@ -626,28 +648,43 @@ function isMergeHidden(td, ri, ci) {
     return m && m.rowStart !== ri;
 }
 
-function mergeCellsForRange(td, ci, rowStart, rowEnd) {
-    if (rowEnd <= rowStart) { toast('Нужно выделить минимум 2 строки', 'warning'); return; }
-    // Удаляем существующие merges в этом диапазоне по этой колонке
+function mergeSelectedCells(td, ci, rowIdxs) {
+    if (!rowIdxs || rowIdxs.length < 2) {
+        toast('Выделите несколько строк (клик на номер строки + Shift+клик)', 'warning');
+        return;
+    }
+    // Проверка что идут подряд
+    const sorted = [...rowIdxs].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] !== sorted[i - 1] + 1) {
+            toast('Строки должны идти подряд', 'warning');
+            return;
+        }
+    }
+    const rowStart = sorted[0];
+    const rowEnd = sorted[sorted.length - 1];
+
+    // Удаляем пересекающиеся merges в той же колонке
     td.merges = (td.merges || []).filter(m => {
         if (m.col !== ci) return true;
-        // Если merge пересекается с нашим диапазоном - удаляем
         if (m.rowEnd < rowStart || m.rowStart > rowEnd) return true;
         return false;
     });
-    // Создаём новый merge
+    // Создаём новый
     td.merges.push({ col: ci, rowStart, rowEnd });
-    // Копируем значение из первой ячейки, очищаем остальные
+    // Значение — из первой ячейки
     const val = td.rows[rowStart][ci];
     for (let r = rowStart + 1; r <= rowEnd; r++) {
         td.rows[r][ci] = '';
     }
     td.rows[rowStart][ci] = val;
+    // Сбрасываем выделение
+    selectedRows[td.id] = new Set();
     render(td);
     toast(`Объединено ${rowEnd - rowStart + 1} ячеек`, 'success');
 }
 
-function unmergeCellsAt(td, ri, ci) {
+function unmergeCellAt(td, ri, ci) {
     const m = getMergeAt(td, ri, ci);
     if (!m) { toast('Эта ячейка не объединена', 'warning'); return; }
     td.merges = td.merges.filter(x => x !== m);
@@ -667,8 +704,8 @@ function render(td) {
     let theadHtml = '<tr>';
     if (tableSettings.showRowNums) theadHtml += '<th class="row-num">№</th>';
     td.cols.forEach((col, i) => {
-        const width = colWidths[td.id]?.[i];
-        const styleW = width ? `style="width:${width}px;min-width:${width}px;max-width:${width}px"` : '';
+        const w = colWidths[col] || colWidths[i];
+        const styleW = w ? `style="width:${w}px;min-width:${w}px;max-width:${w}px"` : '';
         const sorted = sort && sort.col === i;
         const sortCls = sorted ? (sort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
         const sortIcon = sorted ? (sort.dir === 'asc' ? '▲' : '▼') : '⇅';
@@ -688,6 +725,10 @@ function render(td) {
             if (e.target.classList.contains('resize-handle')) return;
             sortByColumn(td, +th.dataset.col);
         });
+        th.addEventListener('dblclick', e => {
+            if (e.target.classList.contains('resize-handle')) return;
+            autoFitColumn(td, +th.dataset.col);
+        });
     });
 
     thead.querySelectorAll('.resize-handle').forEach(handle => {
@@ -701,14 +742,12 @@ function render(td) {
     // TBODY
     tbody.innerHTML = '';
     const rows = td.rows;
-    const merges = td.merges || [];
 
     rows.forEach((row, ri) => {
         const tr = document.createElement('tr');
         tr.dataset.ri = ri;
         if (selectedRows[td.id]?.has(ri)) tr.classList.add('selected');
 
-        // Row number
         if (tableSettings.showRowNums) {
             const numTd = document.createElement('td');
             numTd.className = 'row-num';
@@ -734,92 +773,107 @@ function render(td) {
             tr.appendChild(numTd);
         }
 
-        // Data cells
         row.forEach((v, colIdx) => {
-            // Skip hidden merge cells
             if (isMergeHidden(td, ri, colIdx)) return;
 
             const tdEl = document.createElement('td');
-            const input = document.createElement('input');
+            const cell = document.createElement('div');
             const cn = (td.cols[colIdx] || '').toLowerCase();
             const isTotal = cn.startsWith('стоимость');
             const isNum = isNumericCol(cn);
-            const mergeStart = getMergeStart(td, ri, colIdx);
+            const mergeAt = getMergeAt(td, ri, colIdx);
 
-            if (mergeStart) {
-                tdEl.rowSpan = mergeStart.rowEnd - mergeStart.rowStart + 1;
+            cell.className = 'cell';
+            cell.contentEditable = isTotal ? 'false' : 'true';
+            cell.dataset.ci = colIdx;
+            cell.dataset.ri = ri;
+
+            if (isNum) cell.classList.add('num');
+            if (isTotal) cell.classList.add('total');
+            if (tableSettings.wrapText) cell.classList.add('wrap');
+
+            // Set width
+            const w = colWidths[td.cols[colIdx]] || colWidths[colIdx];
+            if (w) {
+                tdEl.style.width = w + 'px';
+                tdEl.style.minWidth = w + 'px';
+                tdEl.style.maxWidth = w + 'px';
+            }
+
+            if (mergeAt && mergeAt.rowStart === ri) {
+                tdEl.rowSpan = mergeAt.rowEnd - mergeAt.rowStart + 1;
                 tdEl.classList.add('merged-start');
             }
 
-            if (isTotal) {
-                input.readOnly = true;
-                input.className = 'total';
-            } else if (isNum) {
-                input.className = cn.startsWith('цена') ? 'price' : 'qty';
-            } else if (cn.includes('наименование')) {
-                input.className = 'name-cell';
-            }
+            cell.textContent = v ?? '';
 
-            if (tableSettings.wrapText) input.classList.add('wrap-on');
-
-            input.value = v ?? '';
-
-            input.addEventListener('focus', () => {
-                tbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
-                if (!tableSettings.wrapText) {
-                    selectedRows[td.id] = new Set([ri]);
-                    tr.classList.add('selected');
-                }
-                input.dataset.old = input.value;
+            // Events
+            cell.addEventListener('focus', () => {
+                cell.dataset.old = cell.innerText;
             });
 
-            if (isNum && !isTotal) {
-                input.addEventListener('input', () => {
-                    row[colIdx] = input.value;
-                    updCalcRow(td, ri);
-                });
-                input.addEventListener('blur', () => {
-                    const n = pn(row[colIdx]);
+            cell.addEventListener('input', () => {
+                let val = cell.innerText;
+                // Убираем последний \n от contenteditable
+                if (val.endsWith('\n')) val = val.slice(0, -1);
+                td.rows[ri][colIdx] = val;
+                if (isNum && !isTotal) {
+                    updCalcRow(td, ri, true);
+                }
+            });
+
+            cell.addEventListener('blur', () => {
+                let val = cell.innerText;
+                if (val.endsWith('\n')) val = val.slice(0, -1);
+                if (isNum && !isTotal) {
+                    const n = pn(val);
                     if (!isNaN(n)) {
-                        row[colIdx] = n.toFixed(2);
-                        input.value = row[colIdx];
-                        updCalcRow(td, ri);
+                        val = n.toFixed(2);
+                        td.rows[ri][colIdx] = val;
+                        cell.textContent = val;
                     }
-                });
-            } else if (!isTotal) {
-                input.addEventListener('input', () => { row[colIdx] = input.value; });
-            }
-
-            input.addEventListener('change', () => {
-                if (input.dataset.old !== undefined && input.value !== input.dataset.old) {
-                    hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: colIdx, old: input.dataset.old, val: input.value } });
+                    updCalcRow(td, ri, false);
+                } else {
+                    td.rows[ri][colIdx] = val;
+                }
+                if (cell.dataset.old !== undefined && cell.dataset.old !== val) {
+                    hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: colIdx, old: cell.dataset.old, val: val } });
                 }
             });
 
-            input.addEventListener('keydown', e => {
+            cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' && e.shiftKey) {
                     e.preventDefault();
-                    const s = input.selectionStart, en = input.selectionEnd, v = input.value;
-                    input.value = v.substring(0, s) + '\n' + v.substring(en);
-                    input.selectionStart = input.selectionEnd = s + 1;
-                    row[colIdx] = input.value;
-                } else if (e.key === 'Tab') {
+                    // Вставляем перенос строки
+                    document.execCommand('insertLineBreak');
+                    return;
+                }
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (ri === rows.length - 1) addRowEnd(td);
+                    moveFocus(td, ri, colIdx, 0, 1);
+                    return;
+                }
+                if (e.key === 'Tab') {
                     e.preventDefault();
                     moveFocus(td, ri, colIdx, e.shiftKey ? -1 : 1);
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (ri === rows.length - 1) { addRowEnd(td); }
-                    moveFocus(td, ri + 1, colIdx, 0, 1);
-                } else if (e.key === 'ArrowDown' && input.selectionStart === input.value.length) {
-                    e.preventDefault();
-                    moveFocus(td, ri, colIdx, 0, 1);
-                } else if (e.key === 'ArrowUp' && input.selectionStart === 0) {
-                    e.preventDefault();
-                    moveFocus(td, ri, colIdx, 0, -1);
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    cell.blur();
+                    return;
                 }
             });
 
-            tdEl.appendChild(input);
+            cell.addEventListener('paste', e => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                if (!text) return;
+                // Если многострочный — вставляем как переносы
+                document.execCommand('insertText', false, text);
+            });
+
+            tdEl.appendChild(cell);
             tr.appendChild(tdEl);
         });
 
@@ -850,7 +904,7 @@ function render(td) {
             if (i === (ti >= 0 ? ti - 1 : td.cols.length - 2)) {
                 html += '<td style="text-align:right;padding:10px 12px;font-weight:700">Итого</td>';
             } else if (i === ti) {
-                html += `<td style="padding:0"><input value="${sumT(td).toFixed(2)}" readonly class="total" style="font-weight:700"></td>`;
+                html += `<td style="padding:0"><div class="cell total">${sumT(td).toFixed(2)}</div></td>`;
             } else {
                 html += '<td></td>';
             }
@@ -863,32 +917,34 @@ function render(td) {
     updateCardStats(td);
 }
 
-function updCalcRow(td, ri) {
-    calc(td.rows[ri], td.cols);
+function updCalcRow(td, ri, skipRecalc) {
+    if (!skipRecalc) {
+        calc(td.rows[ri], td.cols);
+    }
     const ti = ci(td.cols, 'Стоимость');
     if (ti < 0) return;
+
+    // Обновляем ячейку Стоимость в этой строке
     const tr = td.el.querySelector(`tbody tr[data-ri="${ri}"]`);
-    if (!tr) return;
-    const tds = tr.querySelectorAll('td:not(.row-num):not(.actions-col)');
-    // Это может быть неточно из-за merge, но обычно работает
-    let realIdx = 0;
-    let foundIdx = -1;
-    for (let i = 0; i < td.cols.length; i++) {
-        if (isMergeHidden(td, ri, i)) continue;
-        if (i === ti) { foundIdx = realIdx; break; }
-        realIdx++;
+    if (tr) {
+        const cells = tr.querySelectorAll('.cell');
+        for (const c of cells) {
+            if (+c.dataset.ci === ti) {
+                c.textContent = td.rows[ri][ti] ?? '';
+                break;
+            }
+        }
     }
-    if (foundIdx >= 0 && tds[foundIdx]) {
-        const inp = tds[foundIdx].querySelector('input');
-        if (inp && document.activeElement !== inp) inp.value = td.rows[ri][ti] ?? '';
-    }
+
+    // Обновляем итог
     const totTr = td.el.querySelector('tbody tr.row-total');
     if (totTr) {
-        const totInputs = totTr.querySelectorAll('input');
-        totInputs.forEach(inp => {
-            if (inp.classList.contains('total')) inp.value = sumT(td).toFixed(2);
+        const totCells = totTr.querySelectorAll('.cell');
+        totCells.forEach(c => {
+            if (c.classList.contains('total')) c.textContent = sumT(td).toFixed(2);
         });
     }
+
     updateCardStats(td);
 }
 
@@ -898,24 +954,22 @@ function moveFocus(td, ri, ci, dc, dr = 0) {
     if (nc < 0) { nc = td.cols.length - 1; nr--; }
     if (nr >= td.rows.length) return;
     if (nr < 0) return;
-    // Skip hidden cells
     while (isMergeHidden(td, nr, nc)) {
-        nc += 1;
-        if (nc >= td.cols.length) return;
+        nc += dc >= 0 ? 1 : -1;
+        if (nc >= td.cols.length || nc < 0) return;
     }
-    const rows = td.el.querySelectorAll('tbody tr[data-ri]');
-    const row = [...rows].find(r => +r.dataset.ri === nr);
-    if (!row) return;
-    const tds = row.querySelectorAll('td:not(.row-num):not(.actions-col)');
-    // Вычисляем позицию с учётом merge
-    let realIdx = 0;
-    for (let i = 0; i < nc; i++) {
-        if (isMergeHidden(td, nr, i)) continue;
-        realIdx++;
-    }
-    if (tds[realIdx]) {
-        const inp = tds[realIdx].querySelector('input');
-        if (inp) { inp.focus(); inp.select(); }
+    const tr = td.el.querySelector(`tbody tr[data-ri="${nr}"]`);
+    if (!tr) return;
+    const cell = tr.querySelector(`.cell[data-ci="${nc}"]`);
+    if (cell) {
+        cell.focus();
+        // Поставить курсор в конец
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
     }
 }
 
@@ -925,7 +979,6 @@ function insRowAbove(td, idx) { insRow(td, idx); }
 function insRow(td, idx) {
     td.rows.splice(idx, 0, Array(td.cols.length).fill(''));
     calc(td.rows[idx], td.cols);
-    // Сдвигаем merges
     if (td.merges) {
         td.merges.forEach(m => {
             if (m.rowStart >= idx) m.rowStart++;
@@ -939,7 +992,6 @@ function delRow(td, idx) {
     if (td.rows.length <= 1) { toast('Нельзя удалить последнюю строку', 'warning'); return; }
     hist.push({ a: 'delRow', tid: td.id, d: { i: idx, r: [...td.rows[idx]], merges: td.merges ? td.merges.map(m => ({ ...m })) : [] } });
     td.rows.splice(idx, 1);
-    // Корректируем merges
     if (td.merges) {
         td.merges = td.merges.filter(m => {
             if (m.rowStart > idx && m.rowEnd > idx) {
@@ -962,10 +1014,10 @@ function addRowEnd(td) {
     calc(td.rows[td.rows.length - 1], td.cols);
     render(td);
     setTimeout(() => {
-        const row = td.el.querySelector(`tbody tr[data-ri="${td.rows.length - 1}"]`);
-        if (row) {
-            const inp = row.querySelector('td:not(.row-num):not(.actions-col) input');
-            if (inp) inp.focus();
+        const tr = td.el.querySelector(`tbody tr[data-ri="${td.rows.length - 1}"]`);
+        if (tr) {
+            const cell = tr.querySelector('.cell');
+            if (cell) cell.focus();
         }
     }, 50);
 }
@@ -985,7 +1037,6 @@ function insCol(td, idx) {
         if (!name.trim()) return;
         td.cols.splice(idx, 0, name.trim());
         td.rows.forEach(r => r.splice(idx, 0, ''));
-        // Сдвигаем merges
         if (td.merges) {
             td.merges.forEach(m => { if (m.col >= idx) m.col++; });
         }
@@ -1008,7 +1059,10 @@ function delCol(td, idx) {
 function renameCol(td, idx) {
     openPrompt('Новое название:', td.cols[idx], (name) => {
         if (!name.trim() || name.trim() === td.cols[idx]) return;
+        const oldName = td.cols[idx];
+        const w = colWidths[oldName];
         td.cols[idx] = name.trim();
+        if (w) { delete colWidths[oldName]; colWidths[name.trim()] = w; }
         render(td);
     });
 }
@@ -1075,12 +1129,31 @@ function sortByColumn(td, col) {
         if (av > bv) return dir === 'asc' ? 1 : -1;
         return 0;
     });
-    // Сбрасываем merges при сортировке
     if (td.merges && td.merges.length) {
         td.merges = [];
         toast('Объединения сброшены из-за сортировки', 'info');
     }
     render(td);
+}
+
+// ==================== AUTO FIT ====================
+function autoFitColumn(td, col) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.font = tableSettings.fontSize + 'px "Segoe UI", sans-serif';
+    let maxW = 100;
+    // Заголовок
+    maxW = Math.max(maxW, ctx.measureText(formatHeader(td.cols[col], td.currency)).width + 60);
+    // Данные
+    td.rows.forEach(r => {
+        const w = ctx.measureText(String(r[col] ?? '')).width + 40;
+        if (w > maxW) maxW = w;
+    });
+    maxW = Math.min(maxW, 600);
+    colWidths[td.cols[col]] = maxW;
+    saveNow();
+    render(td);
+    toast('Ширина подогнана', 'success');
 }
 
 // ==================== RESIZE ====================
@@ -1096,23 +1169,18 @@ function startResize(td, col, e, handle) {
 
     const onMove = ev => {
         const w = Math.max(60, startW + (ev.clientX - startX));
-        if (!colWidths[td.id]) colWidths[td.id] = {};
-        colWidths[td.id][col] = w;
+        colWidths[td.cols[col]] = w;
         th.style.width = w + 'px';
         th.style.minWidth = w + 'px';
         th.style.maxWidth = w + 'px';
         td.el.querySelectorAll(`tbody tr`).forEach(row => {
-            const tds = row.querySelectorAll('td:not(.row-num):not(.actions-col)');
-            let realIdx = 0;
-            td.cols.forEach((_, i) => {
-                if (isMergeHidden(td, +row.dataset.ri, i)) return;
-                if (i === col && tds[realIdx]) {
-                    tds[realIdx].style.width = w + 'px';
-                    tds[realIdx].style.minWidth = w + 'px';
-                    tds[realIdx].style.maxWidth = w + 'px';
-                }
-                realIdx++;
-            });
+            const cell = row.querySelector(`.cell[data-ci="${col}"]`);
+            if (cell) {
+                const parent = cell.parentElement;
+                parent.style.width = w + 'px';
+                parent.style.minWidth = w + 'px';
+                parent.style.maxWidth = w + 'px';
+            }
         });
     };
     const onUp = () => {
@@ -1121,6 +1189,7 @@ function startResize(td, col, e, handle) {
         overlay.remove();
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
+        saveNow();
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
@@ -1208,7 +1277,7 @@ function openSearch() {
 function closeSearch() {
     Q('#searchBar').classList.remove('show');
     lastSearch = { query: '', matches: [], idx: 0 };
-    document.querySelectorAll('td.search-hit, tr.search-active').forEach(el => {
+    document.querySelectorAll('.search-hit, .search-active').forEach(el => {
         el.classList.remove('search-hit', 'search-active');
     });
     const c = Q('#searchCount');
@@ -1219,7 +1288,7 @@ function doSearch() {
     const td = active();
     if (!td) return;
     const query = Q('#searchInput').value.trim();
-    document.querySelectorAll('td.search-hit, tr.search-active').forEach(el => {
+    document.querySelectorAll('.search-hit, .search-active').forEach(el => {
         el.classList.remove('search-hit', 'search-active');
     });
     if (!query) {
@@ -1241,26 +1310,19 @@ function doSearch() {
 }
 
 function highlightMatch(td, i) {
-    document.querySelectorAll('td.search-hit, tr.search-active').forEach(el => {
+    document.querySelectorAll('.search-hit, .search-active').forEach(el => {
         el.classList.remove('search-hit', 'search-active');
     });
     const m = lastSearch.matches[i];
     if (!m) return;
-    const row = td.el.querySelector(`tbody tr[data-ri="${m.ri}"]`);
-    if (!row) return;
-    const tds = row.querySelectorAll('td:not(.row-num):not(.actions-col)');
-    // Индекс с учётом merge
-    let realIdx = 0;
-    for (let j = 0; j < m.ci; j++) {
-        if (isMergeHidden(td, m.ri, j)) continue;
-        realIdx++;
-    }
-    if (tds[realIdx]) {
-        tds[realIdx].classList.add('search-hit');
-        row.classList.add('search-active');
-        const input = tds[realIdx].querySelector('input');
-        if (input) { input.focus(); input.select(); }
-        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const tr = td.el.querySelector(`tbody tr[data-ri="${m.ri}"]`);
+    if (!tr) return;
+    const cell = tr.querySelector(`.cell[data-ci="${m.ci}"]`);
+    if (cell) {
+        cell.parentElement.classList.add('search-hit');
+        tr.classList.add('search-active');
+        cell.focus();
+        cell.parentElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
     Q('#searchCount').textContent = `${i + 1}/${lastSearch.matches.length}`;
 }
@@ -1301,17 +1363,17 @@ function openConfirm(title, message, onOk) {
     window._confirmCancel = () => modal.classList.remove('show');
 }
 
-// ==================== CONTEXT MENU ====================
+// ==================== CTX MENU ====================
 function showCtx(x, y) {
     const cm = Q('#ctxMenu');
     cm.style.display = 'block';
     cm.style.left = Math.min(x, window.innerWidth - 240) + 'px';
-    cm.style.top = Math.min(y, window.innerHeight - 420) + 'px';
+    cm.style.top = Math.min(y, window.innerHeight - 450) + 'px';
 }
 
 function hideCtx() { Q('#ctxMenu').style.display = 'none'; }
 
-// ==================== COPY CELLS ====================
+// ==================== COPY ====================
 function copySelectedCells() {
     const td = active();
     if (!td) return;
@@ -1349,7 +1411,6 @@ function save() {
         const ti = ci(td.cols, 'Стоимость');
         const ni = ci(td.cols, 'Наименование');
 
-        // Header
         const hr = sheet.getRow(cr);
         td.cols.forEach((col, i) => {
             const cell = hr.getCell(i + 1);
@@ -1394,7 +1455,6 @@ function save() {
             cr++;
         }
 
-        // Merges
         if (td.merges) {
             td.merges.forEach(m => {
                 try {
@@ -1403,7 +1463,6 @@ function save() {
             });
         }
 
-        // Total row
         const ldr = cr - 1;
         const tr = sheet.getRow(cr);
         for (let c = 0; c < tc; c++) {
@@ -1486,7 +1545,6 @@ function processWB(wb) {
     idC = 0;
     actId = null;
     sortState = {};
-    colWidths = {};
     selectedRows = {};
 
     wb.SheetNames.forEach(sheetName => {
@@ -1659,6 +1717,9 @@ function toggleSection(id) {
 
 // ==================== GLOBAL HOTKEYS ====================
 function handleGlobalHotkeys(e) {
+    // Не срабатывает если фокус в contenteditable и это обычные клавиши
+    const inCell = e.target.closest('.cell[contenteditable="true"]');
+
     if (e.ctrlKey && !e.shiftKey && !e.altKey) {
         const k = e.key.toLowerCase();
         if (k === 'z') { e.preventDefault(); undo(); return; }
@@ -1667,9 +1728,9 @@ function handleGlobalHotkeys(e) {
         if (k >= '1' && k <= '5') { e.preventDefault(); switchWorkspace(+k); return; }
         if (k === 's') { e.preventDefault(); save(); return; }
         if (k === 'o') { e.preventDefault(); loadViaDialog(); return; }
-        if (k === 'v' && !e.target.closest('input')) { e.preventDefault(); paste(); return; }
-        if (k === 'd' && !e.target.closest('input')) { e.preventDefault(); dupTable(); return; }
-        if (k === 'c' && !e.target.closest('input')) {
+        if (k === 'v' && !inCell) { e.preventDefault(); paste(); return; }
+        if (k === 'd' && !inCell) { e.preventDefault(); dupTable(); return; }
+        if (k === 'c' && !inCell) {
             const td = active();
             if (td && selectedRows[td.id] && selectedRows[td.id].size > 0) {
                 e.preventDefault();
@@ -1687,7 +1748,7 @@ function handleGlobalHotkeys(e) {
 
     if (e.key === 'F3') { e.preventDefault(); if (lastSearch.matches.length) searchNext(); return; }
 
-    if (e.shiftKey && !e.ctrlKey && !e.altKey && !e.target.closest('input') && !recordingKey) {
+    if (e.shiftKey && !e.ctrlKey && !e.altKey && !inCell && !recordingKey) {
         let key = e.key.toUpperCase();
         if (e.code === 'Digit1') key = '1';
         if (e.code === 'Digit2') key = '2';
@@ -1738,7 +1799,7 @@ function handleGlobalHotkeys(e) {
 }
 
 function handleGlobalPaste(e) {
-    if (e.target.closest('input')) return;
+    if (e.target.closest('.cell[contenteditable="true"]')) return;
     e.preventDefault();
     paste();
 }
@@ -1767,35 +1828,30 @@ function bindAllEvents() {
         renderHotkeyList();
         toast('Горячие клавиши сброшены', 'info');
     };
+    const btnRT = document.getElementById('btnResetTable');
+    if (btnRT) btnRT.onclick = resetTableSettings;
     document.querySelectorAll('[data-toggle]').forEach(el => {
         el.onclick = () => toggleSection(el.dataset.toggle);
     });
 
     // Table settings
     const rh = Q('#setRowHeight');
-    if (rh) {
-        rh.oninput = () => {
-            tableSettings.rowHeight = +rh.value;
-            Q('#valRowHeight').textContent = rh.value + ' px';
-            applyTableSettings();
-        };
-    }
+    if (rh) rh.oninput = () => {
+        tableSettings.rowHeight = +rh.value;
+        Q('#valRowHeight').textContent = rh.value + ' px';
+        applyTableSettings();
+    };
     const fs = Q('#setFontSize');
-    if (fs) {
-        fs.oninput = () => {
-            tableSettings.fontSize = +fs.value;
-            Q('#valFontSize').textContent = fs.value + ' px';
-            applyTableSettings();
-        };
-    }
-    const wt = Q('#setWrapText');
-    if (wt) wt.onchange = () => { tableSettings.wrapText = wt.checked; applyTableSettings(); };
-    const sn = Q('#setShowRowNums');
-    if (sn) sn.onchange = () => { tableSettings.showRowNums = sn.checked; applyTableSettings(); };
-    const st = Q('#setShowTotals');
-    if (st) st.onchange = () => { tableSettings.showTotals = st.checked; applyTableSettings(); };
-    const cm = Q('#setCompact');
-    if (cm) cm.onchange = () => { tableSettings.compact = cm.checked; applyTableSettings(); };
+    if (fs) fs.oninput = () => {
+        tableSettings.fontSize = +fs.value;
+        Q('#valFontSize').textContent = fs.value + ' px';
+        applyTableSettings();
+    };
+    const wt = Q('#setWrapText'); if (wt) wt.onchange = () => { tableSettings.wrapText = wt.checked; applyTableSettings(); };
+    const sn = Q('#setShowRowNums'); if (sn) sn.onchange = () => { tableSettings.showRowNums = sn.checked; applyTableSettings(); };
+    const st = Q('#setShowTotals'); if (st) st.onchange = () => { tableSettings.showTotals = st.checked; applyTableSettings(); };
+    const cm = Q('#setCompact'); if (cm) cm.onchange = () => { tableSettings.compact = cm.checked; applyTableSettings(); };
+    const sb = Q('#setShowBorders'); if (sb) sb.onchange = () => { tableSettings.showBorders = sb.checked; applyTableSettings(); };
 
     // Color themes
     document.getElementById('btnColorTheme').onclick = () => {
@@ -1889,26 +1945,17 @@ function bindAllEvents() {
             case 'mergeCells': {
                 if (!td || ctx.ci == null) break;
                 const sel = selectedRows[td.id];
-                if (!sel || sel.size < 2) {
-                    // Пытаемся объединить с ячейкой ниже
-                    if (ctx.ri != null && ctx.ri < td.rows.length - 1) {
-                        mergeCellsForRange(td, ctx.ci, ctx.ri, ctx.ri + 1);
-                    } else {
-                        toast('Выделите несколько строк (клик по номерам)', 'warning');
-                    }
-                    break;
+                if (sel && sel.size >= 2) {
+                    mergeSelectedCells(td, ctx.ci, [...sel]);
+                } else if (ctx.ri != null && ctx.ri < td.rows.length - 1) {
+                    // Объединить с ячейкой ниже
+                    mergeSelectedCells(td, ctx.ci, [ctx.ri, ctx.ri + 1]);
+                } else {
+                    toast('Выделите строки (клик по номерам + Shift)', 'warning');
                 }
-                const indices = [...sel].sort((a, b) => a - b);
-                // Проверяем что идут подряд
-                let consecutive = true;
-                for (let i = 1; i < indices.length; i++) {
-                    if (indices[i] !== indices[i-1] + 1) { consecutive = false; break; }
-                }
-                if (!consecutive) { toast('Строки должны идти подряд', 'warning'); break; }
-                mergeCellsForRange(td, ctx.ci, indices[0], indices[indices.length - 1]);
                 break;
             }
-            case 'unmergeCells':  if (td && ctx.ri != null && ctx.ci != null) unmergeCellsAt(td, ctx.ri, ctx.ci); break;
+            case 'unmergeCells':  if (td && ctx.ri != null && ctx.ci != null) unmergeCellAt(td, ctx.ri, ctx.ci); break;
             case 'renameCol':     if (td && ctx.ci != null) renameCol(td, ctx.ci); break;
             case 'addColBefore':  if (td && ctx.ci != null) insCol(td, ctx.ci); break;
             case 'addColAfter':   if (td && ctx.ci != null) insCol(td, ctx.ci + 1); break;
