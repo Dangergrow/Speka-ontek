@@ -28,7 +28,7 @@
         </div>
         <nav class="sidebar-content" id="sidebarContent"></nav>
         <div class="sidebar-footer">
-            <div class="version-chip">v6.0.0</div>
+            <div class="version-chip">v6.1.0</div>
         </div>
     </aside>
 
@@ -52,8 +52,11 @@
 
         <div class="toolbar" id="formatToolbar">
             <div class="toolbar-group">
-                <button class="tb-btn" data-cmd="addSection" title="Добавить строку-заголовок">
+                <button class="tb-btn" data-cmd="addSection" title="Заголовок раздела (внутри таблицы)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M8 12h8"/></svg>
+                </button>
+                <button class="tb-btn" data-cmd="addDivider" title="Разделитель между таблицами">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><path d="M6 8V6M18 8V6M6 18v-2M18 18v-2"/></svg>
                 </button>
                 <button class="tb-btn" data-cmd="addRow" title="Добавить строку">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -68,6 +71,9 @@
                 <button class="tb-btn" data-cmd="italic" title="Курсив (Ctrl+I)"><i>I</i></button>
                 <button class="tb-btn" data-cmd="underline" title="Подчёркнутый (Ctrl+U)"><u>U</u></button>
                 <button class="tb-btn" data-cmd="strike" title="Зачёркнутый"><s>S</s></button>
+                <button class="tb-btn" data-cmd="formatPainter" title="Копировать формат">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 3H5a2 2 0 0 0-2 2v4h18V5a2 2 0 0 0-2-2z"/><path d="M2 9h20v2H2z"/><path d="M8 11v10"/></svg>
+                </button>
             </div>
             <div class="toolbar-divider"></div>
             <div class="toolbar-group">
@@ -128,6 +134,9 @@
             </div>
             <div class="toolbar-divider"></div>
             <div class="toolbar-group">
+                <button class="tb-btn" data-cmd="showAllCols" title="Показать все колонки">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
                 <button class="tb-btn" data-cmd="clearFormat" title="Очистить формат">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h10l-3 16H6z"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
                 </button>
@@ -225,7 +234,7 @@
                     <div class="about-block">
                         <div class="about-logo"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></div>
                         <div class="about-title">ONTEK</div>
-                        <div class="about-version">Таблица заказов v6.0.0</div>
+                        <div class="about-version">Таблица заказов v6.1.0</div>
                         <div class="about-author">Автор: Камашев В.Е.</div>
                         <div class="about-copy">© 2026 Speka Ontek</div>
                     </div>
@@ -289,17 +298,22 @@
     <div class="ctx-item" data-action="mergeCells"><span class="ctx-icon">⊞</span> Объединить ячейки</div>
     <div class="ctx-item" data-action="unmergeCells"><span class="ctx-icon">⊟</span> Разъединить ячейки</div>
     <div class="ctx-div"></div>
-    <div class="ctx-item" data-action="bold"><span class="ctx-icon">𝐁</span> Жирный</div>
-    <div class="ctx-item" data-action="italic"><span class="ctx-icon">𝐼</span> Курсив</div>
-    <div class="ctx-item" data-action="underline"><span class="ctx-icon">U̲</span> Подчёркнутый</div>
+    <div class="ctx-item" data-action="bold"><span class="ctx-icon">𝐁</span> Жирный<span class="ctx-shortcut">Ctrl+B</span></div>
+    <div class="ctx-item" data-action="italic"><span class="ctx-icon">𝐼</span> Курсив<span class="ctx-shortcut">Ctrl+I</span></div>
+    <div class="ctx-item" data-action="underline"><span class="ctx-icon">U̲</span> Подчёркнутый<span class="ctx-shortcut">Ctrl+U</span></div>
     <div class="ctx-item" data-action="strike"><span class="ctx-icon">S̶</span> Зачёркнутый</div>
+    <div class="ctx-item" data-action="formatPainter"><span class="ctx-icon">🖌</span> Копировать формат</div>
     <div class="ctx-item" data-action="clearFormat"><span class="ctx-icon">⌫</span> Очистить формат</div>
     <div class="ctx-item" data-action="addNote"><span class="ctx-icon">💬</span> Заметка к ячейке</div>
+    <div class="ctx-div"></div>
+    <div class="ctx-item" data-action="sortAsc"><span class="ctx-icon">▲</span> Сортировать A→Я</div>
+    <div class="ctx-item" data-action="sortDesc"><span class="ctx-icon">▼</span> Сортировать Я→A</div>
     <div class="ctx-div"></div>
     <div class="ctx-item" data-action="renameCol"><span class="ctx-icon">✎</span> Переименовать колонку</div>
     <div class="ctx-item" data-action="addColBefore"><span class="ctx-icon">↤</span> Колонку перед</div>
     <div class="ctx-item" data-action="addColAfter"><span class="ctx-icon">↦</span> Колонку после</div>
     <div class="ctx-item" data-action="dupCol"><span class="ctx-icon">⊕</span> Дублировать колонку</div>
+    <div class="ctx-item" data-action="hideCol"><span class="ctx-icon">👁</span> Скрыть колонку</div>
     <div class="ctx-item" data-action="autoFitCol"><span class="ctx-icon">⤢</span> Автоширина колонки</div>
     <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">✕</span> Удалить колонку</div>
     <div class="ctx-div"></div>
@@ -342,8 +356,14 @@
     </div>
 </div>
 
-<!-- Cell note popup -->
 <div class="note-popup" id="notePopup"></div>
+
+<div class="drop-overlay hidden" id="dropOverlay" style="position:fixed;inset:0;background:rgba(99,102,241,0.15);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;border:4px dashed var(--primary);pointer-events:none;">
+    <div style="text-align:center;color:var(--primary);font-size:24px;font-weight:800;">
+        <div style="font-size:64px;margin-bottom:16px;">📂</div>
+        Отпустите файл для загрузки
+    </div>
+</div>
 
 <script src="js/app.js"></script>
 <script src="js/init.js"></script>
