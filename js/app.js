@@ -38,6 +38,7 @@ const ICONS = {
     plusBox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
     minusBox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
     section: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M8 12h8"/></svg>',
+    divider: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="6" rx="1.5"/></svg>',
     convert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M21 7H9a4 4 0 0 0-4 4v1"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h12a4 4 0 0 0 4-4v-1"/></svg>',
     paste: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>',
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
@@ -77,10 +78,8 @@ const EXPORT_THEMES = {
 };
 
 const RU_KEYS = { 'Ф':'A','А':'A','В':'D','Д':'D','С':'C','Ц':'C','Ч':'X','Х':'X','К':'R','Р':'R','М':'V','Ж':'V','Щ':'O','О':'O','Г':'U','У':'U','Ы':'S','Я':'Z','Ь':'DELETE','Т':'DELETE','1':'1','2':'2','3':'3','4':'4','5':'5' };
-
 const DEFAULT_HOTKEYS = { addRow:'A', delRow:'D', addCol:'C', delCol:'X', recalc:'R', paste:'V', load:'O', newRUB:'1', newUSD:'2', dup:'U', clear:'DELETE', undo:'Z', save:'S', convert:'K' };
 const KEY_LABELS = { addRow:'Добавить строку', delRow:'Удалить строку', addCol:'Добавить колонку', delCol:'Удалить колонку', recalc:'Пересчитать', paste:'Вставить', load:'Загрузить', newRUB:'Новая RUB', newUSD:'Новая USD', dup:'Дублировать', clear:'Очистить', undo:'Отменить', save:'Сохранить', convert:'Конвертировать валюту' };
-
 const COLOR_THEMES = [
     { id:'blue',   name:'Синяя',      desc:'Классика',  gradient:'linear-gradient(135deg,#6366f1,#4f46e5)', letter:'S' },
     { id:'green',  name:'Зелёная',    desc:'Природа',   gradient:'linear-gradient(135deg,#10b981,#059669)', letter:'G' },
@@ -89,7 +88,6 @@ const COLOR_THEMES = [
     { id:'rose',   name:'Розовая',    desc:'Яркая',     gradient:'linear-gradient(135deg,#f43f5e,#e11d48)', letter:'R' },
     { id:'slate',  name:'Серая',      desc:'Строгая',   gradient:'linear-gradient(135deg,#475569,#1e293b)', letter:'N' }
 ];
-
 let hotkeys = { ...DEFAULT_HOTKEYS };
 
 // ========== UTILS ==========
@@ -122,8 +120,7 @@ function updateStatusBar() {
         const c1 = Math.min(cellSel.c1, cellSel.c2), c2 = Math.max(cellSel.c1, cellSel.c2);
         let sum = 0, count = 0, nums = 0, minV = Infinity, maxV = -Infinity;
         for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
-            const v = td.rows[r]?.[c];
-            count++;
+            const v = td.rows[r]?.[c]; count++;
             const n = pn(v);
             if (!isNaN(n)) { sum += n; nums++; if (n < minV) minV = n; if (n > maxV) maxV = n; }
         }
@@ -133,9 +130,7 @@ function updateStatusBar() {
             html += `<span class="status-stat">Сред: <b>${(sum / nums).toFixed(2)}</b></span>`;
             html += `<span class="status-stat">Мин: <b>${minV.toFixed(2)}</b></span>`;
             html += `<span class="status-stat">Макс: <b>${maxV.toFixed(2)}</b></span>`;
-        } else {
-            html += `<span class="status-stat">Ячеек: <b>${count}</b></span>`;
-        }
+        } else { html += `<span class="status-stat">Ячеек: <b>${count}</b></span>`; }
     }
     center.innerHTML = html;
 }
@@ -225,15 +220,13 @@ function mergeRect(td, r1, c1, r2, c2) {
     for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) { if (r === r1 && c === c1) continue; td.rows[r][c] = ''; }
     td.rows[r1][c1] = val;
     td.merges.push({ r1, c1, r2, c2 });
-    render(td);
-    toast(`Объединено ${(r2 - r1 + 1) * (c2 - c1 + 1)} ячеек`, 'success');
+    render(td); toast(`Объединено ${(r2 - r1 + 1) * (c2 - c1 + 1)} ячеек`, 'success');
 }
 function unmergeAt(td, ri, ci) {
     const m = findMergeContaining(td, ri, ci);
     if (!m) { toast('Не объединена', 'warning'); return; }
     td.merges = td.merges.filter(x => x !== m);
-    render(td);
-    toast('Разъединено', 'info');
+    render(td); toast('Разъединено', 'info');
 }
 
 // ========== TABLE SETTINGS ==========
@@ -268,9 +261,7 @@ function saveNow() {
 async function loadSettings() {
     for (let i = 0; i < 30; i++) { if (window.pywebview && window.pywebview.api) break; await new Promise(r => setTimeout(r, 100)); }
     let raw = null;
-    if (window.pywebview && window.pywebview.api) {
-        try { raw = await window.pywebview.api.load_settings(); } catch (e) {}
-    }
+    if (window.pywebview && window.pywebview.api) { try { raw = await window.pywebview.api.load_settings(); } catch (e) {} }
     if (!raw || raw === '{}') raw = localStorage.getItem('ontek_settings');
     if (raw && raw !== '{}') {
         try {
@@ -292,8 +283,7 @@ function saveSession() {
         for (const k of Object.keys(workspaces)) {
             state.workspaces[k] = (workspaces[k] || []).map(item => {
                 if (item.type === 'divider') return { type: 'divider', id: item.id, title: item.title };
-                return { type: 'table', id: item.id, cols: item.cols, rows: item.rows, currency: item.currency,
-                    merges: item.merges || [], styles: item.styles || {}, rowTypes: item.rowTypes || {}, notes: item.notes || {} };
+                return { type: 'table', id: item.id, cols: item.cols, rows: item.rows, currency: item.currency, merges: item.merges || [], styles: item.styles || {}, rowTypes: item.rowTypes || {}, notes: item.notes || {} };
             });
         }
         localStorage.setItem('ontek_session', JSON.stringify(state));
@@ -396,13 +386,14 @@ async function loadRates() {
     } catch (e2) { if (bar) bar.textContent = 'Курсы недоступны'; }
 }
 
-// ========== SIDEBAR ==========
+// ========== SIDEBAR ===========
 function buildSidebarV2() {
     const sb = Q('#sidebarContent'); if (!sb) return;
     const sections = [
         { t: 'Таблица', buttons: [
             { id: 'btnAddRow',  icon: ICONS.plus,     label: 'Добавить строку',  hk: 'addRow' },
             { id: 'btnAddSection', icon: ICONS.section, label: 'Строка-заголовок', hk: null },
+            { id: 'btnAddDivider', icon: ICONS.divider, label: 'Разделитель', hk: null },
             { id: 'btnDelRow',  icon: ICONS.minus,    label: 'Удалить строку',   hk: 'delRow' },
             { id: 'btnAddCol',  icon: ICONS.plusBox,  label: 'Добавить колонку', hk: 'addCol' },
             { id: 'btnDelCol',  icon: ICONS.minusBox, label: 'Удалить колонку',  hk: 'delCol' }
@@ -449,37 +440,28 @@ function buildWorkspaces() {
         area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
         area.addEventListener('drop', e => {
             e.preventDefault(); area.classList.remove('drag-over');
-            const f = e.dataTransfer.files[0];
-            if (f) loadFile(f);
+            const f = e.dataTransfer.files[0]; if (f) loadFile(f);
         });
     });
     upEmpty();
 }
-
 function renderWorkspace(wsNum) {
     const area = Q('#workspaceArea_' + wsNum); if (!area) return;
     area.innerHTML = '';
     const items = workspaces[wsNum] || [];
     if (!items.length) { upEmpty(); updateStatusBar(); return; }
     items.forEach(item => {
-        if (item.type === 'divider') {
-            area.appendChild(buildDividerDOM(item));
-        } else {
+        if (item.type === 'divider') area.appendChild(buildDividerDOM(item));
+        else {
             const card = buildCardDOM(item);
-            area.appendChild(card);
-            item.card = card;
-            render(item);
+            area.appendChild(card); item.card = card; render(item);
         }
     });
-    upEmpty();
-    updateStatusBar();
-    updateCellSelectionUI(active());
+    upEmpty(); updateStatusBar(); updateCellSelectionUI(active());
 }
-
 function buildDividerDOM(item) {
     const el = document.createElement('div');
-    el.className = 'divider';
-    el.dataset.divid = item.id;
+    el.className = 'divider'; el.dataset.divid = item.id;
     el.innerHTML = `
         <div class="divider-icon">§</div>
         <div class="divider-title" contenteditable="true" data-divid="${item.id}">${escapeHtml(item.title || 'Новый раздел')}</div>
@@ -491,21 +473,14 @@ function buildDividerDOM(item) {
         </div>
     `;
     const titleEl = el.querySelector('.divider-title');
-    titleEl.addEventListener('blur', () => {
-        item.title = titleEl.innerText.trim() || 'Новый раздел';
-        titleEl.innerText = item.title;
-        saveSession();
-    });
-    titleEl.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); titleEl.blur(); }
-    });
+    titleEl.addEventListener('blur', () => { item.title = titleEl.innerText.trim() || 'Новый раздел'; titleEl.innerText = item.title; saveSession(); });
+    titleEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); titleEl.blur(); } });
     el.querySelectorAll('.divider-btn').forEach(btn => {
         btn.onclick = e => {
             e.stopPropagation();
             const act = btn.dataset.act;
             const ws = workspaces[activeWorkspace];
-            const idx = ws.indexOf(item);
-            if (idx < 0) return;
+            const idx = ws.indexOf(item); if (idx < 0) return;
             if (act === 'del') { ws.splice(idx, 1); renderWorkspace(activeWorkspace); toast('Разделитель удалён', 'info'); }
             if (act === 'up' && idx > 0) { ws.splice(idx, 1); ws.splice(idx - 1, 0, item); renderWorkspace(activeWorkspace); }
             if (act === 'down' && idx < ws.length - 1) { ws.splice(idx, 1); ws.splice(idx + 1, 0, item); renderWorkspace(activeWorkspace); }
@@ -515,13 +490,18 @@ function buildDividerDOM(item) {
     });
     return el;
 }
-
-function addDivider(title, atIdx) {
+function addDivider(options) {
+    options = options || {};
     const ws = workspaces[activeWorkspace];
+    const position = options.position || 'auto';
+    const refTd = options.refTd || active();
     idC++;
-    const div = { type: 'divider', id: idC, title: title || 'Новый раздел' };
-    if (atIdx !== undefined && atIdx !== null) ws.splice(atIdx, 0, div);
-    else ws.push(div);
+    const div = { type: 'divider', id: idC, title: options.title || 'Новый раздел' };
+    let insertAt = ws.length;
+    if (position === 'before' && refTd) { const idx = ws.indexOf(refTd); if (idx >= 0) insertAt = idx; }
+    else if (position === 'after' && refTd) { const idx = ws.indexOf(refTd); if (idx >= 0) insertAt = idx + 1; }
+    else if (position === 'auto' && refTd) { const idx = ws.indexOf(refTd); if (idx >= 0) insertAt = idx + 1; }
+    ws.splice(insertAt, 0, div);
     renderWorkspace(activeWorkspace);
     toast('Разделитель добавлен', 'success');
     setTimeout(() => {
@@ -543,17 +523,14 @@ function buildCardHeader(td) {
         if (getTables(activeWorkspace).length <= 1) { toast('Нужна хотя бы одна таблица', 'warning'); return; }
         openConfirm('Удалить таблицу?', 'Без возможности восстановления.', () => {
             const ws = workspaces[activeWorkspace];
-            const idx = ws.indexOf(td);
-            if (idx >= 0) ws.splice(idx, 1);
+            const idx = ws.indexOf(td); if (idx >= 0) ws.splice(idx, 1);
             if (actId === td.id) actId = null;
             renderWorkspace(activeWorkspace);
-            toast('Удалена', 'info');
-            saveSession();
+            toast('Удалена', 'info'); saveSession();
         });
     };
     return hdr;
 }
-
 function addTable(cur = 'RUB') {
     const ws = workspaces[activeWorkspace];
     upEmpty(); idC++;
@@ -567,16 +544,11 @@ function addTable(cur = 'RUB') {
 function dupTable(src) {
     if (!src) src = active(); if (!src) { toast('Выберите таблицу', 'warning'); return; }
     const ws = workspaces[activeWorkspace]; idC++;
-    const td = { type: 'table', id: idC, cols: [...src.cols], rows: src.rows.map(r => [...r]), currency: src.currency, el: null, card: null,
-        merges: src.merges ? src.merges.map(m => ({ ...m })) : [],
-        styles: src.styles ? JSON.parse(JSON.stringify(src.styles)) : {},
-        rowTypes: src.rowTypes ? { ...src.rowTypes } : {},
-        notes: src.notes ? { ...src.notes } : {} };
+    const td = { type: 'table', id: idC, cols: [...src.cols], rows: src.rows.map(r => [...r]), currency: src.currency, el: null, card: null, merges: src.merges ? src.merges.map(m => ({ ...m })) : [], styles: src.styles ? JSON.parse(JSON.stringify(src.styles)) : {}, rowTypes: src.rowTypes ? { ...src.rowTypes } : {}, notes: src.notes ? { ...src.notes } : {} };
     ws.push(td);
     renderWorkspace(activeWorkspace);
     setAct(td.id);
-    toast('Таблица дублирована', 'success');
-    saveSession();
+    toast('Таблица дублирована', 'success'); saveSession();
 }
 function buildCardDOM(td) {
     const card = document.createElement('div');
@@ -632,10 +604,7 @@ function updateCellSelectionUI(td) {
     const c1 = Math.min(cellSel.c1, cellSel.c2), c2 = Math.max(cellSel.c1, cellSel.c2);
     for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
         const cell = td.el.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
-        if (cell) {
-            cell.classList.add('selected-cell');
-            if (r === cellSel.anchorR && c === cellSel.anchorC) cell.classList.add('anchor-cell');
-        }
+        if (cell) { cell.classList.add('selected-cell'); if (r === cellSel.anchorR && c === cellSel.anchorC) cell.classList.add('anchor-cell'); }
     }
 }
 
@@ -785,13 +754,7 @@ function render(td) {
             });
             cell.addEventListener('mousedown', e => {
                 if (e.button !== 0) return;
-                if (paintBuffer) {
-                    e.preventDefault();
-                    applyFormatToCell(td, ri, colIdx);
-                    stopFormatPainter();
-                    toast('Формат применён', 'success');
-                    return;
-                }
+                if (paintBuffer) { e.preventDefault(); applyFormatToCell(td, ri, colIdx); stopFormatPainter(); toast('Формат применён', 'success'); return; }
                 if (e.shiftKey) { e.preventDefault(); selectCell(td, ri, colIdx, true); return; }
                 cellSel.tid = td.id; cellSel.anchorR = ri; cellSel.anchorC = colIdx;
                 cellSel.r1 = ri; cellSel.c1 = colIdx; cellSel.r2 = ri; cellSel.c2 = colIdx; cellSel.dragging = true;
@@ -942,11 +905,7 @@ function showAllCols() {
 }
 
 // ========== DATE ==========
-function insertDate() {
-    const d = new Date();
-    const s = d.toLocaleDateString('ru-RU');
-    document.execCommand('insertText', false, s);
-}
+function insertDate() { const s = new Date().toLocaleDateString('ru-RU'); document.execCommand('insertText', false, s); }
 
 // ========== SECTION ROWS ==========
 function addSectionRow(td, atIdx) {
@@ -957,10 +916,7 @@ function addSectionRow(td, atIdx) {
     td.rows.splice(idx, 0, newRow);
     if (!td.rowTypes) td.rowTypes = {};
     const newTypes = {};
-    for (const [k, v] of Object.entries(td.rowTypes)) {
-        const n = +k;
-        newTypes[n >= idx ? n + 1 : n] = v;
-    }
+    for (const [k, v] of Object.entries(td.rowTypes)) { const n = +k; newTypes[n >= idx ? n + 1 : n] = v; }
     newTypes[idx] = 'section';
     td.rowTypes = newTypes;
     if (td.merges) td.merges = td.merges.map(m => ({ ...m, r1: m.r1 >= idx ? m.r1 + 1 : m.r1, r2: m.r2 >= idx ? m.r2 + 1 : m.r2 }));
@@ -968,10 +924,7 @@ function addSectionRow(td, atIdx) {
     if (td.notes) { const nn = {}; for (const [k, v] of Object.entries(td.notes)) { const [r, c] = k.split(':').map(Number); nn[(r >= idx ? r + 1 : r) + ':' + c] = v; } td.notes = nn; }
     render(td);
     toast('Строка-заголовок добавлена', 'success');
-    setTimeout(() => {
-        const cell = td.el.querySelector(`.cell[data-r="${idx}"][data-c="0"]`);
-        if (cell) { cell.focus(); const range = document.createRange(); range.selectNodeContents(cell); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
-    }, 50);
+    setTimeout(() => { const cell = td.el.querySelector(`.cell[data-r="${idx}"][data-c="0"]`); if (cell) { cell.focus(); const range = document.createRange(); range.selectNodeContents(cell); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); } }, 50);
     saveSession();
 }
 
@@ -1004,10 +957,7 @@ function addRowEnd(td) {
     setTimeout(() => { const cell = td.el.querySelector(`.cell[data-r="${td.rows.length - 1}"][data-c="0"]`); if (cell) cell.focus(); }, 50);
     saveSession();
 }
-function delRowEnd(td) {
-    if (td.rows.length <= 1) { toast('Нельзя удалить последнюю', 'warning'); return; }
-    delRow(td, td.rows.length - 1);
-}
+function delRowEnd(td) { if (td.rows.length <= 1) { toast('Нельзя удалить последнюю', 'warning'); return; } delRow(td, td.rows.length - 1); }
 function insCol(td, idx) {
     openPrompt('Название новой колонки:', '', (name) => {
         if (!name.trim()) return;
@@ -1049,10 +999,7 @@ function addColEnd(td) {
         render(td); saveSession();
     });
 }
-function delColEnd(td) {
-    if (td.cols.length <= 2) { toast('Минимум 2 колонки', 'warning'); return; }
-    delCol(td, td.cols.length - 1);
-}
+function delColEnd(td) { if (td.cols.length <= 2) { toast('Минимум 2 колонки', 'warning'); return; } delCol(td, td.cols.length - 1); }
 function dupRow(td, idx) {
     const copy = [...td.rows[idx]];
     td.rows.splice(idx + 1, 0, copy);
@@ -1069,8 +1016,8 @@ function sortByColumn(td, col, forceDir) {
     if (!forceDir) { if (st.col === col && st.dir === 'asc') dir = 'desc'; else if (st.col === col && st.dir === 'desc') dir = 'asc'; }
     sortState[td.id] = { col, dir };
     const sectionIdx = new Set(Object.entries(td.rowTypes || {}).filter(([k, v]) => v === 'section').map(([k]) => +k));
-    const dataRows = [], otherRows = [];
-    td.rows.forEach((r, i) => { if (sectionIdx.has(i)) otherRows.push({ r: [...r], i, type: 'section' }); else dataRows.push({ r: [...r], i }); });
+    const dataRows = [];
+    td.rows.forEach((r, i) => { if (sectionIdx.has(i)) return; dataRows.push({ r: [...r], i }); });
     dataRows.sort((a, b) => {
         let av = a.r[col] ?? '', bv = b.r[col] ?? '';
         const an = pn(av), bn = pn(bv);
@@ -1119,8 +1066,7 @@ function undo() {
     if (!td) { toast('Таблица не найдена', 'error'); return; }
     switch (l.a) {
         case 'editCell': td.rows[l.d.ri][l.d.ci] = l.d.old; render(td); toast('Отменено', 'info'); break;
-        case 'delRow':
-        case 'delRowEnd':
+        case 'delRow': case 'delRowEnd':
             td.rows.splice(l.d.i, 0, l.d.r);
             if (l.d.merges) td.merges = l.d.merges.map(m => ({ ...m }));
             if (l.d.styles) td.styles = JSON.parse(JSON.stringify(l.d.styles));
@@ -1150,9 +1096,7 @@ function paste() {
 }
 function insertRowsIntoTable(td, parsedRows) {
     if (!td || !parsedRows.length) return;
-    let startIdx;
-    if (td.rows.length === 1 && isEmptyRow(td.rows[0])) startIdx = 0;
-    else startIdx = td.rows.length;
+    let startIdx = (td.rows.length === 1 && isEmptyRow(td.rows[0])) ? 0 : td.rows.length;
     parsedRows.forEach((r, pi) => {
         const nr = Array(td.cols.length).fill('');
         for (let i = 0; i < td.cols.length; i++) {
@@ -1161,8 +1105,7 @@ function insertRowsIntoTable(td, parsedRows) {
             if (isNumericCol(cn)) { const n = pn(v); if (!isNaN(n) && v !== '') v = n.toFixed(2); }
             nr[i] = v;
         }
-        if (startIdx === 0 && pi === 0) td.rows[0] = nr;
-        else td.rows.push(nr);
+        if (startIdx === 0 && pi === 0) td.rows[0] = nr; else td.rows.push(nr);
         calc(nr, td.cols);
     });
     hist.push({ a: 'paste', tid: td.id, d: { si: startIdx, count: parsedRows.length } });
@@ -1227,9 +1170,9 @@ function frDoSearch() {
     frMatches = [];
     td.rows.forEach((row, ri) => row.forEach((v, ci) => {
         const s = String(v ?? '');
-        let hay = caseSens ? s : s.toLowerCase();
-        let needle = caseSens ? q : q.toLowerCase();
-        let idx = hay.indexOf(needle);
+        const hay = caseSens ? s : s.toLowerCase();
+        const needle = caseSens ? q : q.toLowerCase();
+        const idx = hay.indexOf(needle);
         if (idx >= 0) {
             if (whole) {
                 const before = idx === 0 || /\W/.test(hay[idx - 1]);
@@ -1271,9 +1214,7 @@ function frReplaceAll() {
     let count = 0;
     td.rows.forEach((row, ri) => row.forEach((v, ci) => {
         const s = String(v ?? ''); if (!s) return;
-        let newS;
-        if (caseSens) newS = s.split(q).join(r);
-        else newS = s.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), r);
+        const newS = caseSens ? s.split(q).join(r) : s.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), r);
         if (newS !== s) { td.rows[ri][ci] = newS; count++; }
     }));
     if (count) { render(td); toast(`Заменено: ${count}`, 'success'); saveSession(); }
@@ -1282,9 +1223,7 @@ function frReplaceAll() {
 }
 
 // ========== TEMPLATES ==========
-function loadTemplates() {
-    try { const raw = localStorage.getItem('ontek_templates'); if (raw) templates = JSON.parse(raw); } catch (e) {}
-}
+function loadTemplates() { try { const raw = localStorage.getItem('ontek_templates'); if (raw) templates = JSON.parse(raw); } catch (e) {} }
 function saveTemplates() { localStorage.setItem('ontek_templates', JSON.stringify(templates)); }
 function openTemplates() { Q('#tplModal').classList.add('show'); renderTemplates(); }
 function closeTemplates() { Q('#tplModal').classList.remove('show'); }
@@ -1334,8 +1273,20 @@ function openConfirm(title, message, onOk) {
 function showCtx(x, y) {
     const cm = Q('#ctxMenu');
     cm.style.display = 'block';
-    cm.style.left = Math.min(x, window.innerWidth - 260) + 'px';
-    cm.style.top = Math.min(y, window.innerHeight - 640) + 'px';
+    cm.style.visibility = 'hidden';
+    cm.style.left = '0px';
+    cm.style.top = '0px';
+    const rect = cm.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+    const pad = 8;
+    let left = x, top = y;
+    if (top + h > window.innerHeight - pad) top = window.innerHeight - h - pad;
+    if (left + w > window.innerWidth - pad) left = window.innerWidth - w - pad;
+    if (top < pad) top = pad;
+    if (left < pad) left = pad;
+    cm.style.left = left + 'px';
+    cm.style.top = top + 'px';
+    cm.style.visibility = 'visible';
 }
 function hideCtx() { Q('#ctxMenu').style.display = 'none'; }
 
@@ -1373,8 +1324,6 @@ function save() {
         const pi = ci(td.cols, 'Цена'); if (pi >= 0) sheet.getColumn(pi + 1).width = 22;
         const ti = ci(td.cols, 'Стоимость'); if (ti >= 0) sheet.getColumn(ti + 1).width = 22;
     });
-
-    // Разделители тоже экспортируем
     const items = workspaces[activeWorkspace] || [];
     items.forEach(item => {
         if (item.type === 'divider') {
@@ -1401,8 +1350,7 @@ function save() {
             cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
             cell.border = { top: { style: 'thin', color: { argb: palette.borderDark } }, bottom: { style: 'thin', color: { argb: palette.borderDark } }, left: { style: 'thin', color: { argb: palette.borderDark } }, right: { style: 'thin', color: { argb: palette.borderDark } } };
         });
-        hr.height = 28;
-        cr++;
+        hr.height = 28; cr++;
         const fdr = cr;
         for (let r = 0; r < td.rows.length; r++) {
             const isSection = td.rowTypes && td.rowTypes[r] === 'section';
@@ -1414,8 +1362,7 @@ function save() {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: palette.section } };
                 cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
                 for (let c = 1; c <= tc; c++) { const cc = sheet.getCell(cr, c); cc.border = { top: { style: 'thin', color: { argb: palette.border } }, bottom: { style: 'thin', color: { argb: palette.border } }, left: { style: 'thin', color: { argb: palette.border } }, right: { style: 'thin', color: { argb: palette.border } } }; }
-                sheet.getRow(cr).height = 24;
-                cr++;
+                sheet.getRow(cr).height = 24; cr++;
                 continue;
             }
             const row = sheet.getRow(cr);
@@ -1458,10 +1405,8 @@ function save() {
             cell.alignment = { horizontal: 'right', vertical: 'middle', wrapText: true };
             cell.border = { top: { style: 'medium', color: { argb: palette.borderDark } }, bottom: { style: 'medium', color: { argb: palette.borderDark } }, left: { style: 'thin', color: { argb: palette.border } }, right: { style: 'thin', color: { argb: palette.border } } };
         }
-        tr.height = 28;
-        cr += 2;
+        tr.height = 28; cr += 2;
     });
-
     wb.xlsx.writeBuffer().then(buf => {
         const fn = `Заказы_ONTEK_${new Date().toISOString().slice(0, 10)}.xlsx`;
         if (window.pywebview && window.pywebview.api) {
@@ -1497,10 +1442,7 @@ function exportCSV() {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     if (window.pywebview && window.pywebview.api) {
         const reader = new FileReader();
-        reader.onload = () => {
-            const b64 = reader.result.split(',')[1];
-            window.pywebview.api.save_file(b64, fn).then(r => { const j = JSON.parse(r); if (j.success) toast('CSV сохранён', 'success'); else toast('Отменено', 'info'); });
-        };
+        reader.onload = () => { const b64 = reader.result.split(',')[1]; window.pywebview.api.save_file(b64, fn).then(r => { const j = JSON.parse(r); if (j.success) toast('CSV сохранён', 'success'); else toast('Отменено', 'info'); }); };
         reader.readAsDataURL(blob);
     } else {
         const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = fn;
@@ -1592,7 +1534,7 @@ function processCSV(rows) {
     let cols = null, dataRows = [];
     for (const row of rows) {
         const lower = row.map(c => c.toLowerCase());
-        if (!cols && lower.some(c => c.includes('артикул') || c.includes('наименование'))) { cols = row.filter(h => h.trim()); }
+        if (!cols && lower.some(c => c.includes('артикул') || c.includes('наименование'))) cols = row.filter(h => h.trim());
         else if (cols) { if (row.every(c => !c.trim())) continue; dataRows.push(row); }
     }
     if (!cols) { cols = [...DEFAULT_COLS]; dataRows = rows; }
@@ -1807,6 +1749,7 @@ function bindAllEvents() {
     const sb = (id, fn, retries = 5) => { const el = document.getElementById(id); if (el) { el.onclick = fn; return; } if (retries > 0) setTimeout(() => sb(id, fn, retries - 1), 100); };
     sb('btnAddRow', () => { const t = active(); if (t) addRowEnd(t); else toast('Выберите таблицу', 'warning'); });
     sb('btnAddSection', () => { const t = active(); if (t) addSectionRow(t); else toast('Выберите таблицу', 'warning'); });
+    sb('btnAddDivider', () => addDivider({ position: 'auto' }));
     sb('btnDelRow', () => { const t = active(); if (t) delRowEnd(t); else toast('Выберите таблицу', 'warning'); });
     sb('btnAddCol', () => { const t = active(); if (t) addColEnd(t); else toast('Выберите таблицу', 'warning'); });
     sb('btnDelCol', () => { const t = active(); if (t) delColEnd(t); else toast('Выберите таблицу', 'warning'); });
@@ -1838,7 +1781,6 @@ function bindAllEvents() {
     Q('#searchPrev').onclick = searchPrev;
     Q('#searchClose').onclick = closeSearch;
 
-    // Toolbar buttons
     document.querySelectorAll('.tb-btn[data-cmd]').forEach(btn => {
         btn.onclick = e => {
             e.preventDefault();
@@ -1846,7 +1788,7 @@ function bindAllEvents() {
             const td = active();
             switch (cmd) {
                 case 'addSection': if (td) addSectionRow(td); else toast('Выберите таблицу', 'warning'); break;
-                case 'addDivider': addDivider(); break;
+                case 'addDivider': addDivider({ position: 'auto' }); break;
                 case 'addRow': if (td) addRowEnd(td); else toast('Выберите таблицу', 'warning'); break;
                 case 'delRow': if (td) delRowEnd(td); else toast('Выберите таблицу', 'warning'); break;
                 case 'bold': toggleStyle('bold'); break;
@@ -1872,7 +1814,6 @@ function bindAllEvents() {
         };
     });
 
-    // Color palettes
     const buildPalette = (el, cb) => {
         el.innerHTML = COLOR_PALETTE.map(c => c === null ? `<div class="color-swatch none" data-color=""></div>` : `<div class="color-swatch" style="background:${c}" data-color="${c}"></div>`).join('');
         el.querySelectorAll('.color-swatch').forEach(s => s.onclick = () => { cb(s.dataset.color); el.classList.remove('show'); });
@@ -1907,7 +1848,6 @@ function bindAllEvents() {
         render(td);
     };
 
-    // Context menu
     Q('#ctxMenu').addEventListener('click', e => {
         const item = e.target.closest('.ctx-item'); if (!item) return;
         const action = item.dataset.action;
@@ -1920,6 +1860,8 @@ function bindAllEvents() {
             case 'addRowAbove': if (td && ctx.ri != null) insRowAbove(td, ctx.ri); break;
             case 'addRowBelow': if (td && ctx.ri != null) insRowBelow(td, ctx.ri); break;
             case 'addSection': if (td) addSectionRow(td, ctx.ri != null ? ctx.ri : undefined); break;
+            case 'addDividerBefore': addDivider({ position: 'before', refTd: td }); break;
+            case 'addDividerAfter': addDivider({ position: 'after', refTd: td }); break;
             case 'dupRow': if (td && ctx.ri != null) dupRow(td, ctx.ri); break;
             case 'delRow': if (td && ctx.ri != null) delRow(td, ctx.ri); break;
             case 'mergeCells':
