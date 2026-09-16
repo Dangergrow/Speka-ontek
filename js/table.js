@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.1.1 — TABLE ====================
+// ==================== ONTEK v7.1.2 — TABLE ====================
 // Таблицы, ячейки, строки/колонки, разделители, рендер
 
 // ========== WORKSPACE ==========
@@ -422,6 +422,7 @@ function render(td) {
         tbody.appendChild(tr);
     });
 
+    // Total row — суммы только по колонкам "Стоимость" (и по совместимости — где реально нужно)
     if (tableSettings.showTotals && rows.length > 0) {
         const totTr = document.createElement('tr');
         totTr.className = 'row-total';
@@ -435,11 +436,13 @@ function render(td) {
             const isCostCol = cn.startsWith('стоимость');
             const isQtyCol = cn.includes('ко-во') || cn.includes('количество');
             const isPriceCol = cn.startsWith('цена');
+
             if (isCostCol) {
                 const cur = getColCurrency(td, i) || td.currency;
                 html += `<td style="padding:0"><div class="cell total" style="padding:var(--cell-padding) 12px;font-weight:700">${sumCol(td, i).toFixed(2)} ${cur}</div></td>`;
             } else if (isQtyCol) {
-                html += `<td style="padding:0"><div class="cell total" style="padding:var(--cell-padding) 12px">${sumCol(td, i).toFixed(2)}</div></td>`;
+                // НЕ суммируем количество — оставляем пустым
+                html += '<td></td>';
             } else if (isPriceCol) {
                 html += `<td style="padding:10px 12px;color:var(--text-tertiary);text-align:right">—</td>`;
             } else if (i === labelIdx) {
@@ -486,9 +489,6 @@ function updCalcRow(td, ri, skipRecalc) {
             if (cn.startsWith('стоимость')) {
                 const cur = getColCurrency(td, i) || td.currency;
                 if (cells[idx]) cells[idx].textContent = `${sumCol(td, i).toFixed(2)} ${cur}`;
-                idx++;
-            } else if (cn.includes('ко-во') || cn.includes('количество')) {
-                if (cells[idx]) cells[idx].textContent = sumCol(td, i).toFixed(2);
                 idx++;
             }
         });
@@ -605,26 +605,24 @@ function showAllCols() {
 function applyMarkupToSelection(percent) {
     const td = active(); if (!td) { toast('Выберите таблицу', 'warning'); return; }
     if (cellSel.r1 < 0) { toast('Выделите ячейки в колонке Цена', 'warning'); return; }
-    const pi = ci(td.cols, 'Цена');
-    if (pi < 0) { toast('Нет колонки "Цена"', 'warning'); return; }
     let changed = 0;
     forEachSelectedCell(td, (r, c) => {
-        if (c !== pi) return;
+        const cn = (td.cols[c] || '').toLowerCase();
+        if (!cn.startsWith('цена')) return;
         const v = pn(td.rows[r][c]);
         if (!isNaN(v)) { td.rows[r][c] = (v * (1 + percent / 100)).toFixed(2); changed++; }
     });
-    if (changed === 0) { toast('Нет числовых значений в колонке Цена', 'warning'); return; }
+    if (changed === 0) { toast('Нет числовых значений в колонках Цена', 'warning'); return; }
     recalcAll(td); render(td); saveSession();
     toast(`Наценка ${percent}% → ${changed} ячеек`, 'success');
 }
 function applyDiscountToSelection(percent) {
     const td = active(); if (!td) { toast('Выберите таблицу', 'warning'); return; }
     if (cellSel.r1 < 0) { toast('Выделите ячейки в колонке Цена', 'warning'); return; }
-    const pi = ci(td.cols, 'Цена');
-    if (pi < 0) { toast('Нет колонки "Цена"', 'warning'); return; }
     let changed = 0;
     forEachSelectedCell(td, (r, c) => {
-        if (c !== pi) return;
+        const cn = (td.cols[c] || '').toLowerCase();
+        if (!cn.startsWith('цена')) return;
         const v = pn(td.rows[r][c]);
         if (!isNaN(v)) { td.rows[r][c] = (v * (1 - percent / 100)).toFixed(2); changed++; }
     });
@@ -754,23 +752,43 @@ function addSectionRow(td, atIdx) {
     saveSession();
 }
 
-// ========== ADD COLUMN WITH CURRENCY (новое) ==========
+// ========== ADD COLUMN WITH CURRENCY (создаёт ПАРУ: Цена + Стоимость) ==========
 function addColWithCurrency(td, cur) {
     if (!td) { toast('Выберите таблицу', 'warning'); return; }
-    const defaultName = `Цена, ${cur} с НДС`;
-    openPrompt('Название новой колонки:', defaultName, (name) => {
-        if (!name.trim()) return;
-        const newName = name.trim();
-        const newIdx = td.cols.length;
-        td.cols.push(newName);
+    const priceName = `Цена, ${cur} с НДС`;
+    const costName = `Стоимость, ${cur} с НДС`;
+
+    const existingPrice = td.cols.findIndex(c => c === priceName);
+    const existingCost = td.cols.findIndex(c => c === costName);
+
+    if (existingPrice >= 0 && existingCost >= 0) {
+        toast(`Колонки для ${cur} уже существуют`, 'warning');
+        return;
+    }
+
+    const added = [];
+    if (!td.colCurrencies) td.colCurrencies = {};
+
+    if (existingPrice < 0) {
+        const idx = td.cols.length;
+        td.cols.push(priceName);
         td.rows.forEach(r => r.push(''));
-        if (!td.colCurrencies) td.colCurrencies = {};
-        td.colCurrencies[newIdx] = cur;
-        recalcAll(td);
-        render(td);
-        saveSession();
-        toast(`Колонка "${newName}" добавлена (${cur})`, 'success');
-    });
+        td.colCurrencies[idx] = cur;
+        added.push(priceName);
+    }
+
+    if (existingCost < 0) {
+        const idx = td.cols.length;
+        td.cols.push(costName);
+        td.rows.forEach(r => r.push(''));
+        td.colCurrencies[idx] = cur;
+        added.push(costName);
+    }
+
+    recalcAll(td);
+    render(td);
+    saveSession();
+    if (added.length) toast(`Добавлено: ${added.join(' + ')}`, 'success');
 }
 
 // ========== SORT / AUTOFIT ==========
