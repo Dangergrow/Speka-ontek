@@ -1,26 +1,24 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ONTEK — Таблица заказов</title>
-    <script src="exceljs.min.js"></script>
-    <script src="xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="css/themes.css">
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONTEK — Таблица заказов</title>
+<script src="exceljs.min.js"></script>
+<script src="xlsx.full.min.js"></script>
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="app-shell">
-    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <div class="brand-logo">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="3"/>
-                    <path d="M8 9h8M8 13h8M8 17h5"/>
+                    <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/>
                 </svg>
             </div>
             <div class="brand-text">
@@ -30,50 +28,132 @@
         </div>
         <nav class="sidebar-content" id="sidebarContent"></nav>
         <div class="sidebar-footer">
-            <div class="version-chip">v5.0.0</div>
+            <div class="version-chip">v6.0.0</div>
         </div>
     </aside>
 
-    <!-- MAIN -->
     <main class="main">
         <header class="topbar">
             <div class="topbar-left">
                 <h1 class="topbar-title">Рабочая область</h1>
                 <div class="rates" id="ratesBar">
-                    <span class="rate-skeleton"></span>
-                    <span class="rate-skeleton"></span>
+                    <span class="rate-skeleton"></span><span class="rate-skeleton"></span>
                 </div>
             </div>
             <div class="topbar-center">
                 <div class="workspace-tabs" id="workspaceTabs"></div>
             </div>
             <div class="topbar-right">
-                <button class="icon-btn" id="btnTheme" title="Сменить тему (Ctrl+T)">
-                    <span id="themeIcon"></span>
-                </button>
+                <button class="icon-btn" id="btnTheme" title="Тема (Ctrl+T)"><span id="themeIcon"></span></button>
                 <button class="icon-btn" id="btnColorTheme" title="Цветовая схема"></button>
                 <button class="icon-btn" id="btnSettings" title="Настройки"></button>
             </div>
         </header>
 
+        <div class="toolbar" id="formatToolbar">
+            <div class="toolbar-group">
+                <button class="tb-btn" data-cmd="addSection" title="Добавить строку-заголовок">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M8 12h8"/></svg>
+                </button>
+                <button class="tb-btn" data-cmd="addRow" title="Добавить строку">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <button class="tb-btn" data-cmd="delRow" title="Удалить строку">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="tb-btn" data-cmd="bold" title="Жирный (Ctrl+B)"><b>B</b></button>
+                <button class="tb-btn" data-cmd="italic" title="Курсив (Ctrl+I)"><i>I</i></button>
+                <button class="tb-btn" data-cmd="underline" title="Подчёркнутый (Ctrl+U)"><u>U</u></button>
+                <button class="tb-btn" data-cmd="strike" title="Зачёркнутый"><s>S</s></button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="tb-btn" data-cmd="alignLeft" title="По левому краю">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+                </button>
+                <button class="tb-btn" data-cmd="alignCenter" title="По центру">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+                </button>
+                <button class="tb-btn" data-cmd="alignRight" title="По правому краю">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <div class="color-picker" id="textColorPicker">
+                    <button class="tb-btn color-btn" data-cmd="textColor" title="Цвет текста">
+                        <span class="color-icon">A</span>
+                        <span class="color-bar" id="textColorBar"></span>
+                    </button>
+                    <div class="color-palette" id="textColorPalette"></div>
+                </div>
+                <div class="color-picker" id="bgColorPicker">
+                    <button class="tb-btn color-btn" data-cmd="bgColor" title="Цвет фона">
+                        <span class="color-icon">▨</span>
+                        <span class="color-bar" id="bgColorBar"></span>
+                    </button>
+                    <div class="color-palette" id="bgColorPalette"></div>
+                </div>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <select class="tb-select" id="tbFontFamily">
+                    <option value="">— Шрифт —</option>
+                    <option value="'Segoe UI', system-ui, sans-serif">Segoe UI</option>
+                    <option value="'Consolas', monospace">Consolas</option>
+                    <option value="'Calibri', sans-serif">Calibri</option>
+                    <option value="'Arial', sans-serif">Arial</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Verdana', sans-serif">Verdana</option>
+                    <option value="'Tahoma', sans-serif">Tahoma</option>
+                </select>
+                <select class="tb-select tb-select-sm" id="tbFontSize">
+                    <option value="">Размер</option>
+                    <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                    <option value="13">13</option><option value="14">14</option><option value="16">16</option>
+                    <option value="18">18</option><option value="20">20</option><option value="24">24</option>
+                </select>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="tb-btn" data-cmd="merge" title="Объединить">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6"/></svg>
+                </button>
+                <button class="tb-btn" data-cmd="unmerge" title="Разъединить">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 15h6"/></svg>
+                </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="tb-btn" data-cmd="clearFormat" title="Очистить формат">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h10l-3 16H6z"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+                </button>
+                <button class="tb-btn" data-cmd="autofit" title="Автоширина колонки">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 9l-4 3 4 3"/><path d="M16 9l4 3-4 3"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+                </button>
+            </div>
+        </div>
+
         <section class="workspace" id="workspaceContainer"></section>
 
         <footer class="statusbar">
             <div class="status-left" id="statusLeft">
-                <span class="status-dot"></span>
-                <span class="status-text">Готово</span>
+                <span class="status-dot"></span><span class="status-text">Готово</span>
             </div>
             <div class="status-center" id="statusCenter"></div>
             <div class="status-right">
                 <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>F</kbd> поиск</span>
-                <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>Z</kbd> отмена</span>
+                <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>H</kbd> замена</span>
                 <span class="kbd-hint"><kbd>ПКМ</kbd> меню</span>
             </div>
         </footer>
     </main>
 </div>
 
-<input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls">
+<input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.csv">
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settingsModal">
@@ -83,169 +163,69 @@
             <button class="modal-close" id="btnCloseSettings">✕</button>
         </div>
         <div class="modal-body">
-            <!-- ТАБЛИЦА -->
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="tableSection">
-                    <span class="arrow">▶</span> Таблица
-                </div>
+                <div class="settings-section-title" data-toggle="tableSection"><span class="arrow">▶</span> Таблица</div>
                 <div class="settings-section-body" id="tableSection">
-                    <div class="setting-row">
-                        <label>Высота строк</label>
-                        <div class="setting-control">
-                            <input type="range" id="setRowHeight" min="24" max="120" step="2" value="38">
-                            <span class="setting-value" id="valRowHeight">38 px</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <label>Размер шрифта</label>
-                        <div class="setting-control">
-                            <input type="range" id="setFontSize" min="10" max="20" step="1" value="13">
-                            <span class="setting-value" id="valFontSize">13 px</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <label>Шрифт</label>
-                        <div class="setting-control">
-                            <select class="select-input" id="setFontFamily">
-                                <option value="'Segoe UI', system-ui, sans-serif">Segoe UI</option>
-                                <option value="'Consolas', monospace">Consolas</option>
-                                <option value="'Calibri', sans-serif">Calibri</option>
-                                <option value="'Arial', sans-serif">Arial</option>
-                                <option value="'Times New Roman', serif">Times New Roman</option>
-                                <option value="'Verdana', sans-serif">Verdana</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <label>Отступы ячеек</label>
-                        <div class="setting-control">
-                            <input type="range" id="setPadding" min="2" max="20" step="1" value="10">
-                            <span class="setting-value" id="valPadding">10 px</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <label>Перенос текста</label>
-                        <label class="switch">
-                            <input type="checkbox" id="setWrapText">
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Показывать номера строк</label>
-                        <label class="switch">
-                            <input type="checkbox" id="setShowRowNums" checked>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Показывать итоговую строку</label>
-                        <label class="switch">
-                            <input type="checkbox" id="setShowTotals" checked>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Чередование строк (зебра)</label>
-                        <label class="switch">
-                            <input type="checkbox" id="setZebra" checked>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Вертикальные границы</label>
-                        <label class="switch">
-                            <input type="checkbox" id="setVGrid" checked>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Горизонтальные границы</label>
-                        <label class="switch">
-                            <input type="checkbox" id="setHGrid" checked>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Скруглённые углы таблицы</label>
-                        <label class="switch">
-                            <input type="checkbox" id="setRounded" checked>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
+                    <div class="setting-row"><label>Высота строк</label><div class="setting-control"><input type="range" id="setRowHeight" min="24" max="120" step="2" value="38"><span class="setting-value" id="valRowHeight">38 px</span></div></div>
+                    <div class="setting-row"><label>Размер шрифта</label><div class="setting-control"><input type="range" id="setFontSize" min="10" max="20" step="1" value="13"><span class="setting-value" id="valFontSize">13 px</span></div></div>
+                    <div class="setting-row"><label>Шрифт по умолчанию</label><div class="setting-control"><select class="select-input" id="setFontFamily">
+                        <option value="'Segoe UI', system-ui, sans-serif">Segoe UI</option>
+                        <option value="'Consolas', monospace">Consolas</option>
+                        <option value="'Calibri', sans-serif">Calibri</option>
+                        <option value="'Arial', sans-serif">Arial</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                        <option value="'Verdana', sans-serif">Verdana</option>
+                        <option value="'Tahoma', sans-serif">Tahoma</option>
+                    </select></div></div>
+                    <div class="setting-row"><label>Отступы ячеек</label><div class="setting-control"><input type="range" id="setPadding" min="2" max="20" step="1" value="10"><span class="setting-value" id="valPadding">10 px</span></div></div>
+                    <div class="setting-row"><label>Перенос текста</label><label class="switch"><input type="checkbox" id="setWrapText"><span class="switch-slider"></span></label></div>
+                    <div class="setting-row"><label>Показывать номера строк</label><label class="switch"><input type="checkbox" id="setShowRowNums" checked><span class="switch-slider"></span></label></div>
+                    <div class="setting-row"><label>Показывать итоговую строку</label><label class="switch"><input type="checkbox" id="setShowTotals" checked><span class="switch-slider"></span></label></div>
+                    <div class="setting-row"><label>Чередование строк</label><label class="switch"><input type="checkbox" id="setZebra" checked><span class="switch-slider"></span></label></div>
+                    <div class="setting-row"><label>Вертикальные границы</label><label class="switch"><input type="checkbox" id="setVGrid" checked><span class="switch-slider"></span></label></div>
+                    <div class="setting-row"><label>Горизонтальные границы</label><label class="switch"><input type="checkbox" id="setHGrid" checked><span class="switch-slider"></span></label></div>
+                    <div class="setting-row"><label>Скруглённые углы таблицы</label><label class="switch"><input type="checkbox" id="setRounded" checked><span class="switch-slider"></span></label></div>
                     <button class="btn-secondary" id="btnResetTable" style="margin-top:10px;width:100%;justify-content:center">Сбросить настройки таблицы</button>
                 </div>
             </div>
-
-            <!-- УВЕДОМЛЕНИЯ -->
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="notifySection">
-                    <span class="arrow">▶</span> Уведомления
-                </div>
-                <div class="settings-section-body" id="notifySection">
-                    <div class="setting-row">
-                        <label>Показывать уведомления</label>
-                        <label class="switch">
-                            <input type="checkbox" id="setShowToasts" checked>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-row">
-                        <label>Позиция</label>
-                        <div class="setting-control">
-                            <select class="select-input" id="setToastPos">
-                                <option value="toast-bottom-right">Снизу справа</option>
-                                <option value="toast-bottom-left">Снизу слева</option>
-                                <option value="toast-top-right">Сверху справа</option>
-                                <option value="toast-top-left">Сверху слева</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <label>Длительность</label>
-                        <div class="setting-control">
-                            <input type="range" id="setToastDur" min="1000" max="6000" step="500" value="3000">
-                            <span class="setting-value" id="valToastDur">3.0 s</span>
-                        </div>
-                    </div>
+                <div class="settings-section-title" data-toggle="exportSection"><span class="arrow">▶</span> Экспорт в Excel</div>
+                <div class="settings-section-body" id="exportSection">
+                    <div class="setting-row"><label>Цветовая схема экспорта</label></div>
+                    <div class="export-themes" id="exportThemes"></div>
                 </div>
             </div>
-
-            <!-- ГОРЯЧИЕ КЛАВИШИ -->
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="hkSection">
-                    <span class="arrow">▶</span> Горячие клавиши
+                <div class="settings-section-title" data-toggle="notifySection"><span class="arrow">▶</span> Уведомления</div>
+                <div class="settings-section-body" id="notifySection">
+                    <div class="setting-row"><label>Показывать уведомления</label><label class="switch"><input type="checkbox" id="setShowToasts" checked><span class="switch-slider"></span></label></div>
+                    <div class="setting-row"><label>Позиция</label><div class="setting-control"><select class="select-input" id="setToastPos">
+                        <option value="toast-bottom-right">Снизу справа</option>
+                        <option value="toast-bottom-left">Снизу слева</option>
+                        <option value="toast-top-right">Сверху справа</option>
+                        <option value="toast-top-left">Сверху слева</option>
+                    </select></div></div>
+                    <div class="setting-row"><label>Длительность</label><div class="setting-control"><input type="range" id="setToastDur" min="1000" max="6000" step="500" value="3000"><span class="setting-value" id="valToastDur">3.0 s</span></div></div>
                 </div>
+            </div>
+            <div class="settings-section">
+                <div class="settings-section-title" data-toggle="hkSection"><span class="arrow">▶</span> Горячие клавиши</div>
                 <div class="settings-section-body" id="hkSection">
                     <div id="hotkeyList"></div>
                     <button class="btn-secondary" id="btnResetHotkeys" style="margin-top:10px">Сбросить</button>
                 </div>
             </div>
-
-            <!-- ЦВЕТОВАЯ СХЕМА -->
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="themeSection">
-                    <span class="arrow">▶</span> Цветовая схема
-                </div>
-                <div class="settings-section-body" id="themeSection">
-                    <div class="theme-options" id="themeOptionsSettings"></div>
-                </div>
+                <div class="settings-section-title" data-toggle="themeSection"><span class="arrow">▶</span> Цветовая схема интерфейса</div>
+                <div class="settings-section-body" id="themeSection"><div class="theme-options" id="themeOptionsSettings"></div></div>
             </div>
-
-            <!-- О ПРОГРАММЕ -->
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="aboutSection">
-                    <span class="arrow">▶</span> О программе
-                </div>
+                <div class="settings-section-title" data-toggle="aboutSection"><span class="arrow">▶</span> О программе</div>
                 <div class="settings-section-body" id="aboutSection">
                     <div class="about-block">
-                        <div class="about-logo">
-                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="3"/>
-                                <path d="M8 9h8M8 13h8M8 17h5"/>
-                            </svg>
-                        </div>
+                        <div class="about-logo"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></div>
                         <div class="about-title">ONTEK</div>
-                        <div class="about-version">Таблица заказов v5.0.0</div>
+                        <div class="about-version">Таблица заказов v6.0.0</div>
                         <div class="about-author">Автор: Камашев В.Е.</div>
                         <div class="about-copy">© 2026 Speka Ontek</div>
                     </div>
@@ -258,12 +238,42 @@
 <!-- COLOR THEME MODAL -->
 <div class="modal-overlay" id="colorThemeModal">
     <div class="modal modal-sm">
-        <div class="modal-header">
-            <h2>Цветовая схема</h2>
-            <button class="modal-close" id="btnCloseColorTheme">✕</button>
-        </div>
+        <div class="modal-header"><h2>Цветовая схема интерфейса</h2><button class="modal-close" id="btnCloseColorTheme">✕</button></div>
+        <div class="modal-body"><div class="theme-options" id="colorThemeOptions"></div></div>
+    </div>
+</div>
+
+<!-- FIND & REPLACE MODAL -->
+<div class="modal-overlay" id="frModal">
+    <div class="modal modal-xs">
+        <div class="modal-header"><h2>Найти и заменить</h2><button class="modal-close" id="frClose">✕</button></div>
         <div class="modal-body">
-            <div class="theme-options" id="colorThemeOptions"></div>
+            <input type="text" class="input" id="frFind" placeholder="Найти..." style="margin-bottom:10px">
+            <input type="text" class="input" id="frReplace" placeholder="Заменить на...">
+            <div class="fr-options">
+                <label class="fr-check"><input type="checkbox" id="frCase"> Учитывать регистр</label>
+                <label class="fr-check"><input type="checkbox" id="frWhole"> Слово целиком</label>
+            </div>
+            <div class="fr-info" id="frInfo"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" id="frFindNext">Найти далее</button>
+            <button class="btn-secondary" id="frReplaceOne">Заменить</button>
+            <button class="btn-primary" id="frReplaceAll">Заменить всё</button>
+        </div>
+    </div>
+</div>
+
+<!-- TEMPLATES MODAL -->
+<div class="modal-overlay" id="tplModal">
+    <div class="modal modal-sm">
+        <div class="modal-header"><h2>Шаблоны колонок</h2><button class="modal-close" id="tplClose">✕</button></div>
+        <div class="modal-body">
+            <div id="tplList"></div>
+            <div class="tpl-add">
+                <input type="text" class="input" id="tplName" placeholder="Название шаблона">
+                <button class="btn-primary" id="tplSave">Сохранить текущие колонки</button>
+            </div>
         </div>
     </div>
 </div>
@@ -272,21 +282,19 @@
 <div class="ctx-menu" id="ctxMenu">
     <div class="ctx-item" data-action="addRowAbove"><span class="ctx-icon">↥</span> Строку выше</div>
     <div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">↧</span> Строку ниже</div>
+    <div class="ctx-item" data-action="addSection"><span class="ctx-icon">§</span> Строка-заголовок</div>
     <div class="ctx-item" data-action="dupRow"><span class="ctx-icon">⊕</span> Дублировать строку</div>
     <div class="ctx-item danger" data-action="delRow"><span class="ctx-icon">✕</span> Удалить строку</div>
     <div class="ctx-div"></div>
     <div class="ctx-item" data-action="mergeCells"><span class="ctx-icon">⊞</span> Объединить ячейки</div>
     <div class="ctx-item" data-action="unmergeCells"><span class="ctx-icon">⊟</span> Разъединить ячейки</div>
     <div class="ctx-div"></div>
-    <div class="ctx-item" data-action="bold"><span class="ctx-icon">𝐁</span> Жирный <span style="margin-left:auto;font-size:10px;opacity:0.5">Ctrl+B</span></div>
-    <div class="ctx-item" data-action="italic"><span class="ctx-icon">𝐼</span> Курсив <span style="margin-left:auto;font-size:10px;opacity:0.5">Ctrl+I</span></div>
-    <div class="ctx-item" data-action="underline"><span class="ctx-icon">U̲</span> Подчёркнутый <span style="margin-left:auto;font-size:10px;opacity:0.5">Ctrl+U</span></div>
+    <div class="ctx-item" data-action="bold"><span class="ctx-icon">𝐁</span> Жирный</div>
+    <div class="ctx-item" data-action="italic"><span class="ctx-icon">𝐼</span> Курсив</div>
+    <div class="ctx-item" data-action="underline"><span class="ctx-icon">U̲</span> Подчёркнутый</div>
     <div class="ctx-item" data-action="strike"><span class="ctx-icon">S̶</span> Зачёркнутый</div>
     <div class="ctx-item" data-action="clearFormat"><span class="ctx-icon">⌫</span> Очистить формат</div>
-    <div class="ctx-div"></div>
-    <div class="ctx-item" data-action="alignLeft"><span class="ctx-icon">⬅</span> По левому краю</div>
-    <div class="ctx-item" data-action="alignCenter"><span class="ctx-icon">↔</span> По центру</div>
-    <div class="ctx-item" data-action="alignRight"><span class="ctx-icon">➡</span> По правому краю</div>
+    <div class="ctx-item" data-action="addNote"><span class="ctx-icon">💬</span> Заметка к ячейке</div>
     <div class="ctx-div"></div>
     <div class="ctx-item" data-action="renameCol"><span class="ctx-icon">✎</span> Переименовать колонку</div>
     <div class="ctx-item" data-action="addColBefore"><span class="ctx-icon">↤</span> Колонку перед</div>
@@ -295,7 +303,7 @@
     <div class="ctx-item" data-action="autoFitCol"><span class="ctx-icon">⤢</span> Автоширина колонки</div>
     <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">✕</span> Удалить колонку</div>
     <div class="ctx-div"></div>
-    <div class="ctx-item" data-action="copyCells"><span class="ctx-icon">⧉</span> Копировать выделенное</div>
+    <div class="ctx-item" data-action="copyCells"><span class="ctx-icon">⧉</span> Копировать</div>
     <div class="ctx-item" data-action="paste"><span class="ctx-icon">📋</span> Вставить</div>
     <div class="ctx-div"></div>
     <div class="ctx-item" data-action="dupTable"><span class="ctx-icon">⎘</span> Дублировать таблицу</div>
@@ -304,24 +312,18 @@
 
 <div class="toast-container toast-bottom-right" id="toastContainer"></div>
 
-<!-- SEARCH BAR -->
 <div class="search-bar" id="searchBar">
-    <input type="text" id="searchInput" placeholder="Поиск в таблице...">
+    <input type="text" id="searchInput" placeholder="Поиск...">
     <span class="search-count" id="searchCount">0/0</span>
-    <button class="search-nav" id="searchPrev" title="Предыдущее (Shift+Enter)">↑</button>
-    <button class="search-nav" id="searchNext" title="Следующее (Enter)">↓</button>
-    <button class="search-close" id="searchClose" title="Закрыть (Esc)">✕</button>
+    <button class="search-nav" id="searchPrev" title="Назад">↑</button>
+    <button class="search-nav" id="searchNext" title="Вперёд">↓</button>
+    <button class="search-close" id="searchClose">✕</button>
 </div>
 
-<!-- PROMPT MODAL -->
 <div class="modal-overlay" id="promptModal">
     <div class="modal modal-xs">
-        <div class="modal-header">
-            <h2 id="promptTitle">Введите значение</h2>
-        </div>
-        <div class="modal-body">
-            <input type="text" class="input" id="promptInput" autocomplete="off">
-        </div>
+        <div class="modal-header"><h2 id="promptTitle">Введите значение</h2></div>
+        <div class="modal-body"><input type="text" class="input" id="promptInput" autocomplete="off"></div>
         <div class="modal-footer">
             <button class="btn-secondary" id="promptCancel">Отмена</button>
             <button class="btn-primary" id="promptOk">ОК</button>
@@ -329,21 +331,19 @@
     </div>
 </div>
 
-<!-- CONFIRM MODAL -->
 <div class="modal-overlay" id="confirmModal">
     <div class="modal modal-xs">
-        <div class="modal-header">
-            <h2 id="confirmTitle">Подтверждение</h2>
-        </div>
-        <div class="modal-body">
-            <p id="confirmMessage" style="color:var(--text-secondary)"></p>
-        </div>
+        <div class="modal-header"><h2 id="confirmTitle">Подтверждение</h2></div>
+        <div class="modal-body"><p id="confirmMessage" style="color:var(--text-secondary)"></p></div>
         <div class="modal-footer">
             <button class="btn-secondary" id="confirmCancel">Отмена</button>
             <button class="btn-danger" id="confirmOk">Подтвердить</button>
         </div>
     </div>
 </div>
+
+<!-- Cell note popup -->
+<div class="note-popup" id="notePopup"></div>
 
 <script src="js/app.js"></script>
 <script src="js/init.js"></script>
