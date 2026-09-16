@@ -83,6 +83,7 @@
             <button class="modal-close" id="btnCloseSettings">✕</button>
         </div>
         <div class="modal-body">
+            <!-- ТАБЛИЦА -->
             <div class="settings-section">
                 <div class="settings-section-title" data-toggle="tableSection">
                     <span class="arrow">▶</span> Таблица
@@ -100,6 +101,26 @@
                         <div class="setting-control">
                             <input type="range" id="setFontSize" min="10" max="20" step="1" value="13">
                             <span class="setting-value" id="valFontSize">13 px</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>Шрифт</label>
+                        <div class="setting-control">
+                            <select class="select-input" id="setFontFamily">
+                                <option value="'Segoe UI', system-ui, sans-serif">Segoe UI</option>
+                                <option value="'Consolas', monospace">Consolas</option>
+                                <option value="'Calibri', sans-serif">Calibri</option>
+                                <option value="'Arial', sans-serif">Arial</option>
+                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                <option value="'Verdana', sans-serif">Verdana</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>Отступы ячеек</label>
+                        <div class="setting-control">
+                            <input type="range" id="setPadding" min="2" max="20" step="1" value="10">
+                            <span class="setting-value" id="valPadding">10 px</span>
                         </div>
                     </div>
                     <div class="setting-row">
@@ -124,22 +145,72 @@
                         </label>
                     </div>
                     <div class="setting-row">
-                        <label>Показывать границы ячеек</label>
+                        <label>Чередование строк (зебра)</label>
                         <label class="switch">
-                            <input type="checkbox" id="setShowBorders" checked>
+                            <input type="checkbox" id="setZebra" checked>
                             <span class="switch-slider"></span>
                         </label>
                     </div>
                     <div class="setting-row">
-                        <label>Компактный режим</label>
+                        <label>Вертикальные границы</label>
                         <label class="switch">
-                            <input type="checkbox" id="setCompact">
+                            <input type="checkbox" id="setVGrid" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <label>Горизонтальные границы</label>
+                        <label class="switch">
+                            <input type="checkbox" id="setHGrid" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <label>Скруглённые углы таблицы</label>
+                        <label class="switch">
+                            <input type="checkbox" id="setRounded" checked>
                             <span class="switch-slider"></span>
                         </label>
                     </div>
                     <button class="btn-secondary" id="btnResetTable" style="margin-top:10px;width:100%;justify-content:center">Сбросить настройки таблицы</button>
                 </div>
             </div>
+
+            <!-- УВЕДОМЛЕНИЯ -->
+            <div class="settings-section">
+                <div class="settings-section-title" data-toggle="notifySection">
+                    <span class="arrow">▶</span> Уведомления
+                </div>
+                <div class="settings-section-body" id="notifySection">
+                    <div class="setting-row">
+                        <label>Показывать уведомления</label>
+                        <label class="switch">
+                            <input type="checkbox" id="setShowToasts" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <label>Позиция</label>
+                        <div class="setting-control">
+                            <select class="select-input" id="setToastPos">
+                                <option value="toast-bottom-right">Снизу справа</option>
+                                <option value="toast-bottom-left">Снизу слева</option>
+                                <option value="toast-top-right">Сверху справа</option>
+                                <option value="toast-top-left">Сверху слева</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>Длительность</label>
+                        <div class="setting-control">
+                            <input type="range" id="setToastDur" min="1000" max="6000" step="500" value="3000">
+                            <span class="setting-value" id="valToastDur">3.0 s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ГОРЯЧИЕ КЛАВИШИ -->
             <div class="settings-section">
                 <div class="settings-section-title" data-toggle="hkSection">
                     <span class="arrow">▶</span> Горячие клавиши
@@ -149,6 +220,8 @@
                     <button class="btn-secondary" id="btnResetHotkeys" style="margin-top:10px">Сбросить</button>
                 </div>
             </div>
+
+            <!-- ЦВЕТОВАЯ СХЕМА -->
             <div class="settings-section">
                 <div class="settings-section-title" data-toggle="themeSection">
                     <span class="arrow">▶</span> Цветовая схема
@@ -157,6 +230,8 @@
                     <div class="theme-options" id="themeOptionsSettings"></div>
                 </div>
             </div>
+
+            <!-- О ПРОГРАММЕ -->
             <div class="settings-section">
                 <div class="settings-section-title" data-toggle="aboutSection">
                     <span class="arrow">▶</span> О программе
@@ -203,10 +278,21 @@
     <div class="ctx-item" data-action="mergeCells"><span class="ctx-icon">⊞</span> Объединить ячейки</div>
     <div class="ctx-item" data-action="unmergeCells"><span class="ctx-icon">⊟</span> Разъединить ячейки</div>
     <div class="ctx-div"></div>
+    <div class="ctx-item" data-action="bold"><span class="ctx-icon">𝐁</span> Жирный <span style="margin-left:auto;font-size:10px;opacity:0.5">Ctrl+B</span></div>
+    <div class="ctx-item" data-action="italic"><span class="ctx-icon">𝐼</span> Курсив <span style="margin-left:auto;font-size:10px;opacity:0.5">Ctrl+I</span></div>
+    <div class="ctx-item" data-action="underline"><span class="ctx-icon">U̲</span> Подчёркнутый <span style="margin-left:auto;font-size:10px;opacity:0.5">Ctrl+U</span></div>
+    <div class="ctx-item" data-action="strike"><span class="ctx-icon">S̶</span> Зачёркнутый</div>
+    <div class="ctx-item" data-action="clearFormat"><span class="ctx-icon">⌫</span> Очистить формат</div>
+    <div class="ctx-div"></div>
+    <div class="ctx-item" data-action="alignLeft"><span class="ctx-icon">⬅</span> По левому краю</div>
+    <div class="ctx-item" data-action="alignCenter"><span class="ctx-icon">↔</span> По центру</div>
+    <div class="ctx-item" data-action="alignRight"><span class="ctx-icon">➡</span> По правому краю</div>
+    <div class="ctx-div"></div>
     <div class="ctx-item" data-action="renameCol"><span class="ctx-icon">✎</span> Переименовать колонку</div>
     <div class="ctx-item" data-action="addColBefore"><span class="ctx-icon">↤</span> Колонку перед</div>
     <div class="ctx-item" data-action="addColAfter"><span class="ctx-icon">↦</span> Колонку после</div>
     <div class="ctx-item" data-action="dupCol"><span class="ctx-icon">⊕</span> Дублировать колонку</div>
+    <div class="ctx-item" data-action="autoFitCol"><span class="ctx-icon">⤢</span> Автоширина колонки</div>
     <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">✕</span> Удалить колонку</div>
     <div class="ctx-div"></div>
     <div class="ctx-item" data-action="copyCells"><span class="ctx-icon">⧉</span> Копировать выделенное</div>
@@ -216,7 +302,7 @@
     <div class="ctx-item danger" data-action="delTable"><span class="ctx-icon">🗑</span> Удалить таблицу</div>
 </div>
 
-<div class="toast-container" id="toastContainer"></div>
+<div class="toast-container toast-bottom-right" id="toastContainer"></div>
 
 <!-- SEARCH BAR -->
 <div class="search-bar" id="searchBar">
