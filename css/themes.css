@@ -1,6 +1,5 @@
 /* ==================== ONTEK v5.0.0 THEMES ==================== */
 :root {
-    /* Light (default) */
     --bg-body: #eef1f8;
     --bg-surface: #ffffff;
     --bg-elevated: #ffffff;
@@ -39,7 +38,6 @@
     --info: #06b6d4;
     --info-light: #cffafe;
 
-    /* Table */
     --th-bg: #1e293b;
     --th-text: #ffffff;
     --row-odd: #ffffff;
@@ -51,34 +49,29 @@
     --cell-border: #e2e8f0;
     --cell-focus: #6366f1;
 
-    /* Table sizing (override via settings) */
     --font-size-table: 13px;
+    --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --row-height: 38px;
     --wrap-text: nowrap;
 
-    /* Merged cells */
     --merge-bg: #f8fafc;
     --merge-accent: #eef2ff;
 
-    /* Radii */
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
     --radius-xl: 20px;
 
-    /* Shadows */
     --shadow-xs: 0 1px 2px rgba(15,23,42,0.05);
     --shadow-sm: 0 2px 4px rgba(15,23,42,0.06);
     --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
     --shadow-lg: 0 12px 32px rgba(15,23,42,0.12);
     --shadow-xl: 0 24px 56px rgba(15,23,42,0.16);
 
-    /* Transitions */
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
     --dur: 0.2s;
 }
 
-/* ==================== DARK THEME ==================== */
 body.dark {
     --bg-body: #0a0e1a;
     --bg-surface: #131827;
@@ -122,8 +115,6 @@ body.dark {
 }
 
 /* ==================== COLOR SCHEMES ==================== */
-
-/* GREEN */
 body.theme-green {
     --primary: #10b981;
     --primary-hover: #059669;
@@ -145,7 +136,6 @@ body.dark.theme-green {
     --merge-accent: #064e3b;
 }
 
-/* PURPLE */
 body.theme-purple {
     --primary: #8b5cf6;
     --primary-hover: #7c3aed;
@@ -167,7 +157,6 @@ body.dark.theme-purple {
     --merge-accent: #2e1065;
 }
 
-/* ORANGE */
 body.theme-orange {
     --primary: #f59e0b;
     --primary-hover: #d97706;
@@ -189,7 +178,6 @@ body.dark.theme-orange {
     --merge-accent: #78350f;
 }
 
-/* ROSE */
 body.theme-rose {
     --primary: #f43f5e;
     --primary-hover: #e11d48;
