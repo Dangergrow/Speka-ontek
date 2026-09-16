@@ -1,5 +1,5 @@
-// ==================== ONTEK v7.1.0 — UI ====================
-// Сайдбар, тулбар, контекстное меню (многоуровневое), модалки, поиск, темы
+// ==================== ONTEK v7.1.1 — UI ====================
+// Сайдбар, тулбар, контекстное меню, модалки, поиск, темы
 
 const CTX_ICONS = {
     insert: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
@@ -33,6 +33,7 @@ const CTX_ICONS = {
     painter: '<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="6" rx="1"/><path d="M12 9v5"/><path d="M9 21h6"/><path d="M12 14v7"/></svg>',
     clear: '<svg viewBox="0 0 24 24"><path d="M9 4h10l-3 16H6z"/><line x1="3" y1="20" x2="21" y2="20"/></svg>',
     color: '<svg viewBox="0 0 24 24"><path d="M9 11l3-3 7 7-3 3z"/><path d="M5 19h4v-4H5z"/></svg>',
+    plusCol: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="6" y1="12" x2="12" y2="12"/><line x1="9" y1="9" x2="9" y2="15"/></svg>',
     usd: '<svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 6a4 4 0 0 0-4-2h-2a4 4 0 0 0 0 8h2a4 4 0 0 1 0 8h-2a4 4 0 0 1-4-2"/></svg>',
     eur: '<svg viewBox="0 0 24 24"><path d="M18 6a7 7 0 1 0 0 12"/><line x1="4" y1="10" x2="13" y2="10"/><line x1="4" y1="14" x2="13" y2="14"/></svg>',
     rub: '<svg viewBox="0 0 24 24"><path d="M8 4v16"/><path d="M8 4h5a4 4 0 0 1 0 8H8"/><path d="M6 16h10"/><path d="M6 20h10"/></svg>',
@@ -102,7 +103,7 @@ function buildWorkspaces() {
     upEmpty();
 }
 
-// ========== CONTEXT MENU (многоуровневое) ==========
+// ========== CONTEXT MENU ==========
 let openSubmenus = [];
 
 function closeSubmenusFromLevel(level) {
@@ -186,7 +187,8 @@ function buildSubmenuHTML(subName, ctx) {
                 <div class="ctx-item" data-action="addNote"><span class="ctx-icon">${CTX_ICONS.note}</span> Заметка к ячейке</div>`;
         case 'col':
             return `
-                <div class="ctx-item has-sub" data-sub="colCurrency"><span class="ctx-icon">${CTX_ICONS.currency}</span> Валюта колонки</div>
+                <div class="ctx-item has-sub" data-sub="addColCur"><span class="ctx-icon">${CTX_ICONS.plusCol}</span> Добавить колонку с валютой</div>
+                <div class="ctx-item has-sub" data-sub="colCurrency"><span class="ctx-icon">${CTX_ICONS.currency}</span> Сменить валюту колонки</div>
                 <div class="ctx-div"></div>
                 <div class="ctx-item" data-action="renameCol"><span class="ctx-icon">${CTX_ICONS.rename}</span> Переименовать</div>
                 <div class="ctx-item" data-action="dupCol"><span class="ctx-icon">${CTX_ICONS.dup}</span> Дублировать</div>
@@ -198,12 +200,21 @@ function buildSubmenuHTML(subName, ctx) {
                 <div class="ctx-item" data-action="showAllCols"><span class="ctx-icon">${CTX_ICONS.eye}</span> Показать все</div>
                 <div class="ctx-item" data-action="autoFitCol"><span class="ctx-icon">${CTX_ICONS.autofit}</span> Автоширина</div>
                 <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">${CTX_ICONS.del}</span> Удалить колонку</div>`;
+        case 'addColCur':
+            return `
+                <div class="ctx-item" data-action="addColCurUSD"><span class="ctx-icon">${CTX_ICONS.usd}</span> Новая колонка в USD</div>
+                <div class="ctx-item" data-action="addColCurEUR"><span class="ctx-icon">${CTX_ICONS.eur}</span> Новая колонка в EUR</div>
+                <div class="ctx-item" data-action="addColCurRUB"><span class="ctx-icon">${CTX_ICONS.rub}</span> Новая колонка в RUB</div>
+                <div class="ctx-item" data-action="addColCurXAU"><span class="ctx-icon">${CTX_ICONS.gold}</span> Новая колонка в XAU (золото)</div>
+                <div class="ctx-item" data-action="addColCurBTC"><span class="ctx-icon">${CTX_ICONS.btc}</span> Новая колонка в BTC</div>
+                <div class="ctx-div"></div>
+                <div class="ctx-item" data-action="addColCurCustom"><span class="ctx-icon">${CTX_ICONS.currency}</span> Другая валюта…</div>`;
         case 'colCurrency':
             return `
                 <div class="ctx-item" data-action="colCurUSD"><span class="ctx-icon">${CTX_ICONS.usd}</span> Конвертировать в USD</div>
                 <div class="ctx-item" data-action="colCurEUR"><span class="ctx-icon">${CTX_ICONS.eur}</span> Конвертировать в EUR</div>
                 <div class="ctx-item" data-action="colCurRUB"><span class="ctx-icon">${CTX_ICONS.rub}</span> Конвертировать в RUB</div>
-                <div class="ctx-item" data-action="colCurXAU"><span class="ctx-icon">${CTX_ICONS.gold}</span> Конвертировать в XAU (золото)</div>
+                <div class="ctx-item" data-action="colCurXAU"><span class="ctx-icon">${CTX_ICONS.gold}</span> Конвертировать в XAU</div>
                 <div class="ctx-item" data-action="colCurBTC"><span class="ctx-icon">${CTX_ICONS.btc}</span> Конвертировать в BTC</div>
                 <div class="ctx-div"></div>
                 <div class="ctx-item" data-action="colCurSet"><span class="ctx-icon">${CTX_ICONS.currency}</span> Только пометить (без конвертации)…</div>
@@ -357,7 +368,22 @@ function execCtxAction(action, td, ctx) {
             break;
         }
 
-        // === Currency per column ===
+        // === Add column with currency ===
+        case 'addColCurUSD': if (td) addColWithCurrency(td, 'USD'); break;
+        case 'addColCurEUR': if (td) addColWithCurrency(td, 'EUR'); break;
+        case 'addColCurRUB': if (td) addColWithCurrency(td, 'RUB'); break;
+        case 'addColCurXAU': if (td) addColWithCurrency(td, 'XAU'); break;
+        case 'addColCurBTC': if (td) addColWithCurrency(td, 'BTC'); break;
+        case 'addColCurCustom': {
+            if (!td) break;
+            openPrompt('Код валюты (USD, EUR, RUB, XAU, BTC, OIL):', 'USD', (v) => {
+                const cur = String(v).trim().toUpperCase();
+                if (cur) addColWithCurrency(td, cur);
+            });
+            break;
+        }
+
+        // === Convert column ===
         case 'colCurUSD': if (td && ctx.ci != null) convertColumn(td, ctx.ci, 'USD'); break;
         case 'colCurEUR': if (td && ctx.ci != null) convertColumn(td, ctx.ci, 'EUR'); break;
         case 'colCurRUB': if (td && ctx.ci != null) convertColumn(td, ctx.ci, 'RUB'); break;
