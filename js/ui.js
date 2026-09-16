@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.1.1 — UI ====================
+// ==================== ONTEK v7.1.2 — UI ====================
 // Сайдбар, тулбар, контекстное меню, модалки, поиск, темы
 
 const CTX_ICONS = {
@@ -202,11 +202,11 @@ function buildSubmenuHTML(subName, ctx) {
                 <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">${CTX_ICONS.del}</span> Удалить колонку</div>`;
         case 'addColCur':
             return `
-                <div class="ctx-item" data-action="addColCurUSD"><span class="ctx-icon">${CTX_ICONS.usd}</span> Новая колонка в USD</div>
-                <div class="ctx-item" data-action="addColCurEUR"><span class="ctx-icon">${CTX_ICONS.eur}</span> Новая колонка в EUR</div>
-                <div class="ctx-item" data-action="addColCurRUB"><span class="ctx-icon">${CTX_ICONS.rub}</span> Новая колонка в RUB</div>
-                <div class="ctx-item" data-action="addColCurXAU"><span class="ctx-icon">${CTX_ICONS.gold}</span> Новая колонка в XAU (золото)</div>
-                <div class="ctx-item" data-action="addColCurBTC"><span class="ctx-icon">${CTX_ICONS.btc}</span> Новая колонка в BTC</div>
+                <div class="ctx-item" data-action="addColCurUSD"><span class="ctx-icon">${CTX_ICONS.usd}</span> Цена + Стоимость, USD</div>
+                <div class="ctx-item" data-action="addColCurEUR"><span class="ctx-icon">${CTX_ICONS.eur}</span> Цена + Стоимость, EUR</div>
+                <div class="ctx-item" data-action="addColCurRUB"><span class="ctx-icon">${CTX_ICONS.rub}</span> Цена + Стоимость, RUB</div>
+                <div class="ctx-item" data-action="addColCurXAU"><span class="ctx-icon">${CTX_ICONS.gold}</span> Цена + Стоимость, XAU (золото)</div>
+                <div class="ctx-item" data-action="addColCurBTC"><span class="ctx-icon">${CTX_ICONS.btc}</span> Цена + Стоимость, BTC</div>
                 <div class="ctx-div"></div>
                 <div class="ctx-item" data-action="addColCurCustom"><span class="ctx-icon">${CTX_ICONS.currency}</span> Другая валюта…</div>`;
         case 'colCurrency':
