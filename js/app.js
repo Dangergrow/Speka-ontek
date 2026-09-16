@@ -12,20 +12,32 @@ let activeWorkspace = 1;
 let usdRate = 0;
 let eurRate = 0;
 let sortState = {};
-let colWidths = {};      // { colName: px }
-let selectedRows = {};   // { tid: Set(rowIdx) }
+let colWidths = {};       // { colName: px }
+let selectedRows = {};    // { tid: Set<rowIdx> }
 let lastSearch = { query: '', matches: [], idx: 0 };
 let lastSelectedRow = null;
-let cellData = {};       // для contenteditable: { tid: { ri: { ci: string } } }
+
+// Cell selection state
+let cellSel = { tid: null, r1: -1, c1: -1, r2: -1, c2: -1, anchorR: -1, anchorC: -1, dragging: false };
 
 let tableSettings = {
     rowHeight: 38,
     fontSize: 13,
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    padding: 10,
     wrapText: false,
     showRowNums: true,
     showTotals: true,
-    compact: false,
-    showBorders: true
+    zebra: true,
+    vGrid: true,
+    hGrid: true,
+    rounded: true
+};
+
+let notifySettings = {
+    enabled: true,
+    position: 'toast-bottom-right',
+    duration: 3000
 };
 
 const workspaces = {};
@@ -34,6 +46,7 @@ for (let i = 1; i <= 5; i++) workspaces[i] = [];
 const Q = s => document.querySelector(s);
 const QA = s => document.querySelectorAll(s);
 
+// SVG ICONS
 const ICONS = {
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
     minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
@@ -53,8 +66,7 @@ const ICONS = {
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.9" y1="4.9" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.1" y2="19.1"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="6.3" y1="17.7" x2="4.9" y2="19.1"/><line x1="19.1" y1="4.9" x2="17.7" y2="6.3"/></svg>',
     palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2a10 10 0 1 0 0 20c1 0 2-.8 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4a2 2 0 0 1 2-2h2.5A4.5 4.5 0 0 0 22 11c0-5-4.5-9-10-9z"/></svg>',
-    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
-    merge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>'
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
 
 const RU_KEYS = { 'Ф':'A','А':'A','В':'D','Д':'D','С':'C','Ц':'C','Ч':'X','Х':'X','К':'R','Р':'R','М':'V','Ж':'V','Щ':'O','О':'O','Г':'U','У':'U','Ы':'S','Я':'Z','Ь':'DELETE','Т':'DELETE','1':'1','2':'2','3':'3','4':'4','5':'5' };
@@ -81,12 +93,15 @@ const COLOR_THEMES = [
 let hotkeys = { ...DEFAULT_HOTKEYS };
 
 // ==================== UTILS ====================
-function toast(msg, type = 'success', duration = 2800) {
+function toast(msg, type = 'success', duration) {
+    if (!notifySettings.enabled) return;
     const container = Q('#toastContainer');
     if (!container) return;
+    const dur = duration || notifySettings.duration;
     const icons = { success:'✓', error:'✕', info:'ℹ', warning:'⚠' };
     const el = document.createElement('div');
     el.className = `toast-item ${type}`;
+    el.style.setProperty('--toast-duration', dur + 'ms');
     el.innerHTML = `
         <div class="toast-icon">${icons[type] || '✓'}</div>
         <div class="toast-message">${escapeHtml(msg)}</div>
@@ -96,7 +111,13 @@ function toast(msg, type = 'success', duration = 2800) {
     setTimeout(() => {
         el.classList.add('removing');
         setTimeout(() => el.remove(), 250);
-    }, duration);
+    }, dur);
+}
+
+function updateToastPosition() {
+    const c = Q('#toastContainer');
+    if (!c) return;
+    c.className = 'toast-container ' + notifySettings.position;
 }
 
 function escapeHtml(s) {
@@ -123,9 +144,13 @@ function updateStatusBar() {
     const rows = td.rows.length;
     const total = sumT(td).toFixed(2);
     const curr = td.currency;
+    const sel = cellSel.tid === td.id && cellSel.r1 >= 0
+        ? `<span class="status-stat">Выделено: <b>${Math.abs(cellSel.r2 - cellSel.r1) + 1}×${Math.abs(cellSel.c2 - cellSel.c1) + 1}</b></span>`
+        : '';
     center.innerHTML = `
         <span class="status-stat">Строк: <b>${rows}</b></span>
         <span class="status-stat">Итого: <b>${total} ${curr}</b></span>
+        ${sel}
     `;
 }
 
@@ -222,26 +247,116 @@ function isEmptyRow(row) {
     return !row || row.every(c => String(c ?? '').trim() === '');
 }
 
+// ==================== CELL STYLES ====================
+function getCellStyle(td, ri, ci) {
+    if (!td.styles) td.styles = {};
+    return td.styles[ri + ':' + ci] || {};
+}
+
+function setCellStyle(td, ri, ci, patch) {
+    if (!td.styles) td.styles = {};
+    const key = ri + ':' + ci;
+    td.styles[key] = { ...(td.styles[key] || {}), ...patch };
+    // Удаляем пустые
+    const s = td.styles[key];
+    if (Object.keys(s).length === 0) delete td.styles[key];
+    // Применяем визуально к ячейке
+    const cell = td.el.querySelector(`.cell[data-r="${ri}"][data-c="${ci}"]`);
+    if (cell) applyStyleToCell(cell, s);
+    // Сохраняем
+    saveNow();
+}
+
+function applyStyleToCell(cell, style) {
+    if (!cell) return;
+    cell.classList.remove('cell-bold', 'cell-italic', 'cell-underline', 'cell-strike');
+    if (style.bold) cell.classList.add('cell-bold');
+    if (style.italic) cell.classList.add('cell-italic');
+    if (style.underline) cell.classList.add('cell-underline');
+    if (style.strike) cell.classList.add('cell-strike');
+    if (style.align) cell.style.textAlign = style.align;
+    else cell.style.textAlign = '';
+}
+
+function forEachSelectedCell(td, fn) {
+    if (!cellSel.tid || cellSel.tid !== td.id) return;
+    if (cellSel.r1 < 0) return;
+    const r1 = Math.min(cellSel.r1, cellSel.r2);
+    const r2 = Math.max(cellSel.r1, cellSel.r2);
+    const c1 = Math.min(cellSel.c1, cellSel.c2);
+    const c2 = Math.max(cellSel.c1, cellSel.c2);
+    for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+            fn(r, c);
+        }
+    }
+}
+
+// ==================== MERGES (rectangular) ====================
+function findMergeContaining(td, ri, ci) {
+    if (!td.merges) return null;
+    return td.merges.find(m => ri >= m.r1 && ri <= m.r2 && ci >= m.c1 && ci <= m.c2);
+}
+
+function isMergeCovered(td, ri, ci) {
+    const m = findMergeContaining(td, ri, ci);
+    if (!m) return false;
+    return !(m.r1 === ri && m.c1 === ci);
+}
+
+function mergeRect(td, r1, c1, r2, c2) {
+    if (r1 > r2) [r1, r2] = [r2, r1];
+    if (c1 > c2) [c1, c2] = [c2, c1];
+    if (r1 === r2 && c1 === c2) { toast('Нужно выделить минимум 2 ячейки', 'warning'); return; }
+    // Удаляем пересекающиеся
+    td.merges = (td.merges || []).filter(m => {
+        const overlap = !(m.r2 < r1 || m.r1 > r2 || m.c2 < c1 || m.c1 > c2);
+        return !overlap;
+    });
+    // Сохраняем значение только у верхней левой
+    const val = td.rows[r1][c1];
+    for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+            if (r === r1 && c === c1) continue;
+            td.rows[r][c] = '';
+        }
+    }
+    td.rows[r1][c1] = val;
+    td.merges.push({ r1, c1, r2, c2 });
+    render(td);
+    toast(`Объединено ${(r2 - r1 + 1) * (c2 - c1 + 1)} ячеек`, 'success');
+}
+
+function unmergeAt(td, ri, ci) {
+    const m = findMergeContaining(td, ri, ci);
+    if (!m) { toast('Эта ячейка не объединена', 'warning'); return; }
+    td.merges = td.merges.filter(x => x !== m);
+    render(td);
+    toast('Разъединено', 'info');
+}
+
 // ==================== TABLE SETTINGS ====================
 function applyTableSettings() {
     const root = document.documentElement;
-    let rowH = tableSettings.rowHeight;
-    let fontS = tableSettings.fontSize;
-    if (tableSettings.compact) {
-        rowH = Math.max(24, rowH - 10);
-        fontS = Math.max(10, fontS - 1);
-    }
-    root.style.setProperty('--font-size-table', fontS + 'px');
-    root.style.setProperty('--row-height', rowH + 'px');
+    root.style.setProperty('--font-size-table', tableSettings.fontSize + 'px');
+    root.style.setProperty('--font-family', tableSettings.fontFamily);
+    root.style.setProperty('--row-height', tableSettings.rowHeight + 'px');
+    root.style.setProperty('--cell-padding', tableSettings.padding + 'px');
     root.style.setProperty('--wrap-text', tableSettings.wrapText ? 'pre-wrap' : 'nowrap');
-    document.body.classList.toggle('compact-mode', tableSettings.compact);
-    document.body.classList.toggle('no-borders', !tableSettings.showBorders);
 
-    // Обновить все карточки
+    document.body.classList.toggle('no-zebra', !tableSettings.zebra);
+    document.body.classList.toggle('no-gridlines', !tableSettings.vGrid);
+    document.body.classList.toggle('no-hgridlines', !tableSettings.hGrid);
+    document.body.classList.toggle('no-rounded', !tableSettings.rounded);
+
+    // Padding
+    document.querySelectorAll('.cell').forEach(c => {
+        c.style.padding = tableSettings.padding + 'px 12px';
+    });
+
     Object.keys(workspaces).forEach(ws => {
         workspaces[ws].forEach(td => render(td));
     });
-
     saveNow();
 }
 
@@ -249,20 +364,27 @@ function resetTableSettings() {
     tableSettings = {
         rowHeight: 38,
         fontSize: 13,
+        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        padding: 10,
         wrapText: false,
         showRowNums: true,
         showTotals: true,
-        compact: false,
-        showBorders: true
+        zebra: true,
+        vGrid: true,
+        hGrid: true,
+        rounded: true
     };
     colWidths = {};
     applyAllSettings();
     toast('Настройки таблицы сброшены', 'success');
 }
 
-// ==================== SETTINGS ====================
+// ==================== SETTINGS PERSISTENCE ====================
 function saveNow() {
-    const s = { theme, color: colorTheme, hotkeys, activeWorkspace, tableSettings, colWidths };
+    const s = {
+        theme, color: colorTheme, hotkeys, activeWorkspace,
+        tableSettings, notifySettings, colWidths
+    };
     const json = JSON.stringify(s);
     localStorage.setItem('ontek_settings', json);
     if (window.pywebview && window.pywebview.api) {
@@ -285,6 +407,7 @@ async function loadSettings() {
                 if (s.hotkeys) hotkeys = s.hotkeys;
                 if (s.activeWorkspace) activeWorkspace = s.activeWorkspace;
                 if (s.tableSettings) tableSettings = { ...tableSettings, ...s.tableSettings };
+                if (s.notifySettings) notifySettings = { ...notifySettings, ...s.notifySettings };
                 if (s.colWidths) colWidths = s.colWidths;
                 return;
             }
@@ -298,6 +421,7 @@ async function loadSettings() {
             if (s.hotkeys) hotkeys = s.hotkeys;
             if (s.activeWorkspace) activeWorkspace = s.activeWorkspace;
             if (s.tableSettings) tableSettings = { ...tableSettings, ...s.tableSettings };
+            if (s.notifySettings) notifySettings = { ...notifySettings, ...s.notifySettings };
             if (s.colWidths) colWidths = s.colWidths;
         }
     } catch (e) {}
@@ -320,18 +444,29 @@ function applyAllSettings() {
     document.querySelectorAll('.workspace-panel').forEach(p => p.classList.toggle('active', +p.dataset.ws === activeWorkspace));
     document.querySelectorAll('.theme-card').forEach(c => c.classList.toggle('active', c.dataset.theme === colorTheme));
     updateAllHKDisplays();
+    updateToastPosition();
 
-    const rh = Q('#setRowHeight'), rhv = Q('#valRowHeight');
-    if (rh) rh.value = tableSettings.rowHeight;
-    if (rhv) rhv.textContent = tableSettings.rowHeight + ' px';
-    const fs = Q('#setFontSize'), fsv = Q('#valFontSize');
-    if (fs) fs.value = tableSettings.fontSize;
-    if (fsv) fsv.textContent = tableSettings.fontSize + ' px';
-    const wt = Q('#setWrapText'); if (wt) wt.checked = tableSettings.wrapText;
-    const sn = Q('#setShowRowNums'); if (sn) sn.checked = tableSettings.showRowNums;
-    const st = Q('#setShowTotals'); if (st) st.checked = tableSettings.showTotals;
-    const cm = Q('#setCompact'); if (cm) cm.checked = tableSettings.compact;
-    const sb = Q('#setShowBorders'); if (sb) sb.checked = tableSettings.showBorders;
+    // Sync settings UI
+    const set = (id, val) => { const el = Q('#' + id); if (el) el.value = val; };
+    const setC = (id, val) => { const el = Q('#' + id); if (el) el.checked = val; };
+    set('setRowHeight', tableSettings.rowHeight);
+    Q('#valRowHeight') && (Q('#valRowHeight').textContent = tableSettings.rowHeight + ' px');
+    set('setFontSize', tableSettings.fontSize);
+    Q('#valFontSize') && (Q('#valFontSize').textContent = tableSettings.fontSize + ' px');
+    set('setFontFamily', tableSettings.fontFamily);
+    set('setPadding', tableSettings.padding);
+    Q('#valPadding') && (Q('#valPadding').textContent = tableSettings.padding + ' px');
+    setC('setWrapText', tableSettings.wrapText);
+    setC('setShowRowNums', tableSettings.showRowNums);
+    setC('setShowTotals', tableSettings.showTotals);
+    setC('setZebra', tableSettings.zebra);
+    setC('setVGrid', tableSettings.vGrid);
+    setC('setHGrid', tableSettings.hGrid);
+    setC('setRounded', tableSettings.rounded);
+    setC('setShowToasts', notifySettings.enabled);
+    set('setToastPos', notifySettings.position);
+    set('setToastDur', notifySettings.duration);
+    Q('#valToastDur') && (Q('#valToastDur').textContent = (notifySettings.duration / 1000).toFixed(1) + ' s');
 
     applyTableSettings();
 }
@@ -339,6 +474,7 @@ function applyAllSettings() {
 function switchWorkspace(ws) {
     activeWorkspace = ws;
     actId = null;
+    clearCellSelection();
     applyAllSettings();
     saveNow();
     updateStatusBar();
@@ -373,13 +509,10 @@ function convertCurrency(td) {
     }
     td.currency = newCur;
     td.rows.forEach(r => calc(r, td.cols));
-    // Пересобираем header карточки, чтобы badge обновился
+    // Полная перестройка header чтобы badge обновился
     if (td.card) {
         const oldHdr = td.card.querySelector('.card-hdr');
-        if (oldHdr) {
-            const newHdr = buildCardHeader(td);
-            oldHdr.replaceWith(newHdr);
-        }
+        if (oldHdr) oldHdr.replaceWith(buildCardHeader(td));
     }
     render(td);
     saveNow();
@@ -460,12 +593,9 @@ function buildSidebarV2() {
         </div>
     `).join('');
 
-    const tc = Q('#btnColorTheme');
-    if (tc) tc.innerHTML = ICONS.palette;
-    const ts = Q('#btnSettings');
-    if (ts) ts.innerHTML = ICONS.settings;
-    const ti = Q('#themeIcon');
-    if (ti) ti.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
+    const tc = Q('#btnColorTheme'); if (tc) tc.innerHTML = ICONS.palette;
+    const ts = Q('#btnSettings'); if (ts) ts.innerHTML = ICONS.settings;
+    const ti = Q('#themeIcon'); if (ti) ti.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
 }
 
 // ==================== WORKSPACES ====================
@@ -511,7 +641,6 @@ function buildCardHeader(td) {
             <button class="card-btn icon-only danger del-btn" title="Удалить">🗑</button>
         </div>
     `;
-
     hdr.querySelector('.cur-btn').onclick = e => { e.stopPropagation(); convertCurrency(td); };
     hdr.querySelector('.dup-btn').onclick = e => { e.stopPropagation(); dupTable(td); };
     hdr.querySelector('.del-btn').onclick = e => {
@@ -541,7 +670,8 @@ function addTable(cur = 'RUB') {
         currency: cur,
         el: null,
         card: null,
-        merges: []
+        merges: [],
+        styles: {}
     };
     ws.push(td);
     const area = getArea();
@@ -567,7 +697,8 @@ function dupTable(src) {
         currency: src.currency,
         el: null,
         card: null,
-        merges: src.merges ? src.merges.map(m => ({ ...m })) : []
+        merges: src.merges ? src.merges.map(m => ({ ...m })) : [],
+        styles: src.styles ? JSON.parse(JSON.stringify(src.styles)) : {}
     };
     ws.push(td);
     const area = getArea();
@@ -605,7 +736,8 @@ function buildCardDOM(td) {
             ri = +trEl.dataset.ri;
             const cellEl = e.target.closest('.cell');
             if (cellEl) {
-                ci = +cellEl.dataset.ci;
+                ri = +cellEl.dataset.r;
+                ci = +cellEl.dataset.c;
             }
         }
         window._ctxD = { tid: td.id, ri, ci };
@@ -637,59 +769,55 @@ function updateCardStats(td) {
     updateStatusBar();
 }
 
-// ==================== MERGE ====================
-function getMergeAt(td, ri, ci) {
-    if (!td.merges) return null;
-    return td.merges.find(m => m.col === ci && ri >= m.rowStart && ri <= m.rowEnd);
+// ==================== CELL SELECTION ====================
+function clearCellSelection() {
+    cellSel = { tid: null, r1: -1, c1: -1, r2: -1, c2: -1, anchorR: -1, anchorC: -1, dragging: false };
+    document.querySelectorAll('.cell.selected-cell, .cell.anchor-cell').forEach(c => {
+        c.classList.remove('selected-cell', 'anchor-cell');
+    });
+    updateStatusBar();
 }
 
-function isMergeHidden(td, ri, ci) {
-    const m = getMergeAt(td, ri, ci);
-    return m && m.rowStart !== ri;
-}
-
-function mergeSelectedCells(td, ci, rowIdxs) {
-    if (!rowIdxs || rowIdxs.length < 2) {
-        toast('Выделите несколько строк (клик на номер строки + Shift+клик)', 'warning');
-        return;
+function selectCell(td, ri, ci, shift) {
+    if (shift && cellSel.tid === td.id && cellSel.anchorR >= 0) {
+        cellSel.r1 = cellSel.anchorR;
+        cellSel.c1 = cellSel.anchorC;
+        cellSel.r2 = ri;
+        cellSel.c2 = ci;
+    } else {
+        cellSel.tid = td.id;
+        cellSel.anchorR = ri;
+        cellSel.anchorC = ci;
+        cellSel.r1 = ri;
+        cellSel.c1 = ci;
+        cellSel.r2 = ri;
+        cellSel.c2 = ci;
     }
-    // Проверка что идут подряд
-    const sorted = [...rowIdxs].sort((a, b) => a - b);
-    for (let i = 1; i < sorted.length; i++) {
-        if (sorted[i] !== sorted[i - 1] + 1) {
-            toast('Строки должны идти подряд', 'warning');
-            return;
+    updateCellSelectionUI(td);
+    updateStatusBar();
+}
+
+function updateCellSelectionUI(td) {
+    // Убираем у всех
+    document.querySelectorAll('.cell.selected-cell, .cell.anchor-cell').forEach(c => {
+        c.classList.remove('selected-cell', 'anchor-cell');
+    });
+    if (!cellSel.tid || cellSel.tid !== td.id || cellSel.r1 < 0) return;
+    const r1 = Math.min(cellSel.r1, cellSel.r2);
+    const r2 = Math.max(cellSel.r1, cellSel.r2);
+    const c1 = Math.min(cellSel.c1, cellSel.c2);
+    const c2 = Math.max(cellSel.c1, cellSel.c2);
+    for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+            const cell = td.el.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+            if (cell) {
+                cell.classList.add('selected-cell');
+                if (r === cellSel.anchorR && c === cellSel.anchorC) {
+                    cell.classList.add('anchor-cell');
+                }
+            }
         }
     }
-    const rowStart = sorted[0];
-    const rowEnd = sorted[sorted.length - 1];
-
-    // Удаляем пересекающиеся merges в той же колонке
-    td.merges = (td.merges || []).filter(m => {
-        if (m.col !== ci) return true;
-        if (m.rowEnd < rowStart || m.rowStart > rowEnd) return true;
-        return false;
-    });
-    // Создаём новый
-    td.merges.push({ col: ci, rowStart, rowEnd });
-    // Значение — из первой ячейки
-    const val = td.rows[rowStart][ci];
-    for (let r = rowStart + 1; r <= rowEnd; r++) {
-        td.rows[r][ci] = '';
-    }
-    td.rows[rowStart][ci] = val;
-    // Сбрасываем выделение
-    selectedRows[td.id] = new Set();
-    render(td);
-    toast(`Объединено ${rowEnd - rowStart + 1} ячеек`, 'success');
-}
-
-function unmergeCellAt(td, ri, ci) {
-    const m = getMergeAt(td, ri, ci);
-    if (!m) { toast('Эта ячейка не объединена', 'warning'); return; }
-    td.merges = td.merges.filter(x => x !== m);
-    render(td);
-    toast('Ячейки разъединены', 'info');
 }
 
 // ==================== RENDER ====================
@@ -704,7 +832,7 @@ function render(td) {
     let theadHtml = '<tr>';
     if (tableSettings.showRowNums) theadHtml += '<th class="row-num">№</th>';
     td.cols.forEach((col, i) => {
-        const w = colWidths[col] || colWidths[i];
+        const w = colWidths[col];
         const styleW = w ? `style="width:${w}px;min-width:${w}px;max-width:${w}px"` : '';
         const sorted = sort && sort.col === i;
         const sortCls = sorted ? (sort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
@@ -774,52 +902,58 @@ function render(td) {
         }
 
         row.forEach((v, colIdx) => {
-            if (isMergeHidden(td, ri, colIdx)) return;
+            // Пропускаем ячейки, покрытые merge
+            if (isMergeCovered(td, ri, colIdx)) return;
 
             const tdEl = document.createElement('td');
             const cell = document.createElement('div');
             const cn = (td.cols[colIdx] || '').toLowerCase();
             const isTotal = cn.startsWith('стоимость');
             const isNum = isNumericCol(cn);
-            const mergeAt = getMergeAt(td, ri, colIdx);
+            const mergeAt = findMergeContaining(td, ri, colIdx);
 
             cell.className = 'cell';
             cell.contentEditable = isTotal ? 'false' : 'true';
-            cell.dataset.ci = colIdx;
-            cell.dataset.ri = ri;
+            cell.dataset.r = ri;
+            cell.dataset.c = colIdx;
 
             if (isNum) cell.classList.add('num');
             if (isTotal) cell.classList.add('total');
             if (tableSettings.wrapText) cell.classList.add('wrap');
+            cell.style.padding = tableSettings.padding + 'px 12px';
 
-            // Set width
-            const w = colWidths[td.cols[colIdx]] || colWidths[colIdx];
+            // Width
+            const w = colWidths[td.cols[colIdx]];
             if (w) {
                 tdEl.style.width = w + 'px';
                 tdEl.style.minWidth = w + 'px';
                 tdEl.style.maxWidth = w + 'px';
             }
 
-            if (mergeAt && mergeAt.rowStart === ri) {
-                tdEl.rowSpan = mergeAt.rowEnd - mergeAt.rowStart + 1;
+            // Apply merge to top-left
+            if (mergeAt && mergeAt.r1 === ri && mergeAt.c1 === colIdx) {
+                tdEl.rowSpan = mergeAt.r2 - mergeAt.r1 + 1;
+                tdEl.colSpan = mergeAt.c2 - mergeAt.c1 + 1;
                 tdEl.classList.add('merged-start');
             }
+
+            // Apply style
+            const style = getCellStyle(td, ri, colIdx);
+            applyStyleToCell(cell, style);
 
             cell.textContent = v ?? '';
 
             // Events
             cell.addEventListener('focus', () => {
                 cell.dataset.old = cell.innerText;
+                setAct(td.id);
             });
 
             cell.addEventListener('input', () => {
                 let val = cell.innerText;
-                // Убираем последний \n от contenteditable
                 if (val.endsWith('\n')) val = val.slice(0, -1);
                 td.rows[ri][colIdx] = val;
-                if (isNum && !isTotal) {
-                    updCalcRow(td, ri, true);
-                }
+                if (isNum && !isTotal) updCalcRow(td, ri, true);
             });
 
             cell.addEventListener('blur', () => {
@@ -844,7 +978,6 @@ function render(td) {
             cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' && e.shiftKey) {
                     e.preventDefault();
-                    // Вставляем перенос строки
                     document.execCommand('insertLineBreak');
                     return;
                 }
@@ -863,14 +996,69 @@ function render(td) {
                     cell.blur();
                     return;
                 }
+                // Ctrl+B/I/U для стилей
+                if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+                    if (e.key.toLowerCase() === 'b') {
+                        e.preventDefault();
+                        toggleStyle('bold');
+                        return;
+                    }
+                    if (e.key.toLowerCase() === 'i') {
+                        e.preventDefault();
+                        toggleStyle('italic');
+                        return;
+                    }
+                    if (e.key.toLowerCase() === 'u') {
+                        e.preventDefault();
+                        toggleStyle('underline');
+                        return;
+                    }
+                }
             });
 
             cell.addEventListener('paste', e => {
                 e.preventDefault();
                 const text = (e.clipboardData || window.clipboardData).getData('text/plain');
                 if (!text) return;
-                // Если многострочный — вставляем как переносы
+                if (text.includes('\t') || text.split('\n').length > 1) {
+                    // Многострочный — обрабатываем через вставку строк
+                    const parsed = parseClipboard(text);
+                    if (parsed.length > 1 || (parsed[0] && parsed[0].length > 1)) {
+                        pasteAt(td, ri, colIdx, parsed);
+                        return;
+                    }
+                }
                 document.execCommand('insertText', false, text);
+            });
+
+            // Cell selection by mouse
+            cell.addEventListener('mousedown', e => {
+                if (e.button !== 0) return;
+                if (e.shiftKey) {
+                    e.preventDefault();
+                    selectCell(td, ri, colIdx, true);
+                    return;
+                }
+                // Стартуем драг
+                cellSel.tid = td.id;
+                cellSel.anchorR = ri;
+                cellSel.anchorC = colIdx;
+                cellSel.r1 = ri;
+                cellSel.c1 = colIdx;
+                cellSel.r2 = ri;
+                cellSel.c2 = colIdx;
+                cellSel.dragging = true;
+                updateCellSelectionUI(td);
+                updateStatusBar();
+            });
+
+            cell.addEventListener('mouseenter', () => {
+                if (cellSel.dragging && cellSel.tid === td.id) {
+                    cellSel.r2 = ri;
+                    cellSel.c2 = colIdx;
+                    updateCellSelectionUI(td);
+                    updateStatusBar();
+                }
             });
 
             tdEl.appendChild(cell);
@@ -904,7 +1092,7 @@ function render(td) {
             if (i === (ti >= 0 ? ti - 1 : td.cols.length - 2)) {
                 html += '<td style="text-align:right;padding:10px 12px;font-weight:700">Итого</td>';
             } else if (i === ti) {
-                html += `<td style="padding:0"><div class="cell total">${sumT(td).toFixed(2)}</div></td>`;
+                html += `<td style="padding:0"><div class="cell total" style="padding:${tableSettings.padding}px 12px">${sumT(td).toFixed(2)}</div></td>`;
             } else {
                 html += '<td></td>';
             }
@@ -914,37 +1102,23 @@ function render(td) {
         tbody.appendChild(totTr);
     }
 
+    // Восстановить выделение ячеек
+    updateCellSelectionUI(td);
     updateCardStats(td);
 }
 
 function updCalcRow(td, ri, skipRecalc) {
-    if (!skipRecalc) {
-        calc(td.rows[ri], td.cols);
-    }
+    if (!skipRecalc) calc(td.rows[ri], td.cols);
     const ti = ci(td.cols, 'Стоимость');
     if (ti < 0) return;
-
-    // Обновляем ячейку Стоимость в этой строке
-    const tr = td.el.querySelector(`tbody tr[data-ri="${ri}"]`);
-    if (tr) {
-        const cells = tr.querySelectorAll('.cell');
-        for (const c of cells) {
-            if (+c.dataset.ci === ti) {
-                c.textContent = td.rows[ri][ti] ?? '';
-                break;
-            }
-        }
-    }
-
-    // Обновляем итог
+    const cell = td.el.querySelector(`.cell[data-r="${ri}"][data-c="${ti}"]`);
+    if (cell) cell.textContent = td.rows[ri][ti] ?? '';
     const totTr = td.el.querySelector('tbody tr.row-total');
     if (totTr) {
-        const totCells = totTr.querySelectorAll('.cell');
-        totCells.forEach(c => {
-            if (c.classList.contains('total')) c.textContent = sumT(td).toFixed(2);
+        totTr.querySelectorAll('.cell.total').forEach(c => {
+            c.textContent = sumT(td).toFixed(2);
         });
     }
-
     updateCardStats(td);
 }
 
@@ -954,16 +1128,13 @@ function moveFocus(td, ri, ci, dc, dr = 0) {
     if (nc < 0) { nc = td.cols.length - 1; nr--; }
     if (nr >= td.rows.length) return;
     if (nr < 0) return;
-    while (isMergeHidden(td, nr, nc)) {
+    while (isMergeCovered(td, nr, nc)) {
         nc += dc >= 0 ? 1 : -1;
         if (nc >= td.cols.length || nc < 0) return;
     }
-    const tr = td.el.querySelector(`tbody tr[data-ri="${nr}"]`);
-    if (!tr) return;
-    const cell = tr.querySelector(`.cell[data-ci="${nc}"]`);
+    const cell = td.el.querySelector(`.cell[data-r="${nr}"][data-c="${nc}"]`);
     if (cell) {
         cell.focus();
-        // Поставить курсор в конец
         const range = document.createRange();
         range.selectNodeContents(cell);
         range.collapse(false);
@@ -973,38 +1144,91 @@ function moveFocus(td, ri, ci, dc, dr = 0) {
     }
 }
 
+// ==================== CELL STYLE TOGGLES ====================
+function toggleStyle(prop) {
+    const td = active();
+    if (!td) return;
+    const currentStyle = getCellStyle(td, cellSel.anchorR, cellSel.anchorC);
+    const newVal = !currentStyle[prop];
+    forEachSelectedCell(td, (r, c) => {
+        setCellStyle(td, r, c, { [prop]: newVal });
+    });
+    render(td);
+}
+
+function setAlign(align) {
+    const td = active();
+    if (!td) return;
+    forEachSelectedCell(td, (r, c) => {
+        setCellStyle(td, r, c, { align });
+    });
+    render(td);
+}
+
+function clearFormat() {
+    const td = active();
+    if (!td) return;
+    forEachSelectedCell(td, (r, c) => {
+        if (td.styles) delete td.styles[r + ':' + c];
+    });
+    render(td);
+    toast('Формат очищен', 'info');
+}
+
+// ==================== ROW / COL OPERATIONS ====================
 function insRowBelow(td, idx) { insRow(td, idx + 1); }
 function insRowAbove(td, idx) { insRow(td, idx); }
 
 function insRow(td, idx) {
     td.rows.splice(idx, 0, Array(td.cols.length).fill(''));
     calc(td.rows[idx], td.cols);
+    // Сдвигаем merges и styles
     if (td.merges) {
-        td.merges.forEach(m => {
-            if (m.rowStart >= idx) m.rowStart++;
-            if (m.rowEnd >= idx) m.rowEnd++;
-        });
+        td.merges = td.merges.map(m => ({
+            r1: m.r1 >= idx ? m.r1 + 1 : m.r1,
+            r2: m.r2 >= idx ? m.r2 + 1 : m.r2,
+            c1: m.c1, c2: m.c2
+        }));
+    }
+    if (td.styles) {
+        const ns = {};
+        for (const [k, v] of Object.entries(td.styles)) {
+            const [r, c] = k.split(':').map(Number);
+            const nr = r >= idx ? r + 1 : r;
+            ns[nr + ':' + c] = v;
+        }
+        td.styles = ns;
     }
     render(td);
 }
 
 function delRow(td, idx) {
     if (td.rows.length <= 1) { toast('Нельзя удалить последнюю строку', 'warning'); return; }
-    hist.push({ a: 'delRow', tid: td.id, d: { i: idx, r: [...td.rows[idx]], merges: td.merges ? td.merges.map(m => ({ ...m })) : [] } });
+    hist.push({
+        a: 'delRow', tid: td.id,
+        d: { i: idx, r: [...td.rows[idx]],
+             merges: td.merges ? td.merges.map(m => ({ ...m })) : [],
+             styles: td.styles ? JSON.parse(JSON.stringify(td.styles)) : {} }
+    });
     td.rows.splice(idx, 1);
     if (td.merges) {
-        td.merges = td.merges.filter(m => {
-            if (m.rowStart > idx && m.rowEnd > idx) {
-                m.rowStart--; m.rowEnd--;
-                return true;
-            }
-            if (m.rowStart <= idx && m.rowEnd >= idx) {
-                if (m.rowEnd - m.rowStart < 1) return false;
-                m.rowEnd--;
-                return true;
-            }
-            return true;
-        });
+        td.merges = td.merges
+            .map(m => ({
+                r1: m.r1 > idx ? m.r1 - 1 : m.r1,
+                r2: m.r2 >= idx ? m.r2 - 1 : m.r2,
+                c1: m.c1, c2: m.c2
+            }))
+            .filter(m => m.r1 <= m.r2);
+    }
+    if (td.styles) {
+        const ns = {};
+        for (const [k, v] of Object.entries(td.styles)) {
+            const [r, c] = k.split(':').map(Number);
+            if (r === idx) continue;
+            const nr = r > idx ? r - 1 : r;
+            ns[nr + ':' + c] = v;
+        }
+        td.styles = ns;
     }
     render(td);
 }
@@ -1014,20 +1238,22 @@ function addRowEnd(td) {
     calc(td.rows[td.rows.length - 1], td.cols);
     render(td);
     setTimeout(() => {
-        const tr = td.el.querySelector(`tbody tr[data-ri="${td.rows.length - 1}"]`);
-        if (tr) {
-            const cell = tr.querySelector('.cell');
-            if (cell) cell.focus();
-        }
+        const cell = td.el.querySelector(`.cell[data-r="${td.rows.length - 1}"][data-c="0"]`);
+        if (cell) cell.focus();
     }, 50);
 }
 
 function delRowEnd(td) {
     if (td.rows.length <= 1) { toast('Нельзя удалить последнюю строку', 'warning'); return; }
-    hist.push({ a: 'delRowEnd', tid: td.id, d: { i: td.rows.length - 1, r: [...td.rows[td.rows.length - 1]], merges: td.merges ? td.merges.map(m => ({ ...m })) : [] } });
+    hist.push({
+        a: 'delRowEnd', tid: td.id,
+        d: { i: td.rows.length - 1, r: [...td.rows[td.rows.length - 1]],
+             merges: td.merges ? td.merges.map(m => ({ ...m })) : [],
+             styles: td.styles ? JSON.parse(JSON.stringify(td.styles)) : {} }
+    });
     td.rows.pop();
     if (td.merges) {
-        td.merges = td.merges.filter(m => m.rowStart < td.rows.length && m.rowEnd < td.rows.length);
+        td.merges = td.merges.filter(m => m.r1 < td.rows.length && m.r2 < td.rows.length);
     }
     render(td);
 }
@@ -1038,7 +1264,20 @@ function insCol(td, idx) {
         td.cols.splice(idx, 0, name.trim());
         td.rows.forEach(r => r.splice(idx, 0, ''));
         if (td.merges) {
-            td.merges.forEach(m => { if (m.col >= idx) m.col++; });
+            td.merges = td.merges.map(m => ({
+                r1: m.r1, r2: m.r2,
+                c1: m.c1 >= idx ? m.c1 + 1 : m.c1,
+                c2: m.c2 >= idx ? m.c2 + 1 : m.c2
+            }));
+        }
+        if (td.styles) {
+            const ns = {};
+            for (const [k, v] of Object.entries(td.styles)) {
+                const [r, c] = k.split(':').map(Number);
+                const nc = c >= idx ? c + 1 : c;
+                ns[r + ':' + nc] = v;
+            }
+            td.styles = ns;
         }
         render(td);
     });
@@ -1050,8 +1289,24 @@ function delCol(td, idx) {
     td.cols.splice(idx, 1);
     td.rows.forEach(r => r.splice(idx, 1));
     if (td.merges) {
-        td.merges = td.merges.filter(m => m.col !== idx);
-        td.merges.forEach(m => { if (m.col > idx) m.col--; });
+        td.merges = td.merges
+            .filter(m => !(m.c1 === idx && m.c2 === idx))
+            .map(m => ({
+                r1: m.r1, r2: m.r2,
+                c1: m.c1 > idx ? m.c1 - 1 : m.c1,
+                c2: m.c2 > idx ? m.c2 - 1 : m.c2
+            }))
+            .filter(m => m.c1 <= m.c2);
+    }
+    if (td.styles) {
+        const ns = {};
+        for (const [k, v] of Object.entries(td.styles)) {
+            const [r, c] = k.split(':').map(Number);
+            if (c === idx) continue;
+            const nc = c > idx ? c - 1 : c;
+            ns[r + ':' + nc] = v;
+        }
+        td.styles = ns;
     }
     render(td);
 }
@@ -1072,7 +1327,20 @@ function dupCol(td, idx) {
     td.cols.splice(idx + 1, 0, name);
     td.rows.forEach(r => r.splice(idx + 1, 0, r[idx]));
     if (td.merges) {
-        td.merges.forEach(m => { if (m.col > idx) m.col++; });
+        td.merges = td.merges.map(m => ({
+            r1: m.r1, r2: m.r2,
+            c1: m.c1 > idx ? m.c1 + 1 : m.c1,
+            c2: m.c2 > idx ? m.c2 + 1 : m.c2
+        }));
+    }
+    if (td.styles) {
+        const ns = {};
+        for (const [k, v] of Object.entries(td.styles)) {
+            const [r, c] = k.split(':').map(Number);
+            const nc = c > idx ? c + 1 : c;
+            ns[r + ':' + nc] = v;
+        }
+        td.styles = ns;
     }
     render(td);
     toast('Колонка дублирована', 'info');
@@ -1092,27 +1360,33 @@ function delColEnd(td) {
     hist.push({ a: 'delColEnd', tid: td.id, d: { i: td.cols.length - 1, n: td.cols[td.cols.length - 1], c: td.rows.map(r => r[td.cols.length - 1]) } });
     td.cols.pop();
     td.rows.forEach(r => r.pop());
-    if (td.merges) {
-        const lastIdx = td.cols.length;
-        td.merges = td.merges.filter(m => m.col !== lastIdx);
-    }
     render(td);
 }
 
 function dupRow(td, idx) {
     const copy = [...td.rows[idx]];
     td.rows.splice(idx + 1, 0, copy);
+    // Копируем стили
+    if (td.styles) {
+        const newStyles = {};
+        for (const [k, v] of Object.entries(td.styles)) {
+            const [r, c] = k.split(':').map(Number);
+            if (r === idx) newStyles[(idx + 1) + ':' + c] = { ...v };
+        }
+        Object.assign(td.styles, newStyles);
+    }
     if (td.merges) {
-        td.merges.forEach(m => {
-            if (m.rowStart > idx) m.rowStart++;
-            if (m.rowEnd > idx) m.rowEnd++;
-        });
+        td.merges = td.merges.map(m => ({
+            r1: m.r1 > idx ? m.r1 + 1 : m.r1,
+            r2: m.r2 > idx ? m.r2 + 1 : m.r2,
+            c1: m.c1, c2: m.c2
+        }));
     }
     render(td);
     toast('Строка дублирована', 'info');
 }
 
-// ==================== SORT ====================
+// ==================== SORT / AUTOFIT ====================
 function sortByColumn(td, col) {
     const st = sortState[td.id] || { col: -1, dir: 'asc' };
     let dir = 'asc';
@@ -1136,15 +1410,12 @@ function sortByColumn(td, col) {
     render(td);
 }
 
-// ==================== AUTO FIT ====================
 function autoFitColumn(td, col) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    ctx.font = tableSettings.fontSize + 'px "Segoe UI", sans-serif';
+    ctx.font = tableSettings.fontSize + 'px ' + tableSettings.fontFamily;
     let maxW = 100;
-    // Заголовок
     maxW = Math.max(maxW, ctx.measureText(formatHeader(td.cols[col], td.currency)).width + 60);
-    // Данные
     td.rows.forEach(r => {
         const w = ctx.measureText(String(r[col] ?? '')).width + 40;
         if (w > maxW) maxW = w;
@@ -1174,7 +1445,7 @@ function startResize(td, col, e, handle) {
         th.style.minWidth = w + 'px';
         th.style.maxWidth = w + 'px';
         td.el.querySelectorAll(`tbody tr`).forEach(row => {
-            const cell = row.querySelector(`.cell[data-ci="${col}"]`);
+            const cell = row.querySelector(`.cell[data-c="${col}"]`);
             if (cell) {
                 const parent = cell.parentElement;
                 parent.style.width = w + 'px';
@@ -1207,6 +1478,7 @@ function undo() {
         case 'delRowEnd':
             td.rows.splice(l.d.i, 0, l.d.r);
             if (l.d.merges) td.merges = l.d.merges.map(m => ({ ...m }));
+            if (l.d.styles) td.styles = JSON.parse(JSON.stringify(l.d.styles));
             render(td);
             toast('Строка возвращена', 'info');
             break;
@@ -1245,7 +1517,6 @@ function insertRowsIntoTable(td, parsedRows) {
     let startIdx;
     if (td.rows.length === 1 && isEmptyRow(td.rows[0])) startIdx = 0;
     else startIdx = td.rows.length;
-
     parsedRows.forEach((r, pi) => {
         const nr = Array(td.cols.length).fill('');
         for (let i = 0; i < td.cols.length; i++) {
@@ -1261,10 +1532,32 @@ function insertRowsIntoTable(td, parsedRows) {
         else td.rows.push(nr);
         calc(nr, td.cols);
     });
-
     hist.push({ a: 'paste', tid: td.id, d: { si: startIdx, count: parsedRows.length } });
     render(td);
     toast(`Вставлено строк: ${parsedRows.length}`, 'success');
+}
+
+function pasteAt(td, ri, ci, parsed) {
+    for (let r = 0; r < parsed.length; r++) {
+        const targetR = ri + r;
+        if (targetR >= td.rows.length) {
+            td.rows.push(Array(td.cols.length).fill(''));
+        }
+        for (let c = 0; c < parsed[r].length; c++) {
+            const targetC = ci + c;
+            if (targetC >= td.cols.length) break;
+            let v = parsed[r][c] ?? '';
+            const cn = td.cols[targetC].toLowerCase();
+            if (isNumericCol(cn)) {
+                const n = pn(v);
+                if (!isNaN(n) && v !== '') v = n.toFixed(2);
+            }
+            td.rows[targetR][targetC] = v;
+        }
+        calc(td.rows[targetR], td.cols);
+    }
+    render(td);
+    toast(`Вставлено ${parsed.length}×${parsed[0].length}`, 'success');
 }
 
 // ==================== FIND ====================
@@ -1317,7 +1610,7 @@ function highlightMatch(td, i) {
     if (!m) return;
     const tr = td.el.querySelector(`tbody tr[data-ri="${m.ri}"]`);
     if (!tr) return;
-    const cell = tr.querySelector(`.cell[data-ci="${m.ci}"]`);
+    const cell = tr.querySelector(`.cell[data-c="${m.ci}"]`);
     if (cell) {
         cell.parentElement.classList.add('search-hit');
         tr.classList.add('search-active');
@@ -1367,8 +1660,8 @@ function openConfirm(title, message, onOk) {
 function showCtx(x, y) {
     const cm = Q('#ctxMenu');
     cm.style.display = 'block';
-    cm.style.left = Math.min(x, window.innerWidth - 240) + 'px';
-    cm.style.top = Math.min(y, window.innerHeight - 450) + 'px';
+    cm.style.left = Math.min(x, window.innerWidth - 260) + 'px';
+    cm.style.top = Math.min(y, window.innerHeight - 500) + 'px';
 }
 
 function hideCtx() { Q('#ctxMenu').style.display = 'none'; }
@@ -1377,8 +1670,26 @@ function hideCtx() { Q('#ctxMenu').style.display = 'none'; }
 function copySelectedCells() {
     const td = active();
     if (!td) return;
+    // Если есть cellSel — копируем диапазон
+    if (cellSel.tid === td.id && cellSel.r1 >= 0) {
+        const r1 = Math.min(cellSel.r1, cellSel.r2);
+        const r2 = Math.max(cellSel.r1, cellSel.r2);
+        const c1 = Math.min(cellSel.c1, cellSel.c2);
+        const c2 = Math.max(cellSel.c1, cellSel.c2);
+        const lines = [];
+        for (let r = r1; r <= r2; r++) {
+            const row = [];
+            for (let c = c1; c <= c2; c++) row.push(td.rows[r][c] ?? '');
+            lines.push(row.join('\t'));
+        }
+        navigator.clipboard.writeText(lines.join('\n')).then(() => {
+            toast(`Скопировано ${r2 - r1 + 1}×${c2 - c1 + 1}`, 'success');
+        }).catch(() => toast('Ошибка копирования', 'error'));
+        return;
+    }
+    // Иначе — выделенные строки
     const sel = selectedRows[td.id];
-    if (!sel || !sel.size) { toast('Выделите строки (клик по номеру)', 'warning'); return; }
+    if (!sel || !sel.size) { toast('Выделите ячейки или строки', 'warning'); return; }
     const indices = [...sel].sort((a, b) => a - b);
     const lines = indices.map(i => td.rows[i].join('\t'));
     navigator.clipboard.writeText(lines.join('\n')).then(() => {
@@ -1449,16 +1760,24 @@ function save() {
                     left:   { style: 'thin', color: { argb: 'FFBFDBFE' } },
                     right:  { style: 'thin', color: { argb: 'FFBFDBFE' } }
                 };
-                if (c === ni) cell.alignment.horizontal = 'left';
-                if (c === qi || c === pi || c === ti) cell.alignment.horizontal = 'right';
+                // Стили ячейки
+                const st = getCellStyle(td, r, c);
+                if (st.bold) cell.font = { ...cell.font, bold: true };
+                if (st.italic) cell.font = { ...cell.font, italic: true };
+                if (st.underline) cell.font = { ...cell.font, underline: true };
+                if (st.strike) cell.font = { ...cell.font, strike: true };
+                if (st.align) cell.alignment = { ...cell.alignment, horizontal: st.align };
+                if (c === ni && !st.align) cell.alignment = { ...cell.alignment, horizontal: 'left' };
+                if ((c === qi || c === pi || c === ti) && !st.align) cell.alignment = { ...cell.alignment, horizontal: 'right' };
             }
             cr++;
         }
 
+        // Merges
         if (td.merges) {
             td.merges.forEach(m => {
                 try {
-                    sheet.mergeCells(fdr + m.rowStart, m.col + 1, fdr + m.rowEnd, m.col + 1);
+                    sheet.mergeCells(fdr + m.r1, m.c1 + 1, fdr + m.r2, m.c2 + 1);
                 } catch (e) {}
             });
         }
@@ -1546,6 +1865,7 @@ function processWB(wb) {
     actId = null;
     sortState = {};
     selectedRows = {};
+    clearCellSelection();
 
     wb.SheetNames.forEach(sheetName => {
         const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '' });
@@ -1605,7 +1925,7 @@ function processWB(wb) {
             if (!c.cols.length) c.cols = [...DEFAULT_COLS];
             if (!c.rows.length) c.rows = [Array(c.cols.length).fill('')];
             idC++;
-            ws.push({ id: idC, cols: c.cols, rows: c.rows, currency: c.currency, el: null, card: null, merges: [] });
+            ws.push({ id: idC, cols: c.cols, rows: c.rows, currency: c.currency, el: null, card: null, merges: [], styles: {} });
         }
     });
 
@@ -1657,7 +1977,6 @@ function startRecording(el) {
     recordingHk = el.dataset.hk;
     el.classList.add('recording');
     el.textContent = '...';
-
     const handler = e => {
         e.preventDefault();
         e.stopPropagation();
@@ -1717,11 +2036,12 @@ function toggleSection(id) {
 
 // ==================== GLOBAL HOTKEYS ====================
 function handleGlobalHotkeys(e) {
-    // Не срабатывает если фокус в contenteditable и это обычные клавиши
     const inCell = e.target.closest('.cell[contenteditable="true"]');
 
     if (e.ctrlKey && !e.shiftKey && !e.altKey) {
         const k = e.key.toLowerCase();
+        // В ячейке не перехватываем Ctrl+B/I/U/Z (для форматирования через execCommand)
+        if (inCell && (k === 'b' || k === 'i' || k === 'u')) return;
         if (k === 'z') { e.preventDefault(); undo(); return; }
         if (k === 'f') { e.preventDefault(); openSearch(); return; }
         if (k === 't') { e.preventDefault(); toggleTheme(); return; }
@@ -1732,7 +2052,7 @@ function handleGlobalHotkeys(e) {
         if (k === 'd' && !inCell) { e.preventDefault(); dupTable(); return; }
         if (k === 'c' && !inCell) {
             const td = active();
-            if (td && selectedRows[td.id] && selectedRows[td.id].size > 0) {
+            if (td && ((cellSel.tid === td.id && cellSel.r1 >= 0) || (selectedRows[td.id] && selectedRows[td.id].size > 0))) {
                 e.preventDefault();
                 copySelectedCells();
                 return;
@@ -1743,6 +2063,7 @@ function handleGlobalHotkeys(e) {
     if (e.key === 'Escape') {
         hideCtx();
         closeSearch();
+        clearCellSelection();
         return;
     }
 
@@ -1804,6 +2125,13 @@ function handleGlobalPaste(e) {
     paste();
 }
 
+// Global mouseup для остановки drag
+document.addEventListener('mouseup', () => {
+    if (cellSel.dragging) {
+        cellSel.dragging = false;
+    }
+});
+
 // ==================== BIND ====================
 function bindAllEvents() {
     document.getElementById('btnTheme').onclick = toggleTheme;
@@ -1811,7 +2139,6 @@ function bindAllEvents() {
         if (e.target.files[0]) { loadFile(e.target.files[0]); e.target.value = ''; }
     };
 
-    // Settings
     document.getElementById('btnSettings').onclick = () => {
         document.getElementById('settingsModal').classList.add('show');
         renderHotkeyList();
@@ -1847,11 +2174,31 @@ function bindAllEvents() {
         Q('#valFontSize').textContent = fs.value + ' px';
         applyTableSettings();
     };
+    const ff = Q('#setFontFamily');
+    if (ff) ff.onchange = () => { tableSettings.fontFamily = ff.value; applyTableSettings(); };
+    const pad = Q('#setPadding');
+    if (pad) pad.oninput = () => {
+        tableSettings.padding = +pad.value;
+        Q('#valPadding').textContent = pad.value + ' px';
+        applyTableSettings();
+    };
     const wt = Q('#setWrapText'); if (wt) wt.onchange = () => { tableSettings.wrapText = wt.checked; applyTableSettings(); };
     const sn = Q('#setShowRowNums'); if (sn) sn.onchange = () => { tableSettings.showRowNums = sn.checked; applyTableSettings(); };
     const st = Q('#setShowTotals'); if (st) st.onchange = () => { tableSettings.showTotals = st.checked; applyTableSettings(); };
-    const cm = Q('#setCompact'); if (cm) cm.onchange = () => { tableSettings.compact = cm.checked; applyTableSettings(); };
-    const sb = Q('#setShowBorders'); if (sb) sb.onchange = () => { tableSettings.showBorders = sb.checked; applyTableSettings(); };
+    const zb = Q('#setZebra'); if (zb) zb.onchange = () => { tableSettings.zebra = zb.checked; applyTableSettings(); };
+    const vg = Q('#setVGrid'); if (vg) vg.onchange = () => { tableSettings.vGrid = vg.checked; applyTableSettings(); };
+    const hg = Q('#setHGrid'); if (hg) hg.onchange = () => { tableSettings.hGrid = hg.checked; applyTableSettings(); };
+    const rd = Q('#setRounded'); if (rd) rd.onchange = () => { tableSettings.rounded = rd.checked; applyTableSettings(); };
+
+    // Notify
+    const nt = Q('#setShowToasts'); if (nt) nt.onchange = () => { notifySettings.enabled = nt.checked; saveNow(); };
+    const np = Q('#setToastPos'); if (np) np.onchange = () => { notifySettings.position = np.value; updateToastPosition(); saveNow(); };
+    const nd = Q('#setToastDur');
+    if (nd) nd.oninput = () => {
+        notifySettings.duration = +nd.value;
+        Q('#valToastDur').textContent = (+nd.value / 1000).toFixed(1) + ' s';
+        saveNow();
+    };
 
     // Color themes
     document.getElementById('btnColorTheme').onclick = () => {
@@ -1942,24 +2289,33 @@ function bindAllEvents() {
             case 'addRowBelow':   if (td && ctx.ri != null) insRowBelow(td, ctx.ri); break;
             case 'dupRow':        if (td && ctx.ri != null) dupRow(td, ctx.ri); break;
             case 'delRow':        if (td && ctx.ri != null) delRow(td, ctx.ri); break;
-            case 'mergeCells': {
-                if (!td || ctx.ci == null) break;
-                const sel = selectedRows[td.id];
-                if (sel && sel.size >= 2) {
-                    mergeSelectedCells(td, ctx.ci, [...sel]);
-                } else if (ctx.ri != null && ctx.ri < td.rows.length - 1) {
+            case 'mergeCells':
+                if (!td) break;
+                if (cellSel.tid === td.id && cellSel.r1 >= 0) {
+                    mergeRect(td, cellSel.r1, cellSel.c1, cellSel.r2, cellSel.c2);
+                } else if (ctx.ri != null && ctx.ci != null) {
                     // Объединить с ячейкой ниже
-                    mergeSelectedCells(td, ctx.ci, [ctx.ri, ctx.ri + 1]);
-                } else {
-                    toast('Выделите строки (клик по номерам + Shift)', 'warning');
+                    if (ctx.ri < td.rows.length - 1) {
+                        mergeRect(td, ctx.ri, ctx.ci, ctx.ri + 1, ctx.ci);
+                    } else {
+                        toast('Выделите диапазон ячеек', 'warning');
+                    }
                 }
                 break;
-            }
-            case 'unmergeCells':  if (td && ctx.ri != null && ctx.ci != null) unmergeCellAt(td, ctx.ri, ctx.ci); break;
+            case 'unmergeCells':  if (td && ctx.ri != null && ctx.ci != null) unmergeAt(td, ctx.ri, ctx.ci); break;
+            case 'bold':          toggleStyle('bold'); break;
+            case 'italic':        toggleStyle('italic'); break;
+            case 'underline':     toggleStyle('underline'); break;
+            case 'strike':        toggleStyle('strike'); break;
+            case 'clearFormat':   clearFormat(); break;
+            case 'alignLeft':     setAlign('left'); break;
+            case 'alignCenter':   setAlign('center'); break;
+            case 'alignRight':    setAlign('right'); break;
             case 'renameCol':     if (td && ctx.ci != null) renameCol(td, ctx.ci); break;
             case 'addColBefore':  if (td && ctx.ci != null) insCol(td, ctx.ci); break;
             case 'addColAfter':   if (td && ctx.ci != null) insCol(td, ctx.ci + 1); break;
             case 'dupCol':        if (td && ctx.ci != null) dupCol(td, ctx.ci); break;
+            case 'autoFitCol':    if (td && ctx.ci != null) autoFitColumn(td, ctx.ci); break;
             case 'delCol':        if (td && ctx.ci != null) delCol(td, ctx.ci); break;
             case 'copyCells':     copySelectedCells(); break;
             case 'paste':         paste(); break;
