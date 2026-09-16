@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.0.1 — UI ====================
+// ==================== ONTEK v7.0.2 — UI ====================
 // Сайдбар, тулбар, контекстное меню, модалки, поиск, темы, шаблоны
 
 // ========== SVG для подменю ==========
@@ -58,12 +58,10 @@ function buildSidebarV2() {
             { id: 'btnNewUSD', icon: ICONS.dollar, label: 'Новая USD', hk: 'newUSD' }
         ]},
         { t: 'Файл', buttons: [
-            { id: 'btnLoad',     icon: ICONS.folder, label: 'Открыть',         hk: 'load' },
-            { id: 'btnSave',     icon: ICONS.save,   label: 'Сохранить Excel', hk: 'save' },
-            { id: 'btnExportCSV', icon: ICONS.csv,   label: 'Экспорт CSV',     hk: null },
-            { id: 'btnPrint',    icon: ICONS.print,  label: 'Печать',          hk: null },
-            { id: 'btnClear',    icon: ICONS.trash,  label: 'Очистить',        hk: 'clear' },
-            { id: 'btnUndo',     icon: ICONS.undo,   label: 'Отменить',        hk: 'undo' }
+            { id: 'btnLoad',  icon: ICONS.folder, label: 'Открыть',         hk: 'load' },
+            { id: 'btnSave',  icon: ICONS.save,   label: 'Сохранить Excel', hk: 'save' },
+            { id: 'btnClear', icon: ICONS.trash,  label: 'Очистить',        hk: 'clear' },
+            { id: 'btnUndo',  icon: ICONS.undo,   label: 'Отменить',        hk: 'undo' }
         ]}
     ];
     sb.innerHTML = sections.map(sec => `
@@ -107,13 +105,29 @@ function buildWorkspaces() {
     upEmpty();
 }
 
-// ========== CONTEXT MENU (многоуровневое) ==========
-let openSubmenus = [];
+// ========== CONTEXT MENU (многоуровневое, с уровнями) ==========
+let openSubmenus = []; // [{ el, level, parentEl }]
+
+function closeSubmenusFromLevel(level) {
+    const keep = [];
+    openSubmenus.forEach(s => {
+        if (s.level < level) {
+            keep.push(s);
+        } else {
+            s.el.remove();
+            if (s.parentEl) s.parentEl.classList.remove('open');
+        }
+    });
+    openSubmenus = keep;
+}
 
 function hideCtx() {
     const cm = Q('#ctxMenu');
     if (cm) { cm.style.display = 'none'; cm.innerHTML = ''; }
-    openSubmenus.forEach(el => el.remove());
+    openSubmenus.forEach(s => {
+        s.el.remove();
+        if (s.parentEl) s.parentEl.classList.remove('open');
+    });
     openSubmenus = [];
 }
 
@@ -122,7 +136,6 @@ function buildCtxHTML(ctx) {
     const isHeader = ctx && ctx.ci != null && ctx.ri == null;
     const items = [];
 
-    // Строки
     items.push(`<div class="ctx-item" data-action="addRowAbove"><span class="ctx-icon">${CTX_ICONS.rowUp}</span> Строку выше</div>`);
     items.push(`<div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">${CTX_ICONS.rowDown}</span> Строку ниже</div>`);
     items.push(`<div class="ctx-item" data-action="addSection"><span class="ctx-icon">${CTX_ICONS.section}</span> Строка-заголовок</div>`);
@@ -130,7 +143,6 @@ function buildCtxHTML(ctx) {
     items.push(`<div class="ctx-item danger" data-action="delRow"><span class="ctx-icon">${CTX_ICONS.del}</span> Удалить строку</div>`);
     items.push(`<div class="ctx-div"></div>`);
 
-    // Подменю
     items.push(`<div class="ctx-item has-sub" data-sub="insert"><span class="ctx-icon">${CTX_ICONS.insert}</span> Вставить</div>`);
     items.push(`<div class="ctx-item has-sub" data-sub="format"><span class="ctx-icon">${CTX_ICONS.format}</span> Формат</div>`);
     items.push(`<div class="ctx-item has-sub" data-sub="align"><span class="ctx-icon">${CTX_ICONS.align}</span> Выравнивание</div>`);
@@ -154,9 +166,6 @@ function buildCtxHTML(ctx) {
 }
 
 function buildSubmenuHTML(subName, ctx) {
-    const isCell = ctx && ctx.ri != null && ctx.ci != null;
-    const isHeader = ctx && ctx.ci != null && ctx.ri == null;
-
     switch (subName) {
         case 'insert':
             return `
@@ -221,6 +230,71 @@ function buildSubmenuHTML(subName, ctx) {
     return '';
 }
 
+function positionSubmenu(sub, parentItem) {
+    sub.style.visibility = 'hidden';
+    sub.style.left = '0px';
+    sub.style.top = '0px';
+    const sRect = sub.getBoundingClientRect();
+    const pRect = parentItem.getBoundingClientRect();
+    const pad = 8;
+    let left = pRect.right + 4;
+    let top = pRect.top;
+    if (left + sRect.width > window.innerWidth - pad) {
+        left = pRect.left - sRect.width - 4;
+    }
+    if (top + sRect.height > window.innerHeight - pad) {
+        top = window.innerHeight - sRect.height - pad;
+    }
+    if (top < pad) top = pad;
+    if (left < pad) left = pad;
+    sub.style.left = left + 'px';
+    sub.style.top = top + 'px';
+    sub.style.visibility = 'visible';
+}
+
+function attachSubmenuEvents(sub, ctx, level) {
+    // Внутри подменю: наведение на has-sub → открыть следующий уровень
+    sub.querySelectorAll('.ctx-item.has-sub').forEach(item => {
+        item.addEventListener('mouseenter', () => {
+            const sn = item.dataset.sub;
+            openSubmenuFor(item, sn, ctx, level + 1);
+        });
+    });
+    // Наведение на обычный пункт — закрываем более глубокие уровни
+    sub.querySelectorAll('.ctx-item:not(.has-sub)').forEach(item => {
+        item.addEventListener('mouseenter', () => {
+            closeSubmenusFromLevel(level + 1);
+        });
+    });
+}
+
+function openSubmenuFor(parentItem, subName, ctx, level) {
+    // Закрываем только уровни >= level
+    closeSubmenusFromLevel(level);
+    parentItem.classList.add('open');
+    const html = buildSubmenuHTML(subName, ctx);
+    if (!html) return;
+    const sub = document.createElement('div');
+    sub.className = 'ctx-submenu show';
+    sub.dataset.level = level;
+    sub.innerHTML = html;
+    document.body.appendChild(sub);
+    openSubmenus.push({ el: sub, level, parentEl: parentItem });
+
+    if (subName === 'textColor' || subName === 'bgColor') {
+        const pal = sub.querySelector('.ctx-palette');
+        pal.innerHTML = COLOR_PALETTE.map(c =>
+            c === null
+                ? `<div class="color-swatch none" data-color=""></div>`
+                : `<div class="color-swatch" style="background:${c}" data-color="${c}"></div>`
+        ).join('');
+    }
+
+    positionSubmenu(sub, parentItem);
+    sub.onclick = handleCtxClick;
+    attachSubmenuEvents(sub, ctx, level);
+}
+
 function showCtx(x, y) {
     hideCtx();
     const cm = Q('#ctxMenu');
@@ -247,89 +321,30 @@ function showCtx(x, y) {
 
     cm.querySelectorAll('.ctx-item.has-sub').forEach(item => {
         item.addEventListener('mouseenter', () => {
-            const subName = item.dataset.sub;
-            closeAllSubmenus();
-            showSubmenu(item, subName, ctx);
+            openSubmenuFor(item, item.dataset.sub, ctx, 1);
         });
     });
     cm.querySelectorAll('.ctx-item:not(.has-sub)').forEach(item => {
         item.addEventListener('mouseenter', () => {
-            closeAllSubmenus();
-        });
-    });
-}
-
-function closeAllSubmenus() {
-    openSubmenus.forEach(el => el.remove());
-    openSubmenus = [];
-    document.querySelectorAll('.ctx-item.has-sub.open').forEach(el => el.classList.remove('open'));
-}
-
-function showSubmenu(parentItem, subName, ctx) {
-    closeAllSubmenus();
-    parentItem.classList.add('open');
-    const html = buildSubmenuHTML(subName, ctx);
-    if (!html) return;
-    const sub = document.createElement('div');
-    sub.className = 'ctx-submenu show';
-    sub.innerHTML = html;
-    document.body.appendChild(sub);
-    openSubmenus.push(sub);
-
-    if (subName === 'textColor' || subName === 'bgColor') {
-        const pal = sub.querySelector('.ctx-palette');
-        pal.innerHTML = COLOR_PALETTE.map(c =>
-            c === null
-                ? `<div class="color-swatch none" data-color=""></div>`
-                : `<div class="color-swatch" style="background:${c}" data-color="${c}"></div>`
-        ).join('');
-    }
-
-    const pRect = parentItem.getBoundingClientRect();
-    sub.style.visibility = 'hidden';
-    sub.style.left = '0px';
-    sub.style.top = '0px';
-    const sRect = sub.getBoundingClientRect();
-    let left = pRect.right + 2;
-    let top = pRect.top;
-    const pad = 8;
-    if (left + sRect.width > window.innerWidth - pad) {
-        left = pRect.left - sRect.width - 2;
-    }
-    if (top + sRect.height > window.innerHeight - pad) {
-        top = window.innerHeight - sRect.height - pad;
-    }
-    if (top < pad) top = pad;
-    if (left < pad) left = pad;
-    sub.style.left = left + 'px';
-    sub.style.top = top + 'px';
-    sub.style.visibility = 'visible';
-
-    sub.onclick = handleCtxClick;
-
-    sub.querySelectorAll('.ctx-item.has-sub').forEach(item => {
-        item.addEventListener('mouseenter', () => {
-            const sn = item.dataset.sub;
-            closeAllSubmenus();
-            parentItem.classList.add('open');
-            showSubmenu(item, sn, ctx);
+            closeSubmenusFromLevel(1);
         });
     });
 }
 
 function handleCtxClick(e) {
     const item = e.target.closest('.ctx-item');
-    if (!item) return;
-    const subItem = e.target.closest('.color-swatch');
-    if (subItem && e.target.closest('.ctx-palette')) {
+    const swatch = e.target.closest('.color-swatch');
+    if (swatch && e.target.closest('.ctx-palette')) {
         e.stopPropagation();
-        const isText = e.target.closest('[data-palette="textColor"]');
-        const color = subItem.dataset.color || null;
+        const pal = swatch.closest('.ctx-palette');
+        const isText = pal.dataset.palette === 'textColor';
+        const color = swatch.dataset.color || null;
         if (isText) setCellColor('color', color);
         else setCellColor('bg', color);
         hideCtx();
         return;
     }
+    if (!item) return;
     if (item.classList.contains('has-sub')) return;
     const action = item.dataset.action;
     hideCtx();
@@ -442,7 +457,7 @@ function execCtxAction(action, td, ctx) {
 document.addEventListener('click', e => {
     const cm = Q('#ctxMenu');
     if (!cm) return;
-    if (!cm.contains(e.target) && !openSubmenus.some(s => s.contains(e.target))) {
+    if (!cm.contains(e.target) && !openSubmenus.some(s => s.el.contains(e.target))) {
         hideCtx();
     }
 });
