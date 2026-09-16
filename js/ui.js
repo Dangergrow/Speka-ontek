@@ -1,5 +1,40 @@
-// ==================== ONTEK v7.0.0 — UI ====================
+// ==================== ONTEK v7.0.1 — UI ====================
 // Сайдбар, тулбар, контекстное меню, модалки, поиск, темы, шаблоны
+
+// ========== SVG для подменю ==========
+const CTX_ICONS = {
+    insert: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+    format: '<svg viewBox="0 0 24 24"><path d="M4 20l4-14h2l4 14"/><path d="M6 14h6"/><path d="M17 9v11"/><path d="M14 12h6"/></svg>',
+    align: '<svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>',
+    cells: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
+    col: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>',
+    sort: '<svg viewBox="0 0 24 24"><path d="M8 5v14M8 5l-3 3M8 5l3 3"/><path d="M16 19V5M16 19l-3-3M16 19l3-3"/></svg>',
+    rowUp: '<svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M12 5l-5 5M12 5l5 5"/></svg>',
+    rowDown: '<svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M12 19l-5-5M12 19l5-5"/></svg>',
+    section: '<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M8 12h8"/></svg>',
+    dup: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+    del: '<svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>',
+    copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+    paste: '<svg viewBox="0 0 24 24"><rect x="8" y="3" width="12" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>',
+    table: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>',
+    trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>',
+    merge: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6"/></svg>',
+    unmerge: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 15h6"/></svg>',
+    note: '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    currency: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M15 10a3 3 0 0 0-3-2h-1a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4h-1a3 3 0 0 1-3-2"/></svg>',
+    markup: '<svg viewBox="0 0 24 24"><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/><line x1="5" y1="19" x2="19" y2="5"/></svg>',
+    discount: '<svg viewBox="0 0 24 24"><path d="M20 12V6a2 2 0 0 0-2-2h-6L4 12l8 8 8-8z"/><circle cx="15" cy="9" r="1.5" fill="currentColor"/></svg>',
+    eye: '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    autofit: '<svg viewBox="0 0 24 24"><path d="M8 9l-4 3 4 3"/><path d="M16 9l4 3-4 3"/><line x1="4" y1="12" x2="20" y2="12"/></svg>',
+    rename: '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    bold: '<svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 0 8H6z"/><path d="M6 12h9a4 4 0 0 1 0 8H6z"/></svg>',
+    italic: '<svg viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>',
+    underline: '<svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" y1="20" x2="20" y2="20"/></svg>',
+    strike: '<svg viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12"/><path d="M6 8a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4"/><path d="M6 16a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4"/></svg>',
+    painter: '<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="6" rx="1"/><path d="M12 9v5"/><path d="M9 21h6"/><path d="M12 14v7"/></svg>',
+    clear: '<svg viewBox="0 0 24 24"><path d="M9 4h10l-3 16H6z"/><line x1="3" y1="20" x2="21" y2="20"/></svg>',
+    color: '<svg viewBox="0 0 24 24"><path d="M9 11l3-3 7 7-3 3z"/><path d="M5 19h4v-4H5z"/></svg>'
+};
 
 // ========== SIDEBAR ==========
 function buildSidebarV2() {
@@ -7,11 +42,7 @@ function buildSidebarV2() {
     const sections = [
         { t: 'Таблица', buttons: [
             { id: 'btnAddRow',  icon: ICONS.plus,     label: 'Добавить строку',  hk: 'addRow' },
-            { id: 'btnAddSection', icon: ICONS.section, label: 'Строка-заголовок', hk: null },
-            { id: 'btnAddDivider', icon: ICONS.divider, label: 'Разделитель', hk: null },
-            { id: 'btnDelRow',  icon: ICONS.minus,    label: 'Удалить строку',   hk: 'delRow' },
-            { id: 'btnAddCol',  icon: ICONS.plusBox,  label: 'Добавить колонку', hk: 'addCol' },
-            { id: 'btnDelCol',  icon: ICONS.minusBox, label: 'Удалить колонку',  hk: 'delCol' }
+            { id: 'btnAddDivider', icon: ICONS.divider, label: 'Разделитель', hk: null }
         ]},
         { t: 'Действия', buttons: [
             { id: 'btnConvert', icon: ICONS.convert, label: 'Конвертировать', hk: 'convert' },
@@ -87,108 +118,101 @@ function hideCtx() {
 }
 
 function buildCtxHTML(ctx) {
-    const hasTd = !!active();
     const isCell = ctx && ctx.ri != null && ctx.ci != null;
     const isHeader = ctx && ctx.ci != null && ctx.ri == null;
     const items = [];
 
-    // Верхний уровень
-    items.push(`<div class="ctx-item" data-action="addRowAbove"><span class="ctx-icon">↥</span> Строку выше</div>`);
-    items.push(`<div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">↧</span> Строку ниже</div>`);
-    items.push(`<div class="ctx-item" data-action="addSection"><span class="ctx-icon">§</span> Строка-заголовок</div>`);
-    items.push(`<div class="ctx-item" data-action="dupRow"><span class="ctx-icon">⊕</span> Дублировать строку</div>`);
-    items.push(`<div class="ctx-item danger" data-action="delRow"><span class="ctx-icon">✕</span> Удалить строку</div>`);
+    // Строки
+    items.push(`<div class="ctx-item" data-action="addRowAbove"><span class="ctx-icon">${CTX_ICONS.rowUp}</span> Строку выше</div>`);
+    items.push(`<div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">${CTX_ICONS.rowDown}</span> Строку ниже</div>`);
+    items.push(`<div class="ctx-item" data-action="addSection"><span class="ctx-icon">${CTX_ICONS.section}</span> Строка-заголовок</div>`);
+    items.push(`<div class="ctx-item" data-action="dupRow"><span class="ctx-icon">${CTX_ICONS.dup}</span> Дублировать строку</div>`);
+    items.push(`<div class="ctx-item danger" data-action="delRow"><span class="ctx-icon">${CTX_ICONS.del}</span> Удалить строку</div>`);
     items.push(`<div class="ctx-div"></div>`);
 
-    // Вставить ▶
-    items.push(`<div class="ctx-item has-sub" data-sub="insert"><span class="ctx-icon">↳</span> Вставить <span class="ctx-shortcut">▶</span></div>`);
-    // Формат ▶
-    items.push(`<div class="ctx-item has-sub" data-sub="format"><span class="ctx-icon">🎨</span> Формат <span class="ctx-shortcut">▶</span></div>`);
-    // Выравнивание ▶
-    items.push(`<div class="ctx-item has-sub" data-sub="align"><span class="ctx-icon">≡</span> Выравнивание <span class="ctx-shortcut">▶</span></div>`);
-    // Ячейки ▶
-    items.push(`<div class="ctx-item has-sub" data-sub="cells"><span class="ctx-icon">⊞</span> Ячейки <span class="ctx-shortcut">▶</span></div>`);
-    // Колонка ▶
+    // Подменю
+    items.push(`<div class="ctx-item has-sub" data-sub="insert"><span class="ctx-icon">${CTX_ICONS.insert}</span> Вставить</div>`);
+    items.push(`<div class="ctx-item has-sub" data-sub="format"><span class="ctx-icon">${CTX_ICONS.format}</span> Формат</div>`);
+    items.push(`<div class="ctx-item has-sub" data-sub="align"><span class="ctx-icon">${CTX_ICONS.align}</span> Выравнивание</div>`);
+    items.push(`<div class="ctx-item has-sub" data-sub="cells"><span class="ctx-icon">${CTX_ICONS.cells}</span> Ячейки</div>`);
     if (isHeader || isCell) {
-        items.push(`<div class="ctx-item has-sub" data-sub="col"><span class="ctx-icon">▤</span> Колонка <span class="ctx-shortcut">▶</span></div>`);
+        items.push(`<div class="ctx-item has-sub" data-sub="col"><span class="ctx-icon">${CTX_ICONS.col}</span> Колонка</div>`);
     }
-    // Сортировка ▶
     if (isHeader) {
-        items.push(`<div class="ctx-item has-sub" data-sub="sort"><span class="ctx-icon">⇅</span> Сортировка <span class="ctx-shortcut">▶</span></div>`);
+        items.push(`<div class="ctx-item has-sub" data-sub="sort"><span class="ctx-icon">${CTX_ICONS.sort}</span> Сортировка</div>`);
     }
     items.push(`<div class="ctx-div"></div>`);
 
-    items.push(`<div class="ctx-item" data-action="copyCells"><span class="ctx-icon">⧉</span> Копировать <span class="ctx-shortcut">Ctrl+C</span></div>`);
-    items.push(`<div class="ctx-item" data-action="paste"><span class="ctx-icon">📋</span> Вставить <span class="ctx-shortcut">Ctrl+V</span></div>`);
+    items.push(`<div class="ctx-item" data-action="copyCells"><span class="ctx-icon">${CTX_ICONS.copy}</span> Копировать <span class="ctx-shortcut">Ctrl+C</span></div>`);
+    items.push(`<div class="ctx-item" data-action="paste"><span class="ctx-icon">${CTX_ICONS.paste}</span> Вставить <span class="ctx-shortcut">Ctrl+V</span></div>`);
     items.push(`<div class="ctx-div"></div>`);
 
-    items.push(`<div class="ctx-item" data-action="dupTable"><span class="ctx-icon">⎘</span> Дублировать таблицу</div>`);
-    items.push(`<div class="ctx-item danger" data-action="delTable"><span class="ctx-icon">🗑</span> Удалить таблицу</div>`);
+    items.push(`<div class="ctx-item" data-action="dupTable"><span class="ctx-icon">${CTX_ICONS.table}</span> Дублировать таблицу</div>`);
+    items.push(`<div class="ctx-item danger" data-action="delTable"><span class="ctx-icon">${CTX_ICONS.trash}</span> Удалить таблицу</div>`);
 
     return items.join('');
 }
 
 function buildSubmenuHTML(subName, ctx) {
-    const hasTd = !!active();
     const isCell = ctx && ctx.ri != null && ctx.ci != null;
     const isHeader = ctx && ctx.ci != null && ctx.ri == null;
 
     switch (subName) {
         case 'insert':
             return `
-                <div class="ctx-item" data-action="addDividerBefore"><span class="ctx-icon">⊟</span> Разделитель перед таблицей</div>
-                <div class="ctx-item" data-action="addDividerAfter"><span class="ctx-icon">⊞</span> Разделитель после таблицы</div>
+                <div class="ctx-item" data-action="addDividerBefore"><span class="ctx-icon">${CTX_ICONS.section}</span> Разделитель перед таблицей</div>
+                <div class="ctx-item" data-action="addDividerAfter"><span class="ctx-icon">${CTX_ICONS.section}</span> Разделитель после таблицы</div>
                 <div class="ctx-div"></div>
-                <div class="ctx-item" data-action="addColBefore"><span class="ctx-icon">↤</span> Колонку перед</div>
-                <div class="ctx-item" data-action="addColAfter"><span class="ctx-icon">↦</span> Колонку после</div>
+                <div class="ctx-item" data-action="addColBefore"><span class="ctx-icon">${CTX_ICONS.col}</span> Колонку перед</div>
+                <div class="ctx-item" data-action="addColAfter"><span class="ctx-icon">${CTX_ICONS.col}</span> Колонку после</div>
                 <div class="ctx-div"></div>
-                <div class="ctx-item" data-action="addRowAbove"><span class="ctx-icon">↥</span> Строку выше</div>
-                <div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">↧</span> Строку ниже</div>
+                <div class="ctx-item" data-action="addRowAbove"><span class="ctx-icon">${CTX_ICONS.rowUp}</span> Строку выше</div>
+                <div class="ctx-item" data-action="addRowBelow"><span class="ctx-icon">${CTX_ICONS.rowDown}</span> Строку ниже</div>
             `;
         case 'format':
             return `
-                <div class="ctx-item" data-action="bold"><span class="ctx-icon">B</span> Жирный <span class="ctx-shortcut">Ctrl+B</span></div>
-                <div class="ctx-item" data-action="italic"><span class="ctx-icon">I</span> Курсив <span class="ctx-shortcut">Ctrl+I</span></div>
-                <div class="ctx-item" data-action="underline"><span class="ctx-icon">U</span> Подчёркнутый <span class="ctx-shortcut">Ctrl+U</span></div>
-                <div class="ctx-item" data-action="strike"><span class="ctx-icon">S</span> Зачёркнутый</div>
+                <div class="ctx-item" data-action="bold"><span class="ctx-icon">${CTX_ICONS.bold}</span> Жирный <span class="ctx-shortcut">Ctrl+B</span></div>
+                <div class="ctx-item" data-action="italic"><span class="ctx-icon">${CTX_ICONS.italic}</span> Курсив <span class="ctx-shortcut">Ctrl+I</span></div>
+                <div class="ctx-item" data-action="underline"><span class="ctx-icon">${CTX_ICONS.underline}</span> Подчёркнутый <span class="ctx-shortcut">Ctrl+U</span></div>
+                <div class="ctx-item" data-action="strike"><span class="ctx-icon">${CTX_ICONS.strike}</span> Зачёркнутый</div>
                 <div class="ctx-div"></div>
-                <div class="ctx-item" data-action="formatPainter"><span class="ctx-icon">🖌</span> Копировать формат</div>
-                <div class="ctx-item" data-action="clearFormat"><span class="ctx-icon">⌫</span> Очистить формат</div>
+                <div class="ctx-item" data-action="formatPainter"><span class="ctx-icon">${CTX_ICONS.painter}</span> Копировать формат</div>
+                <div class="ctx-item" data-action="clearFormat"><span class="ctx-icon">${CTX_ICONS.clear}</span> Очистить формат</div>
                 <div class="ctx-div"></div>
-                <div class="ctx-item has-sub" data-sub="textColor"><span class="ctx-icon">A</span> Цвет текста <span class="ctx-shortcut">▶</span></div>
-                <div class="ctx-item has-sub" data-sub="bgColor"><span class="ctx-icon">▨</span> Цвет фона <span class="ctx-shortcut">▶</span></div>
+                <div class="ctx-item has-sub" data-sub="textColor"><span class="ctx-icon">${CTX_ICONS.color}</span> Цвет текста</div>
+                <div class="ctx-item has-sub" data-sub="bgColor"><span class="ctx-icon">${CTX_ICONS.color}</span> Цвет фона</div>
             `;
         case 'align':
             return `
-                <div class="ctx-item" data-action="alignLeft"><span class="ctx-icon">⬅</span> По левому краю</div>
-                <div class="ctx-item" data-action="alignCenter"><span class="ctx-icon">↔</span> По центру</div>
-                <div class="ctx-item" data-action="alignRight"><span class="ctx-icon">➡</span> По правому краю</div>
+                <div class="ctx-item" data-action="alignLeft"><span class="ctx-icon">${CTX_ICONS.align}</span> По левому краю</div>
+                <div class="ctx-item" data-action="alignCenter"><span class="ctx-icon">${CTX_ICONS.align}</span> По центру</div>
+                <div class="ctx-item" data-action="alignRight"><span class="ctx-icon">${CTX_ICONS.align}</span> По правому краю</div>
             `;
         case 'cells':
             return `
-                <div class="ctx-item" data-action="mergeCells"><span class="ctx-icon">⊞</span> Объединить ячейки</div>
-                <div class="ctx-item" data-action="unmergeCells"><span class="ctx-icon">⊟</span> Разъединить ячейки</div>
+                <div class="ctx-item" data-action="mergeCells"><span class="ctx-icon">${CTX_ICONS.merge}</span> Объединить ячейки</div>
+                <div class="ctx-item" data-action="unmergeCells"><span class="ctx-icon">${CTX_ICONS.unmerge}</span> Разъединить ячейки</div>
                 <div class="ctx-div"></div>
-                <div class="ctx-item" data-action="addNote"><span class="ctx-icon">💬</span> Заметка к ячейке</div>
-                <div class="ctx-item" data-action="setCurrency"><span class="ctx-icon">💱</span> Валюта колонки…</div>
+                <div class="ctx-item" data-action="addNote"><span class="ctx-icon">${CTX_ICONS.note}</span> Заметка к ячейке</div>
+                <div class="ctx-item" data-action="setCurrency"><span class="ctx-icon">${CTX_ICONS.currency}</span> Валюта колонки…</div>
             `;
         case 'col':
             return `
-                <div class="ctx-item" data-action="renameCol"><span class="ctx-icon">✎</span> Переименовать</div>
-                <div class="ctx-item" data-action="dupCol"><span class="ctx-icon">⊕</span> Дублировать</div>
+                <div class="ctx-item" data-action="renameCol"><span class="ctx-icon">${CTX_ICONS.rename}</span> Переименовать</div>
+                <div class="ctx-item" data-action="dupCol"><span class="ctx-icon">${CTX_ICONS.dup}</span> Дублировать</div>
                 <div class="ctx-div"></div>
-                <div class="ctx-item" data-action="markup"><span class="ctx-icon">+%</span> Наценка</div>
-                <div class="ctx-item" data-action="discount"><span class="ctx-icon">−%</span> Скидка</div>
+                <div class="ctx-item" data-action="markup"><span class="ctx-icon">${CTX_ICONS.markup}</span> Наценка</div>
+                <div class="ctx-item" data-action="discount"><span class="ctx-icon">${CTX_ICONS.discount}</span> Скидка</div>
                 <div class="ctx-div"></div>
-                <div class="ctx-item" data-action="hideCol"><span class="ctx-icon">👁</span> Скрыть колонку</div>
-                <div class="ctx-item" data-action="showAllCols"><span class="ctx-icon">👁</span> Показать все</div>
-                <div class="ctx-item" data-action="autoFitCol"><span class="ctx-icon">⤢</span> Автоширина</div>
-                <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">✕</span> Удалить колонку</div>
+                <div class="ctx-item" data-action="hideCol"><span class="ctx-icon">${CTX_ICONS.eye}</span> Скрыть колонку</div>
+                <div class="ctx-item" data-action="showAllCols"><span class="ctx-icon">${CTX_ICONS.eye}</span> Показать все</div>
+                <div class="ctx-item" data-action="autoFitCol"><span class="ctx-icon">${CTX_ICONS.autofit}</span> Автоширина</div>
+                <div class="ctx-item danger" data-action="delCol"><span class="ctx-icon">${CTX_ICONS.del}</span> Удалить колонку</div>
             `;
         case 'sort':
             return `
-                <div class="ctx-item" data-action="sortAsc"><span class="ctx-icon">▲</span> По возрастанию (A→Я)</div>
-                <div class="ctx-item" data-action="sortDesc"><span class="ctx-icon">▼</span> По убыванию (Я→A)</div>
+                <div class="ctx-item" data-action="sortAsc"><span class="ctx-icon">${CTX_ICONS.sort}</span> По возрастанию (A→Я)</div>
+                <div class="ctx-item" data-action="sortDesc"><span class="ctx-icon">${CTX_ICONS.sort}</span> По убыванию (Я→A)</div>
             `;
         case 'textColor':
         case 'bgColor':
@@ -207,7 +231,6 @@ function showCtx(x, y) {
     cm.style.left = '0px';
     cm.style.top = '0px';
 
-    // Позиция
     const rect = cm.getBoundingClientRect();
     const w = rect.width, h = rect.height;
     const pad = 8;
@@ -220,10 +243,8 @@ function showCtx(x, y) {
     cm.style.top = top + 'px';
     cm.style.visibility = 'visible';
 
-    // Обработка кликов
     cm.onclick = handleCtxClick;
 
-    // Обработка наведения на подменю
     cm.querySelectorAll('.ctx-item.has-sub').forEach(item => {
         item.addEventListener('mouseenter', () => {
             const subName = item.dataset.sub;
@@ -231,9 +252,9 @@ function showCtx(x, y) {
             showSubmenu(item, subName, ctx);
         });
     });
-    cm.querySelectorAll('.ctx-item').forEach(item => {
+    cm.querySelectorAll('.ctx-item:not(.has-sub)').forEach(item => {
         item.addEventListener('mouseenter', () => {
-            if (!item.classList.contains('has-sub')) closeAllSubmenus();
+            closeAllSubmenus();
         });
     });
 }
@@ -255,7 +276,6 @@ function showSubmenu(parentItem, subName, ctx) {
     document.body.appendChild(sub);
     openSubmenus.push(sub);
 
-    // Заполняем палитру если нужно
     if (subName === 'textColor' || subName === 'bgColor') {
         const pal = sub.querySelector('.ctx-palette');
         pal.innerHTML = COLOR_PALETTE.map(c =>
@@ -265,7 +285,6 @@ function showSubmenu(parentItem, subName, ctx) {
         ).join('');
     }
 
-    // Позиция подменю
     const pRect = parentItem.getBoundingClientRect();
     sub.style.visibility = 'hidden';
     sub.style.left = '0px';
@@ -286,10 +305,8 @@ function showSubmenu(parentItem, subName, ctx) {
     sub.style.top = top + 'px';
     sub.style.visibility = 'visible';
 
-    // Обработка кликов
     sub.onclick = handleCtxClick;
 
-    // Наведение на вложенные подменю
     sub.querySelectorAll('.ctx-item.has-sub').forEach(item => {
         item.addEventListener('mouseenter', () => {
             const sn = item.dataset.sub;
@@ -367,8 +384,8 @@ function execCtxAction(action, td, ctx) {
         case 'setCurrency': {
             if (!td || ctx.ci == null) break;
             const cur = getColCurrency(td, ctx.ci);
-            const options = ['USD','EUR','RUB','XAU','BTC','OIL','— (убрать)'];
-            openPrompt(`Валюта колонки "${td.cols[ctx.ci]}" (${options.join(', ')}):`, cur || '', (v) => {
+            const options = 'USD, EUR, RUB, XAU, BTC, OIL (или пусто — убрать)';
+            openPrompt(`Валюта колонки "${td.cols[ctx.ci]}" (${options}):`, cur || '', (v) => {
                 const val = String(v).trim().toUpperCase();
                 if (!val || val === '—' || val === 'NONE') setColCurrency(td, ctx.ci, null);
                 else setColCurrency(td, ctx.ci, val);
