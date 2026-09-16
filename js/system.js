@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.1.0 — SYSTEM ====================
+// ==================== ONTEK v7.1.1 — SYSTEM ====================
 // Сохранение, загрузка, сессии, хоткеи, экспорт
 
 function saveNow() {
@@ -180,7 +180,7 @@ function copySelectedCells() {
     copyTableWithFormat(td);
 }
 
-// ========== SAVE XLSX (мультивалютный) ==========
+// ========== SAVE XLSX ==========
 function save() {
     const tables = getTables(activeWorkspace);
     if (!tables.length) { toast('Нет таблиц', 'warning'); return; }
@@ -243,7 +243,6 @@ function save() {
                 const cell = row.getCell(c + 1);
                 const cn = (td.cols[c] || '').toLowerCase();
                 if (cn.startsWith('стоимость')) {
-                    // Формула: Ко-во * Цена (соответствующая)
                     const priceIdxs = []; td.cols.forEach((cc, j) => { if ((cc || '').toLowerCase().startsWith('цена')) priceIdxs.push(j); });
                     const costIdxs = []; td.cols.forEach((cc, j) => { if ((cc || '').toLowerCase().startsWith('стоимость')) costIdxs.push(j); });
                     const k = costIdxs.indexOf(c);
@@ -284,7 +283,6 @@ function save() {
         // Total row
         const ldr = cr - 1;
         const tr = sheet.getRow(cr);
-        // Ищем позицию "Итого"
         const firstCostIdx2 = td.cols.findIndex(c => (c || '').toLowerCase().startsWith('стоимость'));
         const labelIdx = firstCostIdx2 > 0 ? firstCostIdx2 - 1 : tc - 2;
         for (let c = 0; c < tc; c++) {
@@ -508,10 +506,18 @@ function processWB(wb) {
     saveSession();
 }
 
-// ========== GLOBAL HOTKEYS ==========
+// ========== GLOBAL HOTKEYS (исправлено: не срабатывают в input/textarea) ==========
 function handleGlobalHotkeys(e) {
     const inCell = e.target.closest('.cell[contenteditable="true"]');
-    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === ';') { e.preventDefault(); const s = new Date().toLocaleDateString('ru-RU'); document.execCommand('insertText', false, s); return; }
+    // Все места где пользователь печатает текст — не трогаем хоткеями
+    const isTyping = !!(e.target.closest('input') || e.target.closest('textarea') || e.target.closest('[contenteditable="true"]'));
+
+    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === ';') {
+        e.preventDefault();
+        const s = new Date().toLocaleDateString('ru-RU');
+        document.execCommand('insertText', false, s);
+        return;
+    }
     if (e.key === 'Escape') {
         if (paintBuffer) { stopFormatPainter(); toast('Формат отменён', 'info'); return; }
         hideCtx(); closeSearch(); closeFR(); clearCellSelection(); return;
@@ -528,9 +534,9 @@ function handleGlobalHotkeys(e) {
         if (k >= '1' && k <= '5') { e.preventDefault(); switchWorkspace(+k); return; }
         if (k === 's') { e.preventDefault(); save(); return; }
         if (k === 'o') { e.preventDefault(); loadViaDialog(); return; }
-        if (k === 'v' && !inCell) { e.preventDefault(); paste(); return; }
-        if (k === 'd' && !inCell) { e.preventDefault(); dupTable(); return; }
-        if (k === 'c' && !inCell) {
+        if (k === 'v' && !isTyping) { e.preventDefault(); paste(); return; }
+        if (k === 'd' && !isTyping) { e.preventDefault(); dupTable(); return; }
+        if (k === 'c' && !isTyping) {
             const td = active();
             if (td && ((cellSel.tid === td.id && cellSel.r1 >= 0) || (selectedRows[td.id] && selectedRows[td.id].size > 0))) {
                 e.preventDefault();
@@ -541,17 +547,17 @@ function handleGlobalHotkeys(e) {
     }
     if (e.ctrlKey && e.shiftKey && !e.altKey) {
         const k = e.key.toUpperCase();
-        if (k === 'S' && !inCell) { e.preventDefault(); addSectionRow(active()); return; }
-        if (k === 'D' && !inCell) { e.preventDefault(); addDivider({ position: 'auto' }); return; }
-        if (k === 'M' && !inCell) { e.preventDefault(); const td = active(); if (td && cellSel.r1 >= 0) mergeRect(td, cellSel.r1, cellSel.c1, cellSel.r2, cellSel.c2); return; }
-        if (k === 'E' && !inCell) { e.preventDefault(); exportCSV(); return; }
-        if (k === 'P' && !inCell) { e.preventDefault(); printView(); return; }
-        if (k === 'F' && !inCell) { e.preventDefault(); startFormatPainter(); return; }
-        if (k === 'C' && !inCell) { e.preventDefault(); const td = active(); if (td) copyTableWithFormat(td); return; }
-        if ((k === '!' || k === '1') && !inCell) { e.preventDefault(); addTable('RUB'); return; }
-        if ((k === '@' || k === '2') && !inCell) { e.preventDefault(); addTable('USD'); return; }
+        if (k === 'S' && !isTyping) { e.preventDefault(); addSectionRow(active()); return; }
+        if (k === 'D' && !isTyping) { e.preventDefault(); addDivider({ position: 'auto' }); return; }
+        if (k === 'M' && !isTyping) { e.preventDefault(); const td = active(); if (td && cellSel.r1 >= 0) mergeRect(td, cellSel.r1, cellSel.c1, cellSel.r2, cellSel.c2); return; }
+        if (k === 'E' && !isTyping) { e.preventDefault(); exportCSV(); return; }
+        if (k === 'P' && !isTyping) { e.preventDefault(); printView(); return; }
+        if (k === 'F' && !isTyping) { e.preventDefault(); startFormatPainter(); return; }
+        if (k === 'C' && !isTyping) { e.preventDefault(); const td = active(); if (td) copyTableWithFormat(td); return; }
+        if ((k === '!' || k === '1') && !isTyping) { e.preventDefault(); addTable('RUB'); return; }
+        if ((k === '@' || k === '2') && !isTyping) { e.preventDefault(); addTable('USD'); return; }
     }
-    if (e.shiftKey && !e.ctrlKey && !e.altKey && !inCell && !recordingKey) {
+    if (e.shiftKey && !e.ctrlKey && !e.altKey && !isTyping && !recordingKey) {
         let key = e.key.toUpperCase();
         if (e.code === 'Digit1') key = '1';
         if (e.code === 'Digit2') key = '2';
