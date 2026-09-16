@@ -1,155 +1,212 @@
-/* ===== БАЗОВЫЕ ПЕРЕМЕННЫЕ (СВЕТЛАЯ ТЕМА) ===== */
+/* ==================== ONTEK v5.0.0 THEMES ==================== */
 :root {
-    --bg: #eef1f5;
-    --app-bg: #fff;
-    --text: #1e293b;
-    --text2: #64748b;
-    --border: #e2e8f0;
-    --card: #fff;
-    --card-hdr: #f8fafc;
-    --card-act: #eff6ff;
-    --tbg: #f8fafc;
-    --tsbg: #fff;
-    --thbg: #64748b;
-    --thtx: #fff;
-    --rb: #eff6ff;
-    --ra: #dbeafe;
-    --rh: #fef9c3;
-    --rs: #fef9c3;
-    --tot: #e2e8f0;
-    --rnbg: #f1f5f9;
-    --rntx: #94a3b8;
-    --sbg: #f8fafc;
-    --toast-ok-bg: #d1fae5;
-    --toast-ok-tx: #065f46;
-    --toast-err-bg: #fee2e2;
-    --toast-err-tx: #991b1b;
-    --ctxbg: #fff;
-    --brand: #1e40af;
-    --brandtx: #fff;
-    --sidebar-bg: #f1f5f9;
-    --accent: #3b82f6;
-    --accent2: #6366f1;
-    --accent-light: #eff6ff;
-    --btn-add-bg: #d1fae5;
-    --btn-add-tx: #065f46;
-    --btn-del-bg: #fee2e2;
-    --btn-del-tx: #991b1b;
-    --input-focus-shadow: rgba(59,130,246,0.08);
-    --btn-blue-bg: #3b82f6;
-    --btn-green-bg: #10b981;
-    --btn-red-bg: #ef4444;
-    --btn-orange-bg: #f59e0b;
-    --btn-purple-bg: #8b5cf6;
-    --btn-teal-bg: #14b8a6;
-    --btn-slate-bg: #475569;
-    --btn-pink-bg: #ec4899;
-    --btn-indigo-bg: #6366f1;
+    /* Light (default) */
+    --bg-body: #eef1f8;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-sunken: #f7f9fc;
+    --bg-sidebar: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    --bg-sidebar-item: rgba(255,255,255,0.05);
+    --bg-sidebar-item-hover: rgba(255,255,255,0.1);
+    --bg-topbar: rgba(255,255,255,0.85);
+
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    --text-sidebar: #cbd5e1;
+    --text-sidebar-active: #ffffff;
+
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-active: #4338ca;
+    --primary-light: #eef2ff;
+    --primary-glow: rgba(99,102,241,0.18);
+
+    --success: #10b981;
+    --success-hover: #059669;
+    --success-light: #d1fae5;
+
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --danger-light: #fee2e2;
+
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+
+    --info: #06b6d4;
+    --info-light: #cffafe;
+
+    /* Table */
+    --th-bg: #1e293b;
+    --th-text: #ffffff;
+    --row-odd: #ffffff;
+    --row-even: #f8fafc;
+    --row-hover: #eef2ff;
+    --row-selected: #e0e7ff;
+    --row-total: #f1f5f9;
+
+    --cell-border: #e2e8f0;
+    --cell-focus: #6366f1;
+
+    /* Table sizing (override via settings) */
+    --font-size-table: 13px;
+    --row-height: 38px;
+    --wrap-text: nowrap;
+
+    /* Merged cells */
+    --merge-bg: #f8fafc;
+    --merge-accent: #eef2ff;
+
+    /* Radii */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgba(15,23,42,0.05);
+    --shadow-sm: 0 2px 4px rgba(15,23,42,0.06);
+    --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
+    --shadow-lg: 0 12px 32px rgba(15,23,42,0.12);
+    --shadow-xl: 0 24px 56px rgba(15,23,42,0.16);
+
+    /* Transitions */
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --dur: 0.2s;
 }
 
-/* ===== ТЁМНАЯ ТЕМА ===== */
-.dark {
-    --bg: #0f172a;
-    --app-bg: #1e293b;
-    --text: #e2e8f0;
-    --text2: #94a3b8;
-    --border: #334155;
-    --card: #1e293b;
-    --card-hdr: #273548;
-    --card-act: #1e3a5f;
-    --tbg: #1a2332;
-    --tsbg: #273548;
-    --thbg: #334155;
-    --thtx: #e2e8f0;
-    --rb: #1e293b;
-    --ra: #273548;
-    --rh: #334155;
-    --rs: #3b3b1a;
-    --tot: #334155;
-    --rnbg: #1a2332;
-    --rntx: #64748b;
-    --sbg: #1a2332;
-    --toast-ok-bg: #064e3b;
-    --toast-ok-tx: #a7f3d0;
-    --toast-err-bg: #7f1d1d;
-    --toast-err-tx: #fecaca;
-    --ctxbg: #273548;
-    --brand: #3b82f6;
-    --sidebar-bg: #1a2332;
-    --accent-light: #1e3a5f;
-    --input-focus-shadow: rgba(59,130,246,0.2);
+/* ==================== DARK THEME ==================== */
+body.dark {
+    --bg-body: #0a0e1a;
+    --bg-surface: #131827;
+    --bg-elevated: #1a2033;
+    --bg-sunken: #0d1220;
+    --bg-sidebar: linear-gradient(180deg, #131827 0%, #0a0e1a 100%);
+    --bg-sidebar-item: rgba(255,255,255,0.04);
+    --bg-sidebar-item-hover: rgba(255,255,255,0.08);
+    --bg-topbar: rgba(19,24,39,0.85);
+
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-tertiary: #64748b;
+    --text-sidebar: #94a3b8;
+    --text-sidebar-active: #ffffff;
+
+    --border-light: #1e293b;
+    --border-medium: #334155;
+
+    --primary-light: #1e1b4b;
+    --primary-glow: rgba(99,102,241,0.3);
+
+    --success-light: #064e3b;
+    --danger-light: #7f1d1d;
+    --warning-light: #78350f;
+    --info-light: #164e63;
+
+    --th-bg: #0f172a;
+    --th-text: #cbd5e1;
+    --row-odd: #131827;
+    --row-even: #171d2e;
+    --row-hover: #1e293b;
+    --row-selected: #1e1b4b;
+    --row-total: #1a2033;
+
+    --cell-border: #1e293b;
+    --cell-focus: #6366f1;
+
+    --merge-bg: #171d2e;
+    --merge-accent: #1e1b4b;
 }
 
-/* ===== ЗЕЛЁНАЯ ТЕМА ===== */
-.theme-green {
-    --app-bg: #f0fdf4;
-    --accent: #10b981;
-    --accent2: #059669;
-    --brand: #065f46;
-    --accent-light: #d1fae5;
-    --btn-blue-bg: #10b981;
-    --btn-green-bg: #059669;
-    --btn-purple-bg: #7c3aed;
-    --btn-teal-bg: #0d9488;
-    --btn-slate-bg: #374151;
-    --btn-pink-bg: #db2777;
-    --btn-indigo-bg: #4f46e5;
-    --thbg: #065f46;
+/* ==================== COLOR SCHEMES ==================== */
+
+/* GREEN */
+body.theme-green {
+    --primary: #10b981;
+    --primary-hover: #059669;
+    --primary-active: #047857;
+    --primary-light: #d1fae5;
+    --primary-glow: rgba(16,185,129,0.2);
+    --th-bg: #064e3b;
+    --cell-focus: #10b981;
+    --row-hover: #ecfdf5;
+    --row-selected: #d1fae5;
+    --merge-bg: #f0fdf4;
+    --merge-accent: #d1fae5;
 }
-.dark.theme-green {
-    --app-bg: #0a1f14;
+body.dark.theme-green {
+    --primary-light: #064e3b;
+    --row-hover: #0f2a20;
+    --row-selected: #064e3b;
+    --merge-bg: #0f2a20;
+    --merge-accent: #064e3b;
 }
 
-/* ===== ФИОЛЕТОВАЯ ТЕМА ===== */
-.theme-purple {
-    --app-bg: #faf5ff;
-    --accent: #8b5cf6;
-    --accent2: #7c3aed;
-    --brand: #5b21b6;
-    --accent-light: #ede9fe;
-    --btn-blue-bg: #8b5cf6;
-    --btn-slate-bg: #4338ca;
-    --thbg: #5b21b6;
+/* PURPLE */
+body.theme-purple {
+    --primary: #8b5cf6;
+    --primary-hover: #7c3aed;
+    --primary-active: #6d28d9;
+    --primary-light: #ede9fe;
+    --primary-glow: rgba(139,92,246,0.2);
+    --th-bg: #4c1d95;
+    --cell-focus: #8b5cf6;
+    --row-hover: #faf5ff;
+    --row-selected: #ede9fe;
+    --merge-bg: #faf5ff;
+    --merge-accent: #ede9fe;
 }
-.dark.theme-purple {
-    --app-bg: #1a0f2e;
-}
-
-/* ===== ОРАНЖЕВАЯ ТЕМА ===== */
-.theme-orange {
-    --app-bg: #fff7ed;
-    --accent: #f59e0b;
-    --accent2: #ea580c;
-    --brand: #c2410c;
-    --accent-light: #fed7aa;
-    --btn-blue-bg: #f59e0b;
-    --btn-orange-bg: #ea580c;
-    --btn-slate-bg: #78350f;
-    --btn-pink-bg: #be123c;
-    --thbg: #c2410c;
-}
-.dark.theme-orange {
-    --app-bg: #1c0f02;
+body.dark.theme-purple {
+    --primary-light: #2e1065;
+    --row-hover: #1e1035;
+    --row-selected: #2e1065;
+    --merge-bg: #1e1035;
+    --merge-accent: #2e1065;
 }
 
-/* ===== КНОПКИ ===== */
-.b-blue { background: var(--btn-blue-bg) !important; color: #fff; }
-.b-green { background: var(--btn-green-bg) !important; color: #fff; }
-.b-red { background: var(--btn-red-bg) !important; color: #fff; }
-.b-orange { background: var(--btn-orange-bg) !important; color: #fff; }
-.b-purple { background: var(--btn-purple-bg) !important; color: #fff; }
-.b-teal { background: var(--btn-teal-bg) !important; color: #fff; }
-.b-slate { background: var(--btn-slate-bg) !important; color: #fff; }
-.b-pink { background: var(--btn-pink-bg) !important; color: #fff; }
-.b-indigo { background: var(--btn-indigo-bg) !important; color: #fff; }
+/* ORANGE */
+body.theme-orange {
+    --primary: #f59e0b;
+    --primary-hover: #d97706;
+    --primary-active: #b45309;
+    --primary-light: #fef3c7;
+    --primary-glow: rgba(245,158,11,0.2);
+    --th-bg: #7c2d12;
+    --cell-focus: #f59e0b;
+    --row-hover: #fffbeb;
+    --row-selected: #fef3c7;
+    --merge-bg: #fffbeb;
+    --merge-accent: #fef3c7;
+}
+body.dark.theme-orange {
+    --primary-light: #78350f;
+    --row-hover: #2a1804;
+    --row-selected: #78350f;
+    --merge-bg: #2a1804;
+    --merge-accent: #78350f;
+}
 
-/* ===== САЙДБАР КНОПКИ ===== */
-.sb-blue { background: #3b82f6; }
-.sb-green { background: #10b981; }
-.sb-red { background: #ef4444; }
-.sb-orange { background: #f59e0b; }
-.sb-purple { background: #8b5cf6; }
-.sb-teal { background: #14b8a6; }
-.sb-slate { background: #475569; }
-.sb-pink { background: #ec4899; }
-.sb-indigo { background: #6366f1; }
+/* ROSE */
+body.theme-rose {
+    --primary: #f43f5e;
+    --primary-hover: #e11d48;
+    --primary-active: #be123c;
+    --primary-light: #ffe4e6;
+    --primary-glow: rgba(244,63,94,0.2);
+    --th-bg: #881337;
+    --cell-focus: #f43f5e;
+    --row-hover: #fff1f2;
+    --row-selected: #ffe4e6;
+    --merge-bg: #fff1f2;
+    --merge-accent: #ffe4e6;
+}
+body.dark.theme-rose {
+    --primary-light: #4c0519;
+    --row-hover: #2a0811;
+    --row-selected: #4c0519;
+    --merge-bg: #2a0811;
+    --merge-accent: #4c0519;
+}
