@@ -291,9 +291,6 @@ function save() {
             if (cn.startsWith('стоимость')) {
                 cell.value = { formula: `SUM(${cA(fdr, c + 1)}:${cA(ldr, c + 1)})`, result: sumCol(td, c) };
                 cell.numFmt = '#,##0.00';
-            } else if (cn.includes('ко-во') || cn.includes('количество')) {
-                cell.value = { formula: `SUM(${cA(fdr, c + 1)}:${cA(ldr, c + 1)})`, result: sumCol(td, c) };
-                cell.numFmt = '#,##0.00';
             } else if (c === labelIdx) {
                 cell.value = 'Итого';
             }
