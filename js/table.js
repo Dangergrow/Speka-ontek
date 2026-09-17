@@ -221,6 +221,31 @@ function updateCellSelectionUI(td) {
     }
 }
 
+// ========== HELPERS для ячеек с переносами ==========
+// Проверяем, что значение содержит переносы строк
+function hasNewlines(v) {
+    return typeof v === 'string' && v.includes('\n');
+}
+// Рендерим значение в DOM: многострочный текст → <br>, иначе textContent
+function setCellContent(cell, value) {
+    const v = value ?? '';
+    if (hasNewlines(v)) {
+        cell.innerHTML = String(v).split('\n').map(l => escapeHtml(l)).join('<br>');
+    } else {
+        cell.textContent = v;
+    }
+}
+// Читаем значение из DOM: <br> → \n. Убираем ЛЮБОЕ количество завершающих \n
+// (contenteditable добавляет лишний \n в конце, если ячейка многострочная)
+function getCellContent(cell) {
+    let val = cell.innerText ?? '';
+    // Убираем хвостовые переносы, которые contenteditable добавляет автоматически
+    val = val.replace(/\n+$/, '');
+    // Убираем CR, если где-то остался
+    val = val.replace(/\r/g, '');
+    return val;
+}
+
 // ========== RENDER ==========
 function render(td) {
     if (!td || !td.el) return;
@@ -272,13 +297,15 @@ function render(td) {
             cell.className = 'cell section-cell';
             cell.contentEditable = 'true';
             cell.dataset.r = ri; cell.dataset.c = '0';
-            cell.textContent = row[0] ?? '';
-            cell.addEventListener('focus', () => { cell.dataset.old = cell.innerText; setAct(td.id); });
-            cell.addEventListener('input', () => { let v = cell.innerText; if (v.endsWith('\n')) v = v.slice(0, -1); td.rows[ri][0] = v; });
+            setCellContent(cell, row[0]);
+            cell.addEventListener('focus', () => { cell.dataset.old = getCellContent(cell); setAct(td.id); });
+            cell.addEventListener('input', () => { td.rows[ri][0] = getCellContent(cell); });
             cell.addEventListener('blur', () => {
-                let v = cell.innerText; if (v.endsWith('\n')) v = v.slice(0, -1);
+                const v = getCellContent(cell);
                 td.rows[ri][0] = v;
-                if (cell.dataset.old !== undefined && cell.dataset.old !== v) hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: 0, old: cell.dataset.old, val: v } });
+                if (cell.dataset.old !== undefined && cell.dataset.old !== v) {
+                    hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: 0, old: cell.dataset.old, val: v } });
+                }
             });
             cell.addEventListener('keydown', e => {
                 if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); document.execCommand('insertLineBreak'); return; }
@@ -351,12 +378,23 @@ function render(td) {
             applyStyleToCell(cell, style);
             const note = td.notes && td.notes[formulaKey];
             if (note) cell.classList.add('has-note');
-            cell.textContent = v ?? '';
 
-            cell.addEventListener('focus', () => { cell.dataset.old = cell.innerText; setAct(td.id); activeTbCell = { r: ri, c: colIdx }; updateTbFromCell(td, ri, colIdx); });
-            cell.addEventListener('input', () => { let val = cell.innerText; if (val.endsWith('\n')) val = val.slice(0, -1); td.rows[ri][colIdx] = val; if (isNum && !isTotal && !isFormula(val)) updCalcRow(td, ri, true); });
+            // Вывод содержимого с поддержкой переносов
+            setCellContent(cell, v);
+
+            cell.addEventListener('focus', () => {
+                cell.dataset.old = getCellContent(cell);
+                setAct(td.id);
+                activeTbCell = { r: ri, c: colIdx };
+                updateTbFromCell(td, ri, colIdx);
+            });
+            cell.addEventListener('input', () => {
+                const val = getCellContent(cell);
+                td.rows[ri][colIdx] = val;
+                if (isNum && !isTotal && !isFormula(val)) updCalcRow(td, ri, true);
+            });
             cell.addEventListener('blur', () => {
-                let val = cell.innerText; if (val.endsWith('\n')) val = val.slice(0, -1);
+                let val = getCellContent(cell);
                 if (isFormula(val)) {
                     if (!td.formulas) td.formulas = {};
                     td.formulas[formulaKey] = val;
@@ -371,9 +409,15 @@ function render(td) {
                         const n = pn(val);
                         if (!isNaN(n)) { val = n.toFixed(2); td.rows[ri][colIdx] = val; cell.textContent = val; }
                         updCalcRow(td, ri, false);
-                    } else td.rows[ri][colIdx] = val;
+                    } else {
+                        td.rows[ri][colIdx] = val;
+                        // Перерисуем с сохранением переносов (innerText может дать один \n вместо <br>)
+                        setCellContent(cell, val);
+                    }
                 }
-                if (cell.dataset.old !== undefined && cell.dataset.old !== val) hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: colIdx, old: cell.dataset.old, val: val } });
+                if (cell.dataset.old !== undefined && cell.dataset.old !== val) {
+                    hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: colIdx, old: cell.dataset.old, val: val } });
+                }
             });
             cell.addEventListener('dblclick', () => { if (td.formulas && td.formulas[formulaKey]) cell.textContent = td.formulas[formulaKey]; });
             cell.addEventListener('keydown', e => {
@@ -392,8 +436,48 @@ function render(td) {
                 e.preventDefault();
                 const text = (e.clipboardData || window.clipboardData).getData('text/plain');
                 if (!text) return;
-                if (text.includes('\t') || text.split('\n').length > 1) { const parsed = parseClipboard(text); if (parsed.length > 1 || (parsed[0] && parsed[0].length > 1)) { pasteAt(td, ri, colIdx, parsed); return; } }
-                document.execCommand('insertText', false, text);
+
+                // --- Случай 1: настоящая табличная вставка (между колонками есть TAB) ---
+                if (text.includes('\t')) {
+                    const parsed = parseClipboard(text);
+                    if (parsed.length > 1 || (parsed[0] && parsed[0].length > 1)) {
+                        pasteAt(td, ri, colIdx, parsed);
+                        return;
+                    }
+                }
+
+                // --- Случай 2: текст (возможно многострочный) → целиком в ОДНУ ячейку ---
+                const oldValue = cell.dataset.old !== undefined ? cell.dataset.old : (td.rows[ri][colIdx] || '');
+
+                // Нормализуем переносы строк и убираем ХВОСТОВЫЕ пустые строки
+                let normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                // Убираем ВСЕ завершающие \n (и \r), но сохраняем внутренние переносы
+                normalized = normalized.replace(/[\n\r]+$/, '');
+
+                const lines = normalized.split('\n');
+
+                if (isNum && !isTotal) {
+                    // В числовую колонку — берём первое число из текста
+                    const n = pn(lines[0]);
+                    if (!isNaN(n)) {
+                        td.rows[ri][colIdx] = n.toFixed(2);
+                        setCellContent(cell, td.rows[ri][colIdx]);
+                    } else {
+                        td.rows[ri][colIdx] = normalized;
+                        setCellContent(cell, normalized);
+                    }
+                    updCalcRow(td, ri, false);
+                } else {
+                    // Обычная колонка — сохраняем многострочный текст как есть
+                    td.rows[ri][colIdx] = normalized;
+                    setCellContent(cell, normalized);
+                }
+
+                // Undo-история
+                if (oldValue !== td.rows[ri][colIdx]) {
+                    hist.push({ a: 'editCell', tid: td.id, d: { ri, ci: colIdx, old: oldValue, val: td.rows[ri][colIdx] } });
+                }
+                saveSession();
             });
             cell.addEventListener('mousedown', e => {
                 if (e.button !== 0) return;
@@ -422,7 +506,7 @@ function render(td) {
         tbody.appendChild(tr);
     });
 
-    // Total row — суммы только по колонкам "Стоимость" (и по совместимости — где реально нужно)
+    // Total row — суммы только по колонкам "Стоимость"
     if (tableSettings.showTotals && rows.length > 0) {
         const totTr = document.createElement('tr');
         totTr.className = 'row-total';
@@ -441,7 +525,6 @@ function render(td) {
                 const cur = getColCurrency(td, i) || td.currency;
                 html += `<td style="padding:0"><div class="cell total" style="padding:var(--cell-padding) 12px;font-weight:700">${sumCol(td, i).toFixed(2)} ${cur}</div></td>`;
             } else if (isQtyCol) {
-                // НЕ суммируем количество — оставляем пустым
                 html += '<td></td>';
             } else if (isPriceCol) {
                 html += `<td style="padding:10px 12px;color:var(--text-tertiary);text-align:right">—</td>`;
@@ -877,6 +960,8 @@ function insertRowsIntoTable(td, parsedRows) {
         const nr = Array(td.cols.length).fill('');
         for (let i = 0; i < td.cols.length; i++) {
             let v = r[i] ?? '';
+            // Убираем хвостовые переносы и для колонок с числами нормализуем
+            v = String(v).replace(/[\n\r]+$/, '');
             const cn = td.cols[i].toLowerCase();
             if (isNumericCol(cn)) { const n = pn(v); if (!isNaN(n) && v !== '') v = n.toFixed(2); }
             nr[i] = v;
@@ -896,6 +981,7 @@ function pasteAt(td, ri, ci2, parsed) {
             const targetC = ci2 + c;
             if (targetC >= td.cols.length) break;
             let v = parsed[r][c] ?? '';
+            v = String(v).replace(/[\n\r]+$/, '');
             const cn = td.cols[targetC].toLowerCase();
             if (isNumericCol(cn)) { const n = pn(v); if (!isNaN(n) && v !== '') v = n.toFixed(2); }
             td.rows[targetR][targetC] = v;
