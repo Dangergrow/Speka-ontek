@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.1.0 — CORE ====================
+// ==================== ONTEK v7.2.0 — CORE ====================
 // Константы, состояние, утилиты, формулы, валюты, копирование
 
 const DEFAULT_COLS = ['Артикул','Наименование','Ко-во, шт','Цена','Стоимость'];
@@ -38,10 +38,10 @@ const EXPORT_THEMES = {
 };
 
 const COLOR_THEMES = [
-    { id:'blue',   name:'Синяя',      desc:'Классика',  gradient:'linear-gradient(135deg,#6366f1,#4f46e5)', letter:'S' },
-    { id:'green',  name:'Зелёная',    desc:'Природа',   gradient:'linear-gradient(135deg,#10b981,#059669)', letter:'G' },
+    { id:'blue',   name:'Синяя',      desc:'Классика',  gradient:'linear-gradient(135deg,#3779eb,#235dcc)', letter:'S' },
+    { id:'green',  name:'Зелёная',    desc:'Природа',   gradient:'linear-gradient(135deg,#168464,#0f684f)', letter:'G' },
     { id:'purple', name:'Фиолетовая', desc:'Креатив',   gradient:'linear-gradient(135deg,#8b5cf6,#7c3aed)', letter:'P' },
-    { id:'orange', name:'Оранжевая',  desc:'Тепло',     gradient:'linear-gradient(135deg,#f59e0b,#d97706)', letter:'O' },
+    { id:'orange', name:'Оранжевая',  desc:'Тепло',     gradient:'linear-gradient(135deg,#c25b24,#a14318)', letter:'O' },
     { id:'rose',   name:'Розовая',    desc:'Яркая',     gradient:'linear-gradient(135deg,#f43f5e,#e11d48)', letter:'R' },
     { id:'slate',  name:'Серая',      desc:'Строгая',   gradient:'linear-gradient(135deg,#475569,#1e293b)', letter:'N' }
 ];
@@ -128,11 +128,11 @@ function toast(msg, type = 'success', duration) {
     const container = Q('#toastContainer');
     if (!container) return;
     const dur = duration || notifySettings.duration;
-    const icons = { success:'✓', error:'✕', info:'ℹ', warning:'⚠' };
+    const icons = { success:'<svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>', error:'<svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg>', info:'<svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>', warning:'<svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 18H2Z"/><path d="M12 9v5M12 17h.01"/></svg>' };
     const el = document.createElement('div');
     el.className = `toast-item ${type}`;
     el.style.setProperty('--toast-duration', dur + 'ms');
-    el.innerHTML = `<div class="toast-icon">${icons[type] || '✓'}</div><div class="toast-message">${escapeHtml(msg)}</div><div class="toast-progress"></div>`;
+    el.innerHTML = `<div class="toast-icon">${icons[type] || icons.success}</div><div class="toast-message">${escapeHtml(msg)}</div><div class="toast-progress"></div>`;
     container.appendChild(el);
     setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 250); }, dur);
 }
@@ -653,10 +653,10 @@ async function loadRates() {
     const renderRates = () => {
         if (!bar) return;
         const parts = [];
-        if (usdRate > 0) parts.push(`<span class="rate"><span>💵</span> USD: <span class="rate-value">${usdRate.toFixed(2)} ₽</span></span>`);
-        if (eurRate > 0) parts.push(`<span class="rate"><span>💶</span> EUR: <span class="rate-value">${eurRate.toFixed(2)} ₽</span></span>`);
-        if (btcRate > 0) parts.push(`<span class="rate"><span>₿</span> BTC: <span class="rate-value">${Math.round(btcRate).toLocaleString('ru-RU')} $</span></span>`);
-        if (goldRate > 0) parts.push(`<span class="rate"><span>🥇</span> XAU: <span class="rate-value">${goldRate.toFixed(0)} $/oz</span></span>`);
+        if (usdRate > 0) parts.push(`<span class="rate"><span class="rate-code">USD</span> <span class="rate-value">${usdRate.toFixed(2)} ₽</span></span>`);
+        if (eurRate > 0) parts.push(`<span class="rate"><span class="rate-code">EUR</span> <span class="rate-value">${eurRate.toFixed(2)} ₽</span></span>`);
+        if (btcRate > 0) parts.push(`<span class="rate"><span class="rate-code">BTC</span> <span class="rate-value">${Math.round(btcRate).toLocaleString('ru-RU')} $</span></span>`);
+        if (goldRate > 0) parts.push(`<span class="rate"><span class="rate-code">XAU</span> <span class="rate-value">${goldRate.toFixed(0)} $/oz</span></span>`);
         bar.innerHTML = parts.join('') || 'Курсы недоступны';
     };
     const promises = [];
