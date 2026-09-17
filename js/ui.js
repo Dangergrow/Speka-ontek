@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.1.2 — UI ====================
+// ==================== ONTEK v7.2.0 — UI ====================
 // Сайдбар, тулбар, контекстное меню, модалки, поиск, темы
 
 const CTX_ICONS = {
@@ -45,12 +45,12 @@ const CTX_ICONS = {
 function buildSidebarV2() {
     const sb = Q('#sidebarContent'); if (!sb) return;
     const sections = [
-        { t: 'Таблица', buttons: [
+        { t: 'Редактирование', buttons: [
             { id: 'btnAddRow',  icon: ICONS.plus,     label: 'Добавить строку',  hk: 'addRow' },
             { id: 'btnAddDivider', icon: ICONS.divider, label: 'Разделитель', hk: null }
         ]},
-        { t: 'Действия', buttons: [
-            { id: 'btnConvert', icon: ICONS.convert, label: 'Конвертировать всё', hk: 'convert' },
+        { t: 'Инструменты', buttons: [
+            { id: 'btnConvert', icon: ICONS.convert, label: 'Конвертация', hk: 'convert' },
             { id: 'btnPaste',   icon: ICONS.paste,   label: 'Вставить',       hk: 'paste' },
             { id: 'btnDup',     icon: ICONS.copy,    label: 'Дублировать',    hk: 'dup' },
             { id: 'btnRecalc',  icon: ICONS.refresh, label: 'Пересчёт',       hk: 'recalc' },
@@ -59,11 +59,11 @@ function buildSidebarV2() {
             { id: 'btnTemplates', icon: ICONS.templates, label: 'Шаблоны',    hk: null }
         ]},
         { t: 'Создать', buttons: [
-            { id: 'btnNewRUB', icon: ICONS.ruble,  label: 'Новая RUB', hk: 'newRUB' },
-            { id: 'btnNewUSD', icon: ICONS.dollar, label: 'Новая USD', hk: 'newUSD' }
+            { id: 'btnNewRUB', icon: ICONS.ruble,  label: 'Таблица RUB', hk: 'newRUB' },
+            { id: 'btnNewUSD', icon: ICONS.dollar, label: 'Таблица USD', hk: 'newUSD' }
         ]},
         { t: 'Файл', buttons: [
-            { id: 'btnLoad',  icon: ICONS.folder, label: 'Открыть',         hk: 'load' },
+            { id: 'btnLoad',  icon: ICONS.folder, label: 'Открыть файл',         hk: 'load' },
             { id: 'btnSave',  icon: ICONS.save,   label: 'Сохранить Excel', hk: 'save' },
             { id: 'btnClear', icon: ICONS.trash,  label: 'Очистить',        hk: 'clear' },
             { id: 'btnUndo',  icon: ICONS.undo,   label: 'Отменить',        hk: 'undo' }
@@ -81,6 +81,12 @@ function buildSidebarV2() {
             `).join('')}
         </div>
     `).join('');
+    // Layout only: preserve button instances and the existing event bindings.
+    ['btnLoad', 'btnSave'].forEach(id => Q('#documentActions').appendChild(Q('#' + id)));
+    ['btnNewRUB', 'btnNewUSD'].forEach(id => Q('#createActions').appendChild(Q('#' + id)));
+    sb.querySelectorAll('.sidebar-section').forEach(section => {
+        if (!section.querySelector('button')) section.remove();
+    });
     const tc = Q('#btnColorTheme'); if (tc) tc.innerHTML = ICONS.palette;
     const ts = Q('#btnSettings'); if (ts) ts.innerHTML = ICONS.settings;
     const ti = Q('#themeIcon'); if (ti) ti.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
@@ -91,7 +97,7 @@ function buildWorkspaces() {
     const tabs = Q('#workspaceTabs'), container = Q('#workspaceContainer');
     tabs.innerHTML = ''; container.innerHTML = '';
     for (let i = 1; i <= 5; i++) {
-        tabs.innerHTML += `<button class="workspace-tab ${i === activeWorkspace ? 'active' : ''}" data-ws="${i}">Окно ${i}</button>`;
+        tabs.innerHTML += `<button class="workspace-tab ${i === activeWorkspace ? 'active' : ''}" data-ws="${i}"><span class="workspace-number">0${i}</span><span>Окно ${i}</span></button>`;
         container.innerHTML += `<div class="workspace-panel ${i === activeWorkspace ? 'active' : ''}" data-ws="${i}"><div class="tables-area" id="workspaceArea_${i}"></div></div>`;
     }
     tabs.querySelectorAll('.workspace-tab').forEach(t => { t.onclick = () => switchWorkspace(+t.dataset.ws); });
@@ -605,7 +611,7 @@ function renderThemeOptions(containerId) {
     const c = document.getElementById(containerId); if (!c) return;
     c.innerHTML = COLOR_THEMES.map(t => `
         <div class="theme-card ${t.id === colorTheme ? 'active' : ''}" data-theme="${t.id}">
-            <div class="theme-preview" style="background:${t.gradient}">${t.letter}</div>
+            <div class="theme-preview" style="--preview-accent:${t.gradient}"><span class="preview-rail"></span><span class="preview-page"><i></i><i></i><i></i></span><span class="preview-dot"></span></div>
             <div class="theme-name">${t.name}</div>
             <div class="theme-desc">${t.desc}</div>
         </div>`).join('');
@@ -615,7 +621,7 @@ function renderExportThemes(containerId) {
     const c = document.getElementById(containerId); if (!c) return;
     c.innerHTML = Object.entries(EXPORT_THEMES).map(([k, t]) => `
         <div class="export-theme ${k === exportTheme ? 'active' : ''}" data-theme="${k}">
-            <div class="export-theme-preview" style="background:${t.preview}">${t.name[0]}</div>
+            <div class="export-theme-preview" style="--preview-accent:${t.preview}"><span></span><i></i><i></i></div>
             <div class="export-theme-name">${t.name}</div>
         </div>`).join('');
     c.querySelectorAll('.export-theme').forEach(el => el.onclick = () => setExportTheme(el.dataset.theme));
