@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.1.2 — TABLE ====================
+// ==================== ONTEK v7.2.0 — TABLE ====================
 // Таблицы, ячейки, строки/колонки, разделители, рендер
 
 // ========== WORKSPACE ==========
@@ -21,7 +21,7 @@ function upEmpty() {
     const e = a.querySelector('.empty-state');
     const hasItems = (workspaces[activeWorkspace] || []).length > 0;
     if (!hasItems && !e) {
-        a.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">Нет таблиц</div><div class="empty-state-desc">Создайте новую — <span class="empty-state-kbd">Shift</span>+<span class="empty-state-kbd">1</span> RUB или <span class="empty-state-kbd">Shift</span>+<span class="empty-state-kbd">2</span> USD</div></div>`;
+        a.innerHTML = `<div class="empty-state"><div class="empty-state-icon"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 9v12"/></svg></div><div class="empty-state-eyebrow">НОВОЕ РАБОЧЕЕ ОКНО</div><div class="empty-state-title">Место для следующего заказа</div><div class="empty-state-desc">Добавьте таблицу кнопками сверху или используйте <span class="empty-state-kbd">Shift</span>+<span class="empty-state-kbd">1</span> RUB или <span class="empty-state-kbd">Shift</span>+<span class="empty-state-kbd">2</span> USD</div></div>`;
     } else if (hasItems && e) e.remove();
 }
 
@@ -76,10 +76,10 @@ function buildCardHeader(td) {
     hdr.innerHTML = `
         <div class="card-hdr-left">
             <div class="card-title">
-                <span>📋</span>
+                <span class="card-symbol"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 9v12"/></svg></span>
                 <span>Таблица ${td.currency}</span>
                 <span class="card-badge ${td.currency === 'USD' ? 'usd' : 'rub'}">${td.currency}</span>
-                <span class="card-badge active-badge">●</span>
+                <span class="card-badge active-badge">В работе</span>
             </div>
             <div class="card-stats">
                 <span class="card-stat">Строк: <b class="stat-rows">${td.rows.length}</b></span>
@@ -87,10 +87,10 @@ function buildCardHeader(td) {
             </div>
         </div>
         <div class="card-hdr-right">
-            <button class="card-btn copy-btn" title="Копировать таблицу с форматированием">📋</button>
-            <button class="card-btn cur-btn" title="Конвертировать всю таблицу">${td.currency === 'USD' ? '💵 USD' : '💰 RUB'}</button>
-            <button class="card-btn icon-only dup-btn" title="Дублировать">⎘</button>
-            <button class="card-btn icon-only danger del-btn" title="Удалить">🗑</button>
+            <button class="card-btn copy-btn" title="Копировать таблицу с форматированием" aria-label="Копировать таблицу">${ICONS.copy}</button>
+            <button class="card-btn cur-btn" title="Конвертировать всю таблицу">${ICONS.convert}<span>${td.currency}</span></button>
+            <button class="card-btn icon-only dup-btn" title="Дублировать" aria-label="Дублировать">${ICONS.copy}</button>
+            <button class="card-btn icon-only danger del-btn" title="Удалить" aria-label="Удалить таблицу">${ICONS.trash}</button>
         </div>
     `;
     hdr.querySelector('.copy-btn').onclick = e => { e.stopPropagation(); copyTableWithFormat(td); };
@@ -290,7 +290,7 @@ function render(td) {
             tr.appendChild(tdEl);
             const at = document.createElement('td');
             at.className = 'actions-col';
-            at.innerHTML = '<div class="row-actions"><button class="row-action-btn add" title="Добавить строку ниже">+</button><button class="row-action-btn del" title="Удалить строку">✕</button></div>';
+            at.innerHTML = '<div class="row-actions"><button class="row-action-btn add" title="Добавить строку ниже">+</button><button class="row-action-btn del" title="Удалить строку" aria-label="Удалить строку"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>';
             at.querySelector('.add').onclick = e => { e.stopPropagation(); insRowBelow(td, ri); };
             at.querySelector('.del').onclick = e => { e.stopPropagation(); delRow(td, ri); };
             tr.appendChild(at);
@@ -415,7 +415,7 @@ function render(td) {
         });
         const at = document.createElement('td');
         at.className = 'actions-col';
-        at.innerHTML = '<div class="row-actions"><button class="row-action-btn add" title="Добавить строку ниже">+</button><button class="row-action-btn del" title="Удалить строку">✕</button></div>';
+        at.innerHTML = '<div class="row-actions"><button class="row-action-btn add" title="Добавить строку ниже">+</button><button class="row-action-btn del" title="Удалить строку" aria-label="Удалить строку"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>';
         at.querySelector('.add').onclick = e => { e.stopPropagation(); insRowBelow(td, ri); };
         at.querySelector('.del').onclick = e => { e.stopPropagation(); delRow(td, ri); };
         tr.appendChild(at);
@@ -925,13 +925,13 @@ function buildDividerDOM(item) {
     const el = document.createElement('div');
     el.className = 'divider'; el.dataset.divid = item.id;
     el.innerHTML = `
-        <div class="divider-icon">§</div>
+        <div class="divider-icon">${ICONS.section}</div>
         <div class="divider-title" contenteditable="true" data-divid="${item.id}">${escapeHtml(item.title || 'Новый раздел')}</div>
         <div class="divider-actions">
-            <button class="divider-btn" data-divid="${item.id}" data-act="up" title="Вверх">↑</button>
-            <button class="divider-btn" data-divid="${item.id}" data-act="down" title="Вниз">↓</button>
-            <button class="divider-btn" data-divid="${item.id}" data-act="dup" title="Дублировать">⎘</button>
-            <button class="divider-btn danger" data-divid="${item.id}" data-act="del" title="Удалить">✕</button>
+            <button class="divider-btn" data-divid="${item.id}" data-act="up" title="Вверх" aria-label="Переместить вверх"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg></button>
+            <button class="divider-btn" data-divid="${item.id}" data-act="down" title="Вниз" aria-label="Переместить вниз"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 10 6 6 6-6"/></svg></button>
+            <button class="divider-btn" data-divid="${item.id}" data-act="dup" title="Дублировать" aria-label="Дублировать">${ICONS.copy}</button>
+            <button class="divider-btn danger" data-divid="${item.id}" data-act="del" title="Удалить" aria-label="Удалить"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
         </div>`;
     const titleEl = el.querySelector('.divider-title');
     titleEl.addEventListener('blur', () => { item.title = titleEl.innerText.trim() || 'Новый раздел'; titleEl.innerText = item.title; saveSession(); });
