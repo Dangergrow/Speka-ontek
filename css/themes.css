@@ -1,4 +1,4 @@
-/* ==================== ONTEK v6.0.0 THEMES ==================== */
+/* ==================== ONTEK v7.2.0 THEMES ==================== */
 :root {
     --bg-body: #eef1f8;
     --bg-surface: #ffffff;
@@ -131,3 +131,77 @@ body.dark.theme-rose { --primary-light: #4c0519; --row-hover: #2a0811; --row-sel
 
 body.theme-slate { --primary: #475569; --primary-hover: #334155; --primary-active: #1e293b; --primary-light: #f1f5f9; --primary-glow: rgba(71,85,105,0.2); --th-bg: #0f172a; --cell-focus: #475569; --row-hover: #f1f5f9; --row-selected: #e2e8f0; --merge-bg: #f8fafc; --section-bg: #e2e8f0; --section-border: #94a3b8; }
 body.dark.theme-slate { --primary-light: #1e293b; --row-hover: #1e293b; --row-selected: #334155; --merge-bg: #1e293b; --section-bg: #334155; --section-border: #64748b; --section-text: #e2e8f0; }
+
+/* ONTEK / Atelier — appearance tokens. Existing saved theme keys stay valid. */
+:root {
+    --bg-body: #f0f2f5; --bg-surface: #ffffff; --bg-elevated: #ffffff;
+    --bg-sunken: #f6f7f9; --bg-sidebar: #17212b;
+    --bg-sidebar-item: transparent; --bg-sidebar-item-hover: #243340;
+    --bg-topbar: #ffffff; --bg-toolbar: #ffffff;
+    --text-primary: #202d3a; --text-secondary: #5e6c7b; --text-tertiary: #6c7988;
+    --text-sidebar: #bdc8d3; --border-light: #e0e5eb; --border-medium: #c6d0db;
+    --primary: #2864d6; --primary-hover: #2054b5; --primary-active: #194595;
+    --primary-light: #eaf0fd; --primary-glow: rgba(40,100,214,.13);
+    --success: #19825f; --success-hover: #146c4f; --success-light: #e3f3eb;
+    --danger: #bd4052; --danger-hover: #a72c40; --danger-light: #fce9ed;
+    --warning: #aa691d; --warning-light: #fbefd9; --info: #28719e; --info-light: #e5f2f9;
+    --th-bg: #f1f4f8; --th-text: #4c6077;
+    --row-odd: #fff; --row-even: #fafbfd; --row-hover: #f1f5fc;
+    --row-selected: #e9f0fe; --row-total: #eef3fa;
+    --section-bg: #edf2f9; --section-text: #344f6f; --section-border: #d1ddeb;
+    --cell-border: #e7ecf1; --cell-focus: #2864d6; --merge-bg: #f5f8fc;
+    --shadow-md: 0 5px 20px rgba(23,36,52,.06);
+    --shadow-lg: 0 18px 55px rgba(23,36,52,.15);
+    --shadow-xl: 0 30px 90px rgba(16,29,44,.23);
+    --on-primary: #fff; --sidebar-edge: #2a3643;
+}
+body.theme-blue { --primary:#2864d6; --primary-hover:#2054b5; --primary-active:#194595; }
+body.theme-green { --primary:#168464; --primary-hover:#0f684f; --primary-active:#0a5641; }
+body.theme-purple { --primary:#7850bc; --primary-hover:#623da1; --primary-active:#503184; }
+body.theme-orange { --primary:#b65321; --primary-hover:#984018; --primary-active:#7b3313; }
+body.theme-rose { --primary:#bd4366; --primary-hover:#a13454; --primary-active:#852943; }
+body.theme-slate { --primary:#4e6177; --primary-hover:#3e5065; --primary-active:#2c3d51; }
+body[class*="theme-"] {
+    --primary-light: color-mix(in srgb, var(--primary) 9%, var(--bg-surface));
+    --primary-glow: color-mix(in srgb, var(--primary) 14%, transparent);
+    --th-bg: color-mix(in srgb, var(--primary) 6%, var(--bg-surface));
+    --th-text: var(--text-secondary);
+    --row-hover: color-mix(in srgb, var(--primary) 5%, var(--bg-surface));
+    --row-selected: color-mix(in srgb, var(--primary) 11%, var(--bg-surface));
+    --section-bg: color-mix(in srgb, var(--primary) 8%, var(--bg-surface));
+    --section-border: color-mix(in srgb, var(--primary) 22%, var(--bg-surface));
+    --section-text: var(--text-primary);
+    --cell-focus: var(--primary); --merge-bg: var(--bg-sunken);
+}
+body.dark {
+    color-scheme: dark;
+    --bg-body:#151d26; --bg-surface:#1e2935; --bg-elevated:#25313f; --bg-sunken:#19232e;
+    --bg-sidebar:#111a23; --bg-sidebar-item-hover:#253444;
+    --bg-topbar:#19232e; --bg-toolbar:#1e2935;
+    --text-primary:#e5edf5; --text-secondary:#a9bacb; --text-tertiary:#95a7b9;
+    --text-sidebar:#b7c7d6; --border-light:#344353; --border-medium:#485a6c;
+    --row-odd:#1e2935; --row-even:#222e3b; --row-total:#2a3849; --cell-border:#354454;
+    --success:#65c8a1; --success-hover:#7cdeba; --success-light:#173f36;
+    --danger:#f08b9a; --danger-hover:#ffacb8; --danger-light:#4a2935;
+    --warning:#edbf77; --warning-light:#443727; --info-light:#203c50;
+    --shadow-md:0 5px 24px rgba(0,0,0,.15); --shadow-lg:0 18px 55px rgba(0,0,0,.35);
+    --shadow-xl:0 30px 90px rgba(0,0,0,.5); --on-primary:#111b29; --sidebar-edge:#293746;
+}
+body.dark.theme-blue { --primary:#8bb5ff; --primary-hover:#accaff; --primary-active:#c6dbff; }
+body.dark.theme-green { --primary:#77d5b3; --primary-hover:#96e8cd; --primary-active:#b5f1dd; }
+body.dark.theme-purple { --primary:#c0a3f4; --primary-hover:#d2bafc; --primary-active:#e1d0ff; }
+body.dark.theme-orange { --primary:#f2b283; --primary-hover:#ffc69d; --primary-active:#ffdbbf; }
+body.dark.theme-rose { --primary:#efa2b9; --primary-hover:#ffc0d0; --primary-active:#ffd4df; }
+body.dark.theme-slate { --primary:#acbfd5; --primary-hover:#c6d6e8; --primary-active:#e0eaf6; }
+body.dark[class*="theme-"] {
+    --primary-light:color-mix(in srgb,var(--primary) 12%,var(--bg-surface));
+    --primary-glow:color-mix(in srgb,var(--primary) 12%,transparent);
+    --th-bg:color-mix(in srgb,var(--primary) 7%,var(--bg-sunken));
+    --th-text:var(--text-secondary);
+    --row-hover:color-mix(in srgb,var(--primary) 8%,var(--bg-surface));
+    --row-selected:color-mix(in srgb,var(--primary) 16%,var(--bg-surface));
+    --section-bg:color-mix(in srgb,var(--primary) 10%,var(--bg-surface));
+    --section-text:var(--text-primary);
+    --section-border:color-mix(in srgb,var(--primary) 25%,var(--bg-surface));
+    --merge-bg:var(--bg-sunken);
+}
