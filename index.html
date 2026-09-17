@@ -7,6 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ONTEK — Таблица заказов</title>
+<link rel="icon" href="icon.ico" sizes="any">
 <script src="exceljs.min.js"></script>
 <script src="xlsx.full.min.js"></script>
 <link rel="stylesheet" href="css/themes.css">
@@ -16,42 +17,40 @@
 <div class="app-shell">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="brand-logo">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/>
-                </svg>
-            </div>
+            <div class="brand-logo"><img src="css/brand.svg" width="44" height="44" alt=""></div>
             <div class="brand-text">
                 <div class="brand-name">ONTEK</div>
-                <div class="brand-sub">Таблица заказов</div>
+                <div class="brand-sub">Спецификации и заказы</div>
             </div>
         </div>
+        <div class="sidebar-context"><span class="context-mark"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 9v12"/></svg></span><div><strong>Редактор заказов</strong><span>Рабочее пространство</span></div></div>
         <nav class="sidebar-content" id="sidebarContent"></nav>
         <div class="sidebar-footer">
-            <div class="version-chip">v7.0.0</div>
+            <span class="footer-wordmark">ONTEK <span>/</span> DESKTOP</span><div class="version-chip">7.2</div>
         </div>
     </aside>
 
     <main class="main">
         <header class="topbar">
-            <div class="topbar-left">
-                <h1 class="topbar-title">Рабочая область</h1>
-                <div class="rates" id="ratesBar">
-                    <span class="rate-skeleton"></span><span class="rate-skeleton"></span>
-                </div>
-            </div>
-            <div class="topbar-center">
-                <div class="workspace-tabs" id="workspaceTabs"></div>
-            </div>
+            <div class="topbar-left"><span class="topbar-product">ONTEK</span><span class="breadcrumb-slash">/</span><span class="topbar-title">Спецификации</span></div>
+            <div class="rates" id="ratesBar"><span class="rate-skeleton"></span><span class="rate-skeleton"></span></div>
             <div class="topbar-right">
-                <button class="icon-btn" id="btnTheme" title="Тема (Ctrl+T)"><span id="themeIcon"></span></button>
-                <button class="icon-btn" id="btnColorTheme" title="Цветовая схема"></button>
-                <button class="icon-btn" id="btnSettings" title="Настройки"></button>
+                <button class="icon-btn" id="btnTheme" aria-label="Сменить светлую или тёмную тему" title="Тема (Ctrl+T)"><span id="themeIcon"></span></button>
+                <button class="icon-btn" id="btnColorTheme" aria-label="Цветовая схема" title="Цветовая схема"></button>
+                <button class="icon-btn" id="btnSettings" aria-label="Настройки" title="Настройки"></button>
             </div>
         </header>
+        <section class="workspace-heading" aria-label="Рабочая область">
+            <div class="heading-copy"><div class="eyebrow">РАБОЧАЯ ОБЛАСТЬ</div><h1>Таблица заказов<span class="title-period">.</span></h1><p>Каждая позиция на своём месте.</p></div>
+            <div class="document-actions" id="documentActions"></div>
+        </section>
+        <div class="workspace-switcher">
+            <div class="workspace-tabs" id="workspaceTabs" aria-label="Рабочие окна"></div>
+            <div class="create-actions" id="createActions"></div>
+        </div>
 
         <div class="toolbar" id="formatToolbar">
-            <div class="toolbar-group">
+            <div class="toolbar-group" data-label="Структура">
                 <button class="tb-btn" data-cmd="addSection" title="Заголовок раздела">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M8 12h8"/></svg>
                 </button>
@@ -66,7 +65,7 @@
                 </button>
             </div>
             <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
+            <div class="toolbar-group" data-label="Начертание">
                 <button class="tb-btn" data-cmd="bold" title="Жирный (Ctrl+B)"><b>B</b></button>
                 <button class="tb-btn" data-cmd="italic" title="Курсив (Ctrl+I)"><i>I</i></button>
                 <button class="tb-btn" data-cmd="underline" title="Подчёркнутый (Ctrl+U)"><u>U</u></button>
@@ -76,7 +75,7 @@
                 </button>
             </div>
             <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
+            <div class="toolbar-group" data-label="Выравнивание">
                 <button class="tb-btn" data-cmd="alignLeft" title="По левому краю">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
                 </button>
@@ -88,7 +87,7 @@
                 </button>
             </div>
             <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
+            <div class="toolbar-group" data-label="Цвет">
                 <div class="color-picker" id="textColorPicker">
                     <button class="tb-btn color-btn" data-cmd="textColor" title="Цвет текста">
                         <span class="color-icon">A</span>
@@ -105,8 +104,8 @@
                 </div>
             </div>
             <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
-                <select class="tb-select" id="tbFontFamily">
+            <div class="toolbar-group" data-label="Шрифт">
+                <select class="tb-select" id="tbFontFamily" aria-label="Шрифт ячейки">
                     <option value="">— Шрифт —</option>
                     <option value="'Segoe UI', system-ui, sans-serif">Segoe UI</option>
                     <option value="'Consolas', monospace">Consolas</option>
@@ -116,7 +115,7 @@
                     <option value="'Verdana', sans-serif">Verdana</option>
                     <option value="'Tahoma', sans-serif">Tahoma</option>
                 </select>
-                <select class="tb-select tb-select-sm" id="tbFontSize">
+                <select class="tb-select tb-select-sm" id="tbFontSize" aria-label="Размер шрифта ячейки">
                     <option value="">Размер</option>
                     <option value="10">10</option><option value="11">11</option><option value="12">12</option>
                     <option value="13">13</option><option value="14">14</option><option value="16">16</option>
@@ -124,7 +123,7 @@
                 </select>
             </div>
             <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
+            <div class="toolbar-group" data-label="Ячейки">
                 <button class="tb-btn" data-cmd="merge" title="Объединить">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6"/></svg>
                 </button>
@@ -133,7 +132,7 @@
                 </button>
             </div>
             <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
+            <div class="toolbar-group" data-label="Расчёт">
                 <button class="tb-btn" data-cmd="markup" title="Наценка %">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/><line x1="5" y1="19" x2="19" y2="5"/></svg>
                 </button>
@@ -142,7 +141,7 @@
                 </button>
             </div>
             <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
+            <div class="toolbar-group" data-label="Вид">
                 <button class="tb-btn" data-cmd="showAllCols" title="Показать все колонки">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
@@ -178,11 +177,11 @@
     <div class="modal modal-md">
         <div class="modal-header">
             <h2>Настройки</h2>
-            <button class="modal-close" id="btnCloseSettings">✕</button>
+            <button class="modal-close" id="btnCloseSettings" aria-label="Закрыть"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
         </div>
         <div class="modal-body">
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="tableSection"><span class="arrow">▶</span> Таблица</div>
+                <div class="settings-section-title" data-toggle="tableSection"><span class="arrow"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span> Таблица</div>
                 <div class="settings-section-body" id="tableSection">
                     <div class="setting-row"><label>Высота строк</label><div class="setting-control"><input type="range" id="setRowHeight" min="24" max="120" step="2" value="38"><span class="setting-value" id="valRowHeight">38 px</span></div></div>
                     <div class="setting-row"><label>Размер шрифта</label><div class="setting-control"><input type="range" id="setFontSize" min="10" max="20" step="1" value="13"><span class="setting-value" id="valFontSize">13 px</span></div></div>
@@ -207,14 +206,14 @@
                 </div>
             </div>
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="exportSection"><span class="arrow">▶</span> Экспорт в Excel</div>
+                <div class="settings-section-title" data-toggle="exportSection"><span class="arrow"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span> Экспорт в Excel</div>
                 <div class="settings-section-body" id="exportSection">
                     <div class="setting-row"><label>Цветовая схема экспорта</label></div>
                     <div class="export-themes" id="exportThemes"></div>
                 </div>
             </div>
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="notifySection"><span class="arrow">▶</span> Уведомления</div>
+                <div class="settings-section-title" data-toggle="notifySection"><span class="arrow"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span> Уведомления</div>
                 <div class="settings-section-body" id="notifySection">
                     <div class="setting-row"><label>Показывать уведомления</label><label class="switch"><input type="checkbox" id="setShowToasts" checked><span class="switch-slider"></span></label></div>
                     <div class="setting-row"><label>Позиция</label><div class="setting-control"><select class="select-input" id="setToastPos">
@@ -227,23 +226,23 @@
                 </div>
             </div>
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="hkSection"><span class="arrow">▶</span> Горячие клавиши</div>
+                <div class="settings-section-title" data-toggle="hkSection"><span class="arrow"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span> Горячие клавиши</div>
                 <div class="settings-section-body" id="hkSection">
                     <div id="hotkeyList"></div>
                     <button class="btn-secondary" id="btnResetHotkeys" style="margin-top:10px">Сбросить</button>
                 </div>
             </div>
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="themeSection"><span class="arrow">▶</span> Цветовая схема интерфейса</div>
+                <div class="settings-section-title" data-toggle="themeSection"><span class="arrow"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span> Цветовая схема интерфейса</div>
                 <div class="settings-section-body" id="themeSection"><div class="theme-options" id="themeOptionsSettings"></div></div>
             </div>
             <div class="settings-section">
-                <div class="settings-section-title" data-toggle="aboutSection"><span class="arrow">▶</span> О программе</div>
+                <div class="settings-section-title" data-toggle="aboutSection"><span class="arrow"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span> О программе</div>
                 <div class="settings-section-body" id="aboutSection">
                     <div class="about-block">
-                        <div class="about-logo"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></div>
+                        <div class="about-logo"><img src="css/brand.svg" width="72" height="72" alt="ONTEK"></div>
                         <div class="about-title">ONTEK</div>
-                        <div class="about-version">Таблица заказов v7.0.0</div>
+                        <div class="about-version">Таблица заказов · 7.2</div>
                         <div class="about-author">Автор: Камашев В.Е.</div>
                         <div class="about-copy">© 2026 Speka Ontek</div>
                     </div>
@@ -256,7 +255,7 @@
 <!-- COLOR THEME MODAL -->
 <div class="modal-overlay" id="colorThemeModal">
     <div class="modal modal-sm">
-        <div class="modal-header"><h2>Цветовая схема интерфейса</h2><button class="modal-close" id="btnCloseColorTheme">✕</button></div>
+        <div class="modal-header"><h2>Цветовая схема интерфейса</h2><button class="modal-close" id="btnCloseColorTheme" aria-label="Закрыть"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
         <div class="modal-body"><div class="theme-options" id="colorThemeOptions"></div></div>
     </div>
 </div>
@@ -264,7 +263,7 @@
 <!-- FIND & REPLACE MODAL -->
 <div class="modal-overlay" id="frModal">
     <div class="modal modal-xs">
-        <div class="modal-header"><h2>Найти и заменить</h2><button class="modal-close" id="frClose">✕</button></div>
+        <div class="modal-header"><h2>Найти и заменить</h2><button class="modal-close" id="frClose" aria-label="Закрыть"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
         <div class="modal-body">
             <input type="text" class="input" id="frFind" placeholder="Найти..." style="margin-bottom:10px">
             <input type="text" class="input" id="frReplace" placeholder="Заменить на...">
@@ -285,7 +284,7 @@
 <!-- TEMPLATES MODAL -->
 <div class="modal-overlay" id="tplModal">
     <div class="modal modal-sm">
-        <div class="modal-header"><h2>Шаблоны колонок</h2><button class="modal-close" id="tplClose">✕</button></div>
+        <div class="modal-header"><h2>Шаблоны колонок</h2><button class="modal-close" id="tplClose" aria-label="Закрыть"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
         <div class="modal-body">
             <div id="tplList"></div>
             <div class="tpl-add">
@@ -304,9 +303,9 @@
 <div class="search-bar" id="searchBar">
     <input type="text" id="searchInput" placeholder="Поиск...">
     <span class="search-count" id="searchCount">0/0</span>
-    <button class="search-nav" id="searchPrev" title="Назад">↑</button>
-    <button class="search-nav" id="searchNext" title="Вперёд">↓</button>
-    <button class="search-close" id="searchClose">✕</button>
+    <button class="search-nav" id="searchPrev" title="Назад" aria-label="Предыдущее совпадение"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg></button>
+    <button class="search-nav" id="searchNext" title="Вперёд" aria-label="Следующее совпадение"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 10 6 6 6-6"/></svg></button>
+    <button class="search-close" id="searchClose" aria-label="Закрыть"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
 </div>
 
 <div class="modal-overlay" id="promptModal">
@@ -335,7 +334,7 @@
 
 <div class="drop-overlay hidden" id="dropOverlay" style="position:fixed;inset:0;background:rgba(99,102,241,0.15);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;border:4px dashed var(--primary);pointer-events:none;">
     <div style="text-align:center;color:var(--primary);font-size:24px;font-weight:800;">
-        <div style="font-size:64px;margin-bottom:16px;">📂</div>
+        <div class="drop-symbol"><svg class="ui-symbol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h5l3 3h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 10h18"/></svg></div>
         Отпустите файл для загрузки
     </div>
 </div>
