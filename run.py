@@ -1,4 +1,4 @@
-import os, sys, json, base64, threading, time, urllib.request, shutil, tempfile, subprocess
+import os, sys, json, base64, threading, time, urllib.request, shutil, tempfile, subprocess, ctypes
 import webview
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from tkinter import Tk, filedialog
@@ -7,6 +7,36 @@ APP_NAME = "ONTEK — Таблица заказов"
 APP_VERSION = "7.2.0"
 GITHUB_RAW = "https://raw.githubusercontent.com/Dangergrow/Speka-ontek/main"
 
+# === Иконка на панели задач Windows ===
+# Заставляем Windows использовать один и тот же AppUserModelID всегда,
+# чтобы при закреплении на панели задач не подменялась на старую/дефолтную.
+def set_app_user_model_id():
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "SpekaOntek.ONTEK.Orders.7"
+        )
+    except Exception:
+        pass
+
+# === Путь к иконке ===
+def get_icon_path():
+    """Возвращает путь к icon.ico рядом с exe или в _MEIPASS"""
+    if getattr(sys, 'frozen', False):
+        exe_dir = os.path.dirname(sys.executable)
+        ico = os.path.join(exe_dir, 'icon.ico')
+        if os.path.exists(ico):
+            return ico
+        meipass = getattr(sys, '_MEIPASS', None)
+        if meipass:
+            ico = os.path.join(meipass, 'icon.ico')
+            if os.path.exists(ico):
+                return ico
+    else:
+        ico = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icon.ico')
+        if os.path.exists(ico):
+            return ico
+    return None
+
 def get_app_dir():
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
@@ -14,40 +44,62 @@ def get_app_dir():
         return os.path.dirname(os.path.abspath(__file__))
 
 class Api:
-    def __init__(self): self._window = None
-    def set_window(self, w): self._window = w
-    
+    def __init__(self):
+        self._window = None
+
+    def set_window(self, w):
+        self._window = w
+
     def save_file(self, data_b64, name):
         try:
             data = base64.b64decode(data_b64)
-            root = Tk(); root.withdraw(); root.attributes('-topmost', True)
-            path = filedialog.asksaveasfilename(defaultextension=".xlsx", initialfile=name, filetypes=[("Excel", "*.xlsx")], title="Сохранить")
+            root = Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+            path = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                initialfile=name,
+                filetypes=[("Excel", "*.xlsx")],
+                title="Сохранить"
+            )
             root.destroy()
             if path:
-                with open(path, 'wb') as f: f.write(data)
+                with open(path, 'wb') as f:
+                    f.write(data)
                 return json.dumps({"success": True, "path": path})
             return json.dumps({"success": False})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
-    
+
     def load_file(self):
         try:
-            root = Tk(); root.withdraw(); root.attributes('-topmost', True)
-            path = filedialog.askopenfilename(filetypes=[("Excel", "*.xlsx;*.xls")], title="Открыть")
+            root = Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+            path = filedialog.askopenfilename(
+                filetypes=[("Excel", "*.xlsx;*.xls")],
+                title="Открыть"
+            )
             root.destroy()
             if path:
                 with open(path, 'rb') as f:
-                    return json.dumps({"success": True, "name": os.path.basename(path), "data": base64.b64encode(f.read()).decode('utf-8')})
+                    return json.dumps({
+                        "success": True,
+                        "name": os.path.basename(path),
+                        "data": base64.b64encode(f.read()).decode('utf-8')
+                    })
             return json.dumps({"success": False})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
-    
+
     def save_settings(self, settings_json):
         try:
-            with open(os.path.join(get_app_dir(), 'settings.json'), 'w', encoding='utf-8') as f: f.write(settings_json)
+            with open(os.path.join(get_app_dir(), 'settings.json'), 'w', encoding='utf-8') as f:
+                f.write(settings_json)
             return json.dumps({"success": True})
-        except: return json.dumps({"success": False})
-    
+        except:
+            return json.dumps({"success": False})
+
     def load_settings(self):
         try:
             path = os.path.join(get_app_dir(), 'settings.json')
@@ -56,24 +108,25 @@ class Api:
                     content = f.read()
                 return content if content.strip() else "{}"
             return "{}"
-        except: return "{}"
-    
+        except:
+            return "{}"
+
     def apply_update(self):
         try:
             app_dir = get_app_dir()
             url = f"{GITHUB_RAW}/index.html"
             req = urllib.request.Request(url, headers={'User-Agent': 'ONTEK/1.0'})
-            
+
             with urllib.request.urlopen(req, timeout=15) as r:
                 content = r.read().decode('utf-8', errors='ignore')
-            
-            if '<div class="app"' not in content:
+
+            if '<div class="app' not in content and '<div class="app-shell"' not in content:
                 return json.dumps({"success": False, "message": "Ошибка загрузки"})
-            
+
             with open(os.path.join(app_dir, 'index.html'), 'w', encoding='utf-8') as f:
                 f.write(content)
-            
-            for f in ['css/themes.css', 'css/style.css', 'js/app.js', 'js/init.js']:
+
+            for f in ['css/themes.css', 'css/style.css', 'js/core.js', 'js/table.js', 'js/ui.js', 'js/system.js', 'js/init.js']:
                 try:
                     furl = f"{GITHUB_RAW}/{f}"
                     freq = urllib.request.Request(furl, headers={'User-Agent': 'ONTEK/1.0'})
@@ -82,44 +135,63 @@ class Api:
                         if len(fdata) > 200:
                             lpath = os.path.join(app_dir, f)
                             os.makedirs(os.path.dirname(lpath), exist_ok=True)
-                            with open(lpath, 'wb') as fout: fout.write(fdata)
-                except: continue
-            
+                            with open(lpath, 'wb') as fout:
+                                fout.write(fdata)
+                except:
+                    continue
+
             exe = os.path.join(app_dir, 'ONTEK_Orders.exe')
-            if os.path.exists(exe): subprocess.Popen([exe], shell=True)
+            if os.path.exists(exe):
+                subprocess.Popen([exe], shell=True)
             os._exit(0)
             return json.dumps({"success": True})
         except Exception as e:
             return json.dumps({"success": False, "message": str(e)})
 
+
 def start_server(port, serve_dir):
     os.chdir(serve_dir)
     HTTPServer(('127.0.0.1', port), SimpleHTTPRequestHandler).serve_forever()
 
+
 def main():
     app_dir = get_app_dir()
-    
+
     if getattr(sys, 'frozen', False) and not os.path.exists(os.path.join(app_dir, 'index.html')):
         base = sys._MEIPASS
         for f in ['index.html', 'exceljs.min.js', 'xlsx.full.min.js', 'icon.ico']:
             s, d = os.path.join(base, f), os.path.join(app_dir, f)
-            if os.path.exists(s): shutil.copy2(s, d)
+            if os.path.exists(s):
+                shutil.copy2(s, d)
         for folder in ['css', 'js']:
             sf, df = os.path.join(base, folder), os.path.join(app_dir, folder)
             if os.path.exists(sf):
                 os.makedirs(df, exist_ok=True)
                 for f in os.listdir(sf):
                     s, d = os.path.join(sf, f), os.path.join(df, f)
-                    if os.path.isfile(s): shutil.copy2(s, d)
-    
+                    if os.path.isfile(s):
+                        shutil.copy2(s, d)
+
+    set_app_user_model_id()
+
     port = 8765
     threading.Thread(target=start_server, args=(port, app_dir), daemon=True).start()
     time.sleep(0.5)
-    
+
+    ico = get_icon_path()
     api = Api()
-    window = webview.create_window(title=APP_NAME, url=f'http://127.0.0.1:{port}/index.html', js_api=api, maximized=True, resizable=True, min_size=(900,600))
+    window = webview.create_window(
+        title=APP_NAME,
+        url=f'http://127.0.0.1:{port}/index.html',
+        js_api=api,
+        maximized=True,
+        resizable=True,
+        min_size=(900, 600),
+        easy_drag=False
+    )
     api.set_window(window)
-    webview.start(debug=False)
+    webview.start(debug=False, icon=ico)
+
 
 if __name__ == '__main__':
     main()
