@@ -1,4 +1,4 @@
-// ==================== ONTEK v7.0.0 — INIT ====================
+// ==================== ONTEK v7.2.0 — INIT ====================
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof ExcelJS === 'undefined' || typeof XLSX === 'undefined') {
         document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif"><h1>Ошибка загрузки библиотек</h1><p>Проверьте наличие exceljs.min.js и xlsx.full.min.js</p></div>';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     setStatus('Готово');
-    setTimeout(() => { toast('ONTEK v7.0 готов', 'info', 2000); }, 500);
+    setTimeout(() => { toast('ONTEK v7.2 готов', 'info', 2000); }, 500);
 
     setInterval(saveSession, 5000);
     window.addEventListener('beforeunload', saveSession);
